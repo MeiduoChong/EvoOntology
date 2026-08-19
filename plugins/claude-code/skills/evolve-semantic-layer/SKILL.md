@@ -190,37 +190,41 @@ After the decision:
 1. Update the problem map and causal understanding.
 2. Mark solved problems, remaining limitations, newly discovered issues, and disproven explanations.
 3. Preserve the main validated mechanisms, rejected hypotheses, and unresolved uncertainty needed for later rounds.
-4. If the Candidate is accepted, update the Parent and continue from the most relevant step when valuable problems remain.
-5. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
+4. **Accept** — publish the Candidate as the next semantic version (`semantic_vN+1`), switch `active.json` to it, advance the checkpoint, and end the run.
+5. **Reject** — write `evolution/<round>/result.json`, update the attribution and problem map, then design a new Candidate targeting the next most valuable mechanism and repeat Step 1–4. Do not advance the checkpoint and do not end the run.
+6. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
 
 Candidate failure, unknown attribution, no-op results, or temporary lack of
 effective hypotheses do not indicate completion. They provide information for
-the next evolution cycle.
+the next evolution cycle. Keep iterating until Accept, or until an external
+condition (exhausted budget, user interruption, missing data, or unreliable
+evaluation) forces an Incomplete stop.
 
 **Stage Output:** A Parent/Candidate decision, updated evolution knowledge, and a clear next direction or rollback point.
 
 ### Finalize Evolution Run
 
-Preserve the evolution record, including:
+A run ends only on Accept or on an external Incomplete stop; a Reject loops
+back to a new Candidate within the same frozen batch.
+
+When the run ends, preserve the evolution record, including:
 
 - frozen run context;
 - problem map and hypotheses;
-- Candidate changes;
+- all Candidate changes and their decisions;
 - evaluation results;
 - final decision;
 - unresolved system issues.
 
-If the Candidate is accepted:
+If a Candidate was accepted:
 
 1. run deterministic validation;
 2. save it as the next semantic version;
-3. update `active.json`.
+3. update `active.json`;
+4. advance the evolution checkpoint once.
 
-Advance the evolution checkpoint only after a completed formal Gate:
-
-- Accept → advance;
-- Reject → advance;
-- Incomplete before a reliable Gate → do not advance.
+If the run ended Incomplete, do not advance the checkpoint and do not switch
+`active.json`; the same batch is retried on the next run.
 
 **Stage Output:** Persisted evolution results, updated active version when
 accepted, and consistent evolution state.

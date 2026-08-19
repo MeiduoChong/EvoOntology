@@ -13,13 +13,15 @@ description: 触发进化——诊断→归因→补丁→Parent/Candidate gate�
 - **工作量（workload）**：Evolver 只使用本轮冻结的 Evolution Pool；Validation Reserve
   仅在正式 Gate 时开放，ground truth 只能由指定 Evaluator 读取。
 
-本命令中的 `<workspace>` 始终指 Core `resolve_workspace()` 解析后的目录；每次命令只执行
-一轮 evolution，Validation Reserve 一旦用于正式 Gate，本轮即以 Accept、Reject 或
+本命令中的 `<workspace>` 始终指 Core `resolve_workspace()` 解析后的目录；执行一次完整
+的进化循环：冻结一批数据后，不断生成 Candidate 并用同一 Validation Reserve 做 Gate，
+直到得到可复现的更好版本（Accept）才结束。Reject 不是终点，而是进入下一轮 Candidate
+的输入。只有遇到无法可靠继续的外部条件（预算耗尽、数据不足、评估不可靠）才以
 Incomplete 结束。
 
 ## 执行
 
-执行 `evolve-semantic-layer` skill（`skills/evolve-semantic-layer/`），触发一次进化循环。
+执行 `evolve-semantic-layer` skill（`skills/evolve-semantic-layer/`），启动进化循环。
 
 按 skill 的 Evolution Loop 执行：Diagnose → Attribute → Patch → Evaluate/Gate。评估协议见
 `docs/evaluation-protocol.md`（有 GT 绝对评分 / 无 GT LLM Judge 相对比较）。
@@ -30,6 +32,6 @@ Incomplete 结束。
 python -m evoontology.validate --root <workspace> --version <candidate>
 ```
 
-Accept 后按
-`docs/versioning.md` 发布为 `semantic_vN+1`；Reject 保留 Parent。Accept/Reject 都先写完
-`evolution/<round>/result.json`，再通过 Core 推进 checkpoint；Incomplete 不推进。
+Accept 后按 `docs/versioning.md` 发布为 `semantic_vN+1` 并推进 checkpoint；Reject 保留
+Parent、写 `evolution/<round>/result.json` 后继续下一轮 Candidate（不推进 checkpoint，
+也不结束 run）；Incomplete 不推进 checkpoint 并结束本次 run。
