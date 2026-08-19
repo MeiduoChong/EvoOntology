@@ -73,7 +73,7 @@ class AutonomousDataAgent:
     def __init__(
         self, llm_provider: LLMProvider, mcp_configs: List[MCPServerConfig],
         auto_finish: bool = True, semantic_manifest: str = "",
-        semantic_layer = None, semantic_tools: list = None,
+        semantic_layer = None, semantic_tools: list = None, split: str = "",
     ):
         self.llm_provider = llm_provider
         self.mcp_configs = mcp_configs
@@ -81,6 +81,7 @@ class AutonomousDataAgent:
         self.session: Optional[AutonomousSession] = None
         self._semantic_layer = semantic_layer
         self._semantic_tools = semantic_tools or []
+        self._split = split
 
         # Initialize managers
         self.mcp_manager = MCPClientManager()
@@ -279,6 +280,7 @@ class AutonomousDataAgent:
                     task_id=self.session.session_id,
                     question=self.session.task,
                     ontology_version=self._semantic_layer.version,
+                    split=self._split,
                     messages=results["conversation"],
                     final_answer=final_answer,
                     task_status="completed",
@@ -1020,6 +1022,8 @@ async def main():
     # Config file arguments
     parser.add_argument("--config", help="Path to config.yaml file")
     parser.add_argument("--scenario", help="Scenario name (mimic, 10k, globem)")
+    parser.add_argument("--split", default="",
+                        help="Split label recorded in the trajectory (e.g. train/test)")
 
     # Logging configuration
     parser.add_argument("--log-dir", default="./logs", help="Directory for log files")
@@ -1154,6 +1158,7 @@ async def main():
         semantic_manifest=semantic_manifest,
         semantic_layer=semantic_layer_obj,
         semantic_tools=semantic_tools_list,
+        split=args.split,
     )
 
     if not auto_finish:

@@ -77,6 +77,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         "semantic_store_path": args.semantic_store,
         "semantic_max_tool_rounds": args.semantic_max_tool_rounds,
         "record_trajectories": args.record_trajectories,
+        "split": args.split,
         "base_url": args.agent_base_url
         or args.base_url
         or os.getenv("OPENAI_BASE_URL"),
@@ -130,6 +131,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--record-trajectories", action="store_true",
         help="Write normalized trajectories to the semantic workspace",
+    )
+    run.add_argument(
+        "--split", default="",
+        help="Split label recorded in the trajectory (e.g. train/test)",
     )
     run.add_argument("--base-url", default=None)
     run.add_argument("--agent-api-key", default=None)

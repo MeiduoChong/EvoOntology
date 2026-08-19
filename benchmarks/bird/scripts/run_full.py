@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", choices=["minidev", "dev"], default="minidev")
-    parser.add_argument("--test-dir", default="")
+    parser.add_argument("--split-dir", default="")
     parser.add_argument("--output", default="results/full")
     parser.add_argument("--parallel", type=int, default=8)
     parser.add_argument("--limit", type=int, default=0)
@@ -31,8 +31,8 @@ def main() -> int:
             "--parallel", str(args.parallel),
             "--save-traces",
         ]
-        if args.test_dir:
-            command.extend(["--test-dir", args.test_dir])
+        if args.split_dir:
+            command.extend(["--split-dir", args.split_dir])
         if args.limit:
             command.extend(["--limit", str(args.limit)])
         if args.record_trajectories and condition == "semantic":

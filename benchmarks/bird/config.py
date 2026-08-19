@@ -81,12 +81,12 @@ DATASET_PATHS = {
     "minidev": {
         "questions": MINI_DEV_DATA / "minidev" / "mini_dev_sqlite.json",
         "gold_sql": MINI_DEV_DATA / "minidev" / "mini_dev_sqlite_gold.sql",
-        "test_dir": DATA_DIR / "minidev" / "test",
+        "split_dir": DATA_DIR / "minidev" / "test",
     },
     "dev": {
         "questions": MINI_DEV_DATA / "dev" / "dev.json",
         "gold_sql": MINI_DEV_DATA / "dev" / "dev.sql",
-        "test_dir": DATA_DIR / "dev" / "test",
+        "split_dir": DATA_DIR / "dev" / "test",
     },
 }
 

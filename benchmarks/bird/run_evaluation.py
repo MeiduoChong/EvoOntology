@@ -23,6 +23,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # project root -> evoontology package
 
 from agent.models import EvalResult
 from config import DB_DIR, RESULTS_DIR, SEMANTIC_LAYER_DIR, ExperimentConfig, get_dataset_config
@@ -120,6 +121,7 @@ async def run_single_question(question_data: dict, config: ExperimentConfig,
                               verbose: bool = False,
                               save_traces: bool = False,
                               record_trajectories: bool = False,
+                              split: str = "",
                               gold_lookup: dict | None = None) -> tuple:
     """Run single question."""
     from tool_server.mcp_client import MCPClientManager
@@ -211,17 +213,18 @@ async def run_single_question(question_data: dict, config: ExperimentConfig,
             trace = agent.export_trace()
 
         if record_trajectories and config.semantic.enabled and trace:
-            from evoontology import SemanticStore, TrajectoryStore, from_message_trace
+            from trajectory_recorder import record_trajectory
 
-            version = SemanticStore.active_version(semantic_store_path)
-            TrajectoryStore(semantic_store_path).append(from_message_trace(
-                task_id=f"{db_id}_{question_id}",
+            record_trajectory(
+                semantic_store_path,
+                db_id=db_id,
                 question=question,
-                ontology_version=version,
+                question_id=question_id,
+                split=split,
                 messages=trace.get("messages", []),
                 final_answer=pred_sql,
                 task_status="completed",
-            ))
+            )
 
         return (EvalResult(
             question_id=question_id, db_id=db_id, question=question,
@@ -239,18 +242,19 @@ async def run_single_question(question_data: dict, config: ExperimentConfig,
                 pass
         if record_trajectories and config.semantic.enabled and trace:
             try:
-                from evoontology import SemanticStore, TrajectoryStore, from_message_trace
+                from trajectory_recorder import record_trajectory
 
-                version = SemanticStore.active_version(semantic_store_path)
-                TrajectoryStore(semantic_store_path).append(from_message_trace(
-                    task_id=f"{db_id}_{question_id}",
+                record_trajectory(
+                    semantic_store_path,
+                    db_id=db_id,
                     question=question,
-                    ontology_version=version,
+                    question_id=question_id,
+                    split=split,
                     messages=trace.get("messages", []),
                     final_answer="",
                     task_status="failed",
                     errors=[str(e)],
-                ))
+                )
             except Exception:
                 pass
         return (EvalResult(
@@ -420,8 +424,9 @@ async def main():
     import argparse
     parser = argparse.ArgumentParser(description="BIRD batch evaluation")
     parser.add_argument("--config", required=True, help="YAML configuration file")
-    parser.add_argument("--test-dir", default="",
-                        help="Test-set directory (selected from --dataset by default)")
+    parser.add_argument("--split-dir", default="",
+                        help="Directory of per-database question JSONs to run "
+                             "(train or test split; defaults to the --dataset test split)")
     parser.add_argument("--dataset", default="minidev",
                         choices=["minidev", "dev"],
                         help="Dataset selection (minidev=500 questions, dev=1534 questions)")
@@ -463,13 +468,14 @@ async def main():
     parallel = args.parallel if args.parallel is not None else 8
 
     ds_config = get_dataset_config(args.dataset)
-    test_dir = Path(args.test_dir) if args.test_dir else ds_config["test_dir"]
-    if not test_dir.exists():
-        print(f"❌ Test directory does not exist: {test_dir}")
+    split_dir = Path(args.split_dir) if args.split_dir else ds_config["split_dir"]
+    if not split_dir.exists():
+        print(f"❌ Split directory does not exist: {split_dir}")
         return
+    split_name = split_dir.name
     print(f"Dataset: {args.dataset}")
 
-    test_files = sorted(test_dir.glob("*.json"))
+    test_files = sorted(split_dir.glob("*.json"))
     if args.db_ids:
         allowed = set(args.db_ids.split(","))
         test_files = [f for f in test_files if f.stem in allowed]
@@ -477,7 +483,7 @@ async def main():
     print(f"Configuration: {args.config}")
     print(f"Condition: {config.condition}")
     print(f"LLM: {llm_kwargs['provider_type']}/{llm_kwargs['model']}")
-    print(f"Test files: {len(test_files)} items")
+    print(f"Question files: {len(test_files)} items")
     print(f"Output: {args.output}")
     if args.verbose:
         print("Verbose: ON")
@@ -572,6 +578,7 @@ async def main():
                                 verbose=args.verbose,
                                 save_traces=args.save_traces,
                                 record_trajectories=args.record_trajectories,
+                                split=split_name,
                                 gold_lookup=gold_lookup,
                             ),
                             timeout=args.timeout,
@@ -693,6 +700,7 @@ async def main():
                 "api_key_env": config.agent.api_key_env,
                 "save_traces": args.save_traces,
                 "record_trajectories": args.record_trajectories,
+                "split": split_name,
             }, ensure_ascii=False, indent=2), encoding="utf-8")
 
             payload = None

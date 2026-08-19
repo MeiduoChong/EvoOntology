@@ -5,7 +5,7 @@ agent:
   temperature: 0.0
   max_turns: 30
   provider: "openai"
-  base_url: "https://llm-yh2l9b6l3or0e5bi.cn-beijing.maas.aliyuncs.com/compatible-mode"
+  base_url: "https://llm-yh2l9b6l3or0e5bi.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
   api_key_env: "BIRD_AGENT_API_KEY"
 
 semantic:

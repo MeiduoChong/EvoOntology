@@ -20,7 +20,7 @@ builder / evolver 两个 skill、语义 MCP 运行时，以及 Session Start 进
 ## 安装
 
 ```bash
-claude plugin marketplace add Cmd210/EvoOntology_plugin
+claude plugin marketplace add Cmd210/EvoOntology
 claude plugin marketplace list
 claude plugin install evoontology@evoontology
 claude plugin list

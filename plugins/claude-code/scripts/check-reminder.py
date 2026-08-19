@@ -21,20 +21,24 @@ from evoontology import EvolutionTrigger, resolve_workspace
 
 
 def main() -> int:
-    workspace = resolve_workspace()
-    if not (workspace / "active.json").is_file():
-        return 0
+    base = resolve_workspace()  # <cwd>/.evoontology
 
-    trigger = EvolutionTrigger(str(workspace))
-    trigger.initialize()
-    result = trigger.check()
-    if not result["evolution_due"]:
-        return 0
+    roots: list[Path] = []
+    if (base / "active.json").is_file():
+        roots.append(base)
+    for active_path in sorted(base.glob("*/active.json")):
+        roots.append(active_path.parent)
 
-    print(
-        f"EvoOntology: evolution is due ({result['reason']}). "
-        f"Run /evo-evolve to review and improve the semantic layer."
-    )
+    for root in roots:
+        trigger = EvolutionTrigger(str(root))
+        trigger.initialize()
+        result = trigger.check()
+        if result["evolution_due"]:
+            label = root.name if root != base else "workspace"
+            print(
+                f"EvoOntology: evolution is due ({result['reason']}) for {label}. "
+                f"Run /evo-evolve to review and improve the semantic layer."
+            )
     return 0
 
 

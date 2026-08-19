@@ -22,7 +22,7 @@ skill，Python 只做「运行时 + 最小确定性校验」。默认**零配置
 ### Claude Code
 
 ```bash
-claude plugin marketplace add Cmd210/EvoOntology_plugin
+claude plugin marketplace add Cmd210/EvoOntology
 claude plugin marketplace list
 claude plugin install evoontology@evoontology
 claude plugin list
@@ -31,7 +31,7 @@ claude plugin list
 ### Codex
 
 ```bash
-codex plugin marketplace add Cmd210/EvoOntology_plugin
+codex plugin marketplace add Cmd210/EvoOntology
 codex plugin marketplace list
 codex plugin add evoontology-codex@evoontology
 codex plugin list

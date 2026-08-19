@@ -56,7 +56,7 @@ python run_evaluation.py \
   --dataset minidev
 ```
 
-Use `--test-dir`, `--db-ids`, `--limit`, and `--output` to adapt the command
+Use `--split-dir`, `--db-ids`, `--limit`, and `--output` to adapt the command
 to a local benchmark installation. The evaluation runner uses the same
 question loading, concurrency, retry, and result-writing path for both
 conditions.

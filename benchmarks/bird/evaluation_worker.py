@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # project root -> evoontology package
 
 from agent.data_agent import BIRDReActAgent
 from config import ExperimentConfig
@@ -53,6 +54,7 @@ def main() -> None:
     db_id = job["db_id"]
     save_traces = job.get("save_traces", False)
     record_trajectories = job.get("record_trajectories", False)
+    split = job.get("split", "")
 
     async def _run() -> tuple:
         result, trace = await run_single_question(
@@ -61,6 +63,7 @@ def main() -> None:
             verbose=False,
             save_traces=save_traces,
             record_trajectories=record_trajectories,
+            split=split,
             gold_lookup=None,
         )
         return _make_entry(result), trace

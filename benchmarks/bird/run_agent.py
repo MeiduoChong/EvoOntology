@@ -16,8 +16,8 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-# Add project root
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))          # benchmarks/bird
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))      # project root -> evoontology package
 
 from config import SEMANTIC_LAYER_DIR, ExperimentConfig
 
@@ -35,6 +35,8 @@ async def main():
     parser.add_argument("--base-url", default="", help="API base URL override")
     parser.add_argument("--temperature", type=float, default=-1.0,
                         help="Temperature override (default: 0)")
+    parser.add_argument("--split", default="",
+                        help="Split label recorded in the trajectory (e.g. train/test)")
     args = parser.parse_args()
 
 
@@ -145,17 +147,18 @@ async def main():
                 print(f"\nExecution failed: {e}")
 
         if config.semantic.enabled:
-            from evoontology import SemanticStore, TrajectoryStore, from_message_trace
+            from trajectory_recorder import record_trajectory
 
             store_path = config.semantic.store_path or str(SEMANTIC_LAYER_DIR / db_id)
-            TrajectoryStore(store_path).append(from_message_trace(
-                task_id=session.session_id,
+            record_trajectory(
+                store_path,
+                db_id=db_id,
                 question=args.question,
-                ontology_version=SemanticStore.active_version(store_path),
+                split=args.split,
                 messages=agent.export_trace().get("messages", []),
                 final_answer=session.pred_sql,
                 task_status="completed",
-            ))
+            )
 
     finally:
         await mcp_client.close()

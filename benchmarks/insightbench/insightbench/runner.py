@@ -275,6 +275,7 @@ class BatchRunner:
                     "task_id": f"flag_{flag_id}",
                     "question": goal,
                     "ontology_version": semantic_trace.get("semantic_version", "unknown"),
+                    "split": self.agent_config.get("split", ""),
                     "semantic_calls": semantic_calls,
                     "native_tool_calls": [],
                     "final_answer": {
