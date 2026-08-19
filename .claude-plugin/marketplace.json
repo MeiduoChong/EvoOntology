@@ -1,0 +1,11 @@
+{
+  "name": "evoontology",
+  "owner": { "name": "Eric Chong" },
+  "plugins": [
+    {
+      "name": "evoontology",
+      "source": { "source": "git-subdir", "url": "https://github.com/Cmd210/EvoOntology_plugin.git", "path": "plugins/claude-code" },
+      "description": "Self-evolving ontology layer for data agents: /evo-build and /evo-evolve."
+    }
+  ]
+}

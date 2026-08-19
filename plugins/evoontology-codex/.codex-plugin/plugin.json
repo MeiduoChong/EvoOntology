@@ -1,0 +1,35 @@
+{
+  "name": "evoontology-codex",
+  "version": "1.0.0+codex.20260819041212",
+  "description": "Build, query, record, and evolve a versioned semantic layer for data agents.",
+  "author": {
+    "name": "Eric Chong"
+  },
+  "homepage": "https://github.com/Cmd210/EvoOntology_plugin",
+  "repository": "https://github.com/Cmd210/EvoOntology_plugin",
+  "license": "MIT",
+  "keywords": [
+    "ontology",
+    "semantic-layer",
+    "data-agent",
+    "self-evolution"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "EvoOntology",
+    "shortDescription": "A self-evolving semantic layer for data agents.",
+    "longDescription": "Build an evidence-grounded semantic layer, use it through bounded MCP tools, record task trajectories, and evolve it behind an evaluation gate.",
+    "developerName": "Eric Chong",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Build an initial semantic layer for this data project.",
+      "Check whether the semantic layer is due for evolution.",
+      "Evolve the active semantic layer using recorded trajectories."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

@@ -1,0 +1,14 @@
+.env
+.venv/
+.evoontology/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/
+logs/
+outputs/
+results/
+*.sqlite
+*.db
+*.log
+*.egg-info/

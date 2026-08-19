@@ -1,0 +1,18 @@
+{
+  "name": "evoontology",
+  "version": "1.0.0",
+  "description": "Self-evolving ontology layer for data agents: /evo-build and /evo-evolve commands, builder/evolver skills, a semantic MCP runtime, and a session-start evolution reminder.",
+  "author": {
+    "name": "Eric Chong"
+  },
+  "homepage": "https://github.com/Cmd210/EvoOntology_plugin",
+  "repository": "https://github.com/Cmd210/EvoOntology_plugin",
+  "license": "MIT",
+  "keywords": [
+    "ontology",
+    "semantic-layer",
+    "self-evolution",
+    "data-agent",
+    "text-to-sql"
+  ]
+}

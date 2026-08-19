@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evoontology"
+version = "1.0.0"
+description = "EvoOntology core: versioned semantic-layer store, runtime/MCP, trajectory recording, evolution trigger, and evaluation gate."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Eric Chong" }]
+keywords = ["ontology", "semantic-layer", "data-agent", "self-evolution", "mcp"]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4"]
+bird = ["httpx>=0.27,<1", "openai>=1,<3", "python-dotenv>=1,<2", "pyyaml>=6,<7"]
+
+[project.scripts]
+evoontology-validate = "evoontology.validate:main"
+
+[project.urls]
+Homepage = "https://github.com/Cmd210/EvoOntology_plugin"
+Repository = "https://github.com/Cmd210/EvoOntology_plugin"
+Issues = "https://github.com/Cmd210/EvoOntology_plugin/issues"
+
+[tool.setuptools.packages.find]
+include = ["evoontology", "evoontology.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E402", "E501"]
