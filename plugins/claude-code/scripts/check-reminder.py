@@ -12,6 +12,7 @@ is initialized automatically before checking its trajectories.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -29,16 +30,36 @@ def main() -> int:
     for active_path in sorted(base.glob("*/active.json")):
         roots.append(active_path.parent)
 
+    reminders: list[str] = []
     for root in roots:
         trigger = EvolutionTrigger(str(root))
         trigger.initialize()
         result = trigger.check()
         if result["evolution_due"]:
             label = root.name if root != base else "workspace"
-            print(
+            reminders.append(
                 f"EvoOntology: evolution is due ({result['reason']}) for {label}. "
                 f"Run /evo-evolve to review and improve the semantic layer."
             )
+
+    if not reminders:
+        return 0
+
+    context = (
+        "The EvoOntology semantic layer has pending evolution work.\n"
+        + "\n".join(reminders)
+    )
+    print(
+        json.dumps(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "SessionStart",
+                    "additionalContext": context,
+                }
+            },
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
