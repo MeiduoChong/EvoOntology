@@ -8,12 +8,12 @@ description: This skill is triggered when the user requests to "self-evolve the 
 Continuously improve the complete semantic-layer system until a credible and
 reproducibly better version is obtained.
 
-Evolution may diagnose limitations in Content, Tool, and Schema layers.
-
-Only components supported by the current versioning and rollback mechanism may
-be modified as formal Candidates. Unsupported Tool, Schema, runtime, prompt,
-or workflow issues should be preserved as unresolved system issues rather than
-patched outside the managed evolution process.
+Evolution targets the three ontology-layer dimensions — Content, Tool, and
+Schema — and, when the attributed mechanism calls for it, the related prompt,
+workflow, or runtime components. A Candidate may modify any of these; every
+change must stay traceable and reversible so the Parent can be restored, and
+domain knowledge must remain in versioned semantic artifacts rather than being
+hidden in prompt or orchestration code.
 
 ## Core Principles
 
