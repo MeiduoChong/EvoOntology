@@ -120,9 +120,9 @@ def test_mapping_grounding_creates_no_virtual_nodes(workspace):
     content = build_content_elements(store)
     record_ids = set(store.terms) | set(store.mappings) | set(store.constraints) | set(store.evidence)
     for node in content["nodes"]:
-        assert node["data"]["id"] in record_ids
+        assert node["data"]["record_id"] in record_ids
     for virtual in ("expense_statement", "labor_expense", "financial_database"):
-        assert virtual not in {node["data"]["id"] for node in content["nodes"]}
+        assert virtual not in {node["data"]["record_id"] for node in content["nodes"]}
 
 
 # ---- broken references: warn, never fabricate -------------------------------

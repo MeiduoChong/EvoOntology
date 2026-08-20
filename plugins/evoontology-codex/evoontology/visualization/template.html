@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -6,192 +6,220 @@
 <title>__TITLE__</title>
 <style>
   :root {
-    --bg: #f4f6f9;
+    --bg: #f4f6fa;
     --panel: #ffffff;
-    --border: #e2e7ee;
-    --text: #253244;
-    --muted: #64748b;
-    --accent: #3d6db5;
-    --term-bg: #dceafc;      --term-border: #8fb3e3;   --term-text: #1f3b5c;
-    --mapping-bg: #d9efe8;   --mapping-border: #84c0af; --mapping-text: #1e4d40;
-    --constraint-bg: #fceadb; --constraint-border: #e0b184; --constraint-text: #6e4a21;
-    --evidence-bg: #e9e6f1;  --evidence-border: #aca2c8; --evidence-text: #4a4063;
+    --glass: rgba(255, 255, 255, 0.88);
+    --border: #e3e8f0;
+    --text: #24313f;
+    --muted: #6b7a90;
+    --accent: #4a7dc0;
+    --accent-soft: #eaf1fa;
+    --shadow: 0 8px 28px rgba(30, 45, 70, 0.12);
+    --term-bg: #e6eefb;       --term-border: #9db9e2;       --term-text: #24466e;
+    --mapping-bg: #e2f2ec;    --mapping-border: #8ec8b4;    --mapping-text: #1f5747;
+    --constraint-bg: #fbeedd; --constraint-border: #dcb68a; --constraint-text: #7a5220;
+    --evidence-bg: #ebe7f4;   --evidence-border: #b3a8d0;   --evidence-text: #51476e;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; }
   body {
-    background: var(--bg); color: var(--text);
+    background: var(--bg); color: var(--text); font-size: 13px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
                  Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-    font-size: 13px; display: flex; flex-direction: column; overflow: hidden;
+    display: flex; flex-direction: column; overflow: hidden;
   }
   button {
     font: inherit; color: var(--text); background: var(--panel);
-    border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px;
-    cursor: pointer;
+    border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
   }
   button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #3f6ca8; color: #fff; }
 
   /* ---- header ---- */
   header {
-    display: flex; align-items: center; gap: 14px; padding: 10px 18px;
-    background: var(--panel); border-bottom: 1px solid var(--border); flex: none;
+    display: flex; align-items: center; gap: 12px; padding: 11px 18px; flex: none;
+    background: var(--panel); border-bottom: 1px solid var(--border); z-index: 30;
   }
-  .brand { font-size: 15px; font-weight: 600; white-space: nowrap; }
-  .brand .sep { color: var(--muted); font-weight: 400; margin: 0 2px; }
+  .brand { font-size: 15px; font-weight: 700; white-space: nowrap; letter-spacing: .01em; }
+  .brand .sep { color: var(--muted); font-weight: 400; }
   .badge {
-    display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 12px;
-    font-weight: 500; border: 1px solid var(--border); background: var(--bg);
+    display: inline-block; border-radius: 999px; padding: 2px 11px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--bg); color: var(--muted); white-space: nowrap;
   }
-  .badge.version { color: var(--accent); border-color: #c3d6ef; background: #eef4fb; font-family: ui-monospace, Consolas, monospace; }
+  .badge.version { color: var(--accent); border-color: #c9dcf2; background: var(--accent-soft);
+                   font-family: ui-monospace, Consolas, monospace; }
   .badge.active { color: #1e6b45; border-color: #bfe0cd; background: #e9f6ef; }
   .badge.explicit { color: #8a5a1e; border-color: #ecd3ae; background: #faf2e4; }
   #evolution-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
   .chip {
     border: 1px solid var(--border); background: var(--panel); color: var(--muted);
     border-radius: 999px; padding: 2px 10px; font-size: 12px; white-space: nowrap;
-    cursor: pointer; max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+    max-width: 340px; overflow: hidden; text-overflow: ellipsis;
   }
-  .chip:hover { color: var(--accent); border-color: var(--accent); }
-  .chip.warn { color: #8a5a1e; border-color: #ecd3ae; background: #faf2e4; }
+  .chip.ok { color: #1e6b45; border-color: #bfe0cd; background: #e9f6ef; }
+  .chip.warn { color: #8a5a1e; border-color: #ecd3ae; background: #faf2e4; cursor: pointer; }
+  .chip.warn:hover { border-color: #d9a94f; }
   .spacer { flex: 1; }
-  .search-box { display: flex; align-items: center; gap: 6px; }
+  .search-box { position: relative; display: flex; align-items: center; gap: 8px; }
   .search-box input {
-    font: inherit; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
-    width: 230px; color: var(--text); background: var(--panel); outline: none;
+    font: inherit; padding: 6px 11px; border: 1px solid var(--border); border-radius: 8px;
+    width: 250px; color: var(--text); background: var(--panel); outline: none;
   }
-  .search-box input:focus { border-color: var(--accent); }
+  .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(74, 125, 192, .14); }
   #search-status { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  #search-results {
+    position: absolute; top: calc(100% + 6px); right: 0; width: 330px; max-height: 360px;
+    overflow: auto; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: var(--shadow); padding: 4px; z-index: 40;
+  }
+  .sr-item { display: flex; gap: 9px; align-items: center; padding: 7px 9px; border-radius: 8px; cursor: pointer; }
+  .sr-item:hover { background: var(--accent-soft); }
+  .sr-label { font-weight: 600; font-size: 12.5px; }
+  .sr-id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Consolas, monospace; }
 
   /* ---- tabs ---- */
   nav {
     display: flex; gap: 4px; padding: 8px 18px 0; flex: none;
     background: var(--panel); border-bottom: 1px solid var(--border);
   }
-  nav button {
-    border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0;
-    background: transparent; color: var(--muted); padding: 6px 16px;
+  nav .tab {
+    border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0;
+    background: transparent; color: var(--muted); padding: 7px 18px; font-weight: 500;
   }
-  nav button.active {
-    background: var(--bg); border-color: var(--border); color: var(--text); font-weight: 600;
-  }
+  nav .tab:hover { color: var(--accent); }
+  nav .tab.active { background: var(--bg); border-color: var(--border); color: var(--text); font-weight: 650; }
 
   /* ---- main layout ---- */
-  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: 0; }
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 0; }
   #views { grid-column: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
   .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
   /* ---- content view ---- */
   #view-content { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
-  #cy-wrap { position: relative; grid-row: 1; margin: 12px 12px 0; border: 1px solid var(--border);
-             border-radius: 10px; background: var(--panel); overflow: hidden; }
+  #cy-wrap {
+    position: relative; grid-row: 1; margin: 12px 12px 0; border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; background-color: var(--panel);
+    background-image: radial-gradient(circle, #e4e9f2 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
   #cy { position: absolute; inset: 0; }
+  #hint-bar { grid-row: 2; padding: 8px 14px 10px; color: var(--muted); font-size: 12px; }
   #empty-hint {
     position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-    color: var(--muted); font-size: 14px; text-align: center; padding: 20px;
+    color: var(--muted); font-size: 14px; text-align: center; padding: 24px; white-space: pre-wrap; z-index: 6;
   }
-  #toolbar {
-    grid-row: 2; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-    padding: 10px 12px 12px;
-  }
-  .filter-group {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
-  }
-  .filter-title { color: var(--muted); font-size: 12px; font-weight: 600; }
-  .filter-group label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
-  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid; }
-  .dot.term { background: var(--term-bg); border-color: var(--term-border); }
-  .dot.mapping { background: var(--mapping-bg); border-color: var(--mapping-border); }
-  .dot.constraint { background: var(--constraint-bg); border-color: var(--constraint-border); }
-  .dot.evidence { background: var(--evidence-bg); border-color: var(--evidence-border); }
-  .dot.relation { background: #ffffff; border-color: #8a9bb5; border-radius: 0; height: 2px; width: 14px; }
-  .actions { display: flex; gap: 8px; margin-left: auto; }
 
-  /* ---- schema / tool views ---- */
-  .doc { overflow: auto; padding: 16px 18px 24px; }
-  .doc h2 { font-size: 14px; margin: 18px 0 10px; }
-  .doc h2:first-child { margin-top: 4px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-  .card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 14px; cursor: pointer;
+  /* ---- floating glass cards ---- */
+  .glass {
+    position: absolute; z-index: 5; background: var(--glass);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 12px;
+    box-shadow: var(--shadow); padding: 10px 12px;
   }
-  .card:hover { border-color: var(--accent); }
-  .card .card-name { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-  .card .card-desc { color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.5; }
-  .card .card-meta { color: var(--muted); font-size: 11px; margin-top: 8px; font-family: ui-monospace, Consolas, monospace; line-height: 1.5; word-break: break-all; }
-  .rel-chip {
-    display: inline-flex; align-items: center; gap: 6px; background: var(--panel);
-    border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px; margin: 0 8px 8px 0;
-    cursor: pointer; font-size: 12px;
+  .glass-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .05em; margin-bottom: 6px; }
+  #legend { top: 14px; left: 14px; min-width: 158px; }
+  .lg-item { display: flex; align-items: center; gap: 8px; padding: 2.5px 0; font-size: 12px; }
+  .lg-count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; padding-left: 12px; }
+  .swatch { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid; flex: none; display: inline-block; }
+  .swatch.term { background: var(--term-bg); border-color: var(--term-border); }
+  .swatch.mapping { background: var(--mapping-bg); border-color: var(--mapping-border); }
+  .swatch.constraint { background: var(--constraint-bg); border-color: var(--constraint-border); border-radius: 0;
+                       clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+  .swatch.evidence { background: var(--evidence-bg); border-color: var(--evidence-border); border-radius: 50%; }
+  .swatch.relation { width: 16px; height: 0; border: none; border-top: 2px solid #8fa4c0; border-radius: 0; }
+  #graph-actions { top: 14px; right: 14px; display: flex; gap: 6px; padding: 8px; }
+  #graph-actions button { padding: 4px 10px; font-size: 12px; border-radius: 7px; background: rgba(255, 255, 255, .75); }
+  #filters { bottom: 14px; left: 14px; display: flex; flex-direction: column; gap: 6px; }
+  #filters label { display: flex; align-items: center; gap: 7px; font-size: 12px; cursor: pointer; user-select: none; }
+  #filters label.subtle { color: var(--muted); border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 2px; }
+  #tooltip {
+    position: absolute; z-index: 8; max-width: 290px; pointer-events: none;
+    background: rgba(33, 44, 59, 0.94); color: #f0f4f9; border-radius: 10px;
+    padding: 8px 11px; font-size: 12px; line-height: 1.55; box-shadow: var(--shadow);
   }
-  .rel-chip:hover { border-color: var(--accent); color: var(--accent); }
-  .rel-chip .arrow { color: var(--muted); }
-  .ref-rule {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 12px; margin-bottom: 8px; cursor: pointer; font-size: 12px; color: var(--muted);
-  }
-  .ref-rule:hover { border-color: var(--accent); }
-  .ref-rule b { color: var(--text); font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
-  pre.manifest {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; white-space: pre-wrap; word-break: break-word; font-size: 12px;
-    font-family: ui-monospace, Consolas, monospace; line-height: 1.6;
-  }
-  .param { font-family: ui-monospace, Consolas, monospace; font-size: 11px; background: var(--bg);
-           border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin: 2px 4px 2px 0;
-           display: inline-block; }
+  .tt-title { font-weight: 650; margin-bottom: 2px; }
+  .tt-line { color: #c3cfdd; }
 
   /* ---- detail panel ---- */
-  #detail-panel {
-    grid-column: 2; grid-row: 1; background: var(--panel);
-    border-left: 1px solid var(--border); overflow: auto; padding: 14px 16px 24px; min-height: 0;
+  #detail {
+    grid-column: 2; min-width: 0; background: var(--panel); border-left: 1px solid var(--border);
+    overflow-y: auto; padding: 16px 16px 24px;
   }
-  #detail-title { font-size: 14px; margin: 2px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  #detail-sub { color: var(--muted); font-size: 12px; margin: 2px 0 12px; word-break: break-all; }
-  .kv { border-top: 1px solid var(--border); padding: 7px 0; }
-  .kv .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
-  .kv .v { font-size: 12.5px; line-height: 1.55; word-break: break-word; }
-  .tag {
-    display: inline-block; background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
-    padding: 1px 7px; margin: 2px 4px 2px 0; font-size: 11.5px; font-family: ui-monospace, Consolas, monospace;
-    white-space: pre-wrap; word-break: break-all;
+  #detail-empty { color: var(--muted); font-size: 13px; line-height: 1.7; padding-top: 12px; }
+  .family-badge { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px;
+                  padding: 2px 11px; border: 1px solid; }
+  .family-badge.term { color: var(--term-text); background: var(--term-bg); border-color: var(--term-border); }
+  .family-badge.mapping { color: var(--mapping-text); background: var(--mapping-bg); border-color: var(--mapping-border); }
+  .family-badge.constraint { color: var(--constraint-text); background: var(--constraint-bg); border-color: var(--constraint-border); }
+  .family-badge.evidence { color: var(--evidence-text); background: var(--evidence-bg); border-color: var(--evidence-border); }
+  .family-badge.relation { color: #31517a; background: #eef2f8; border-color: #b9c8dc; }
+  .family-badge.reference { color: #5b6b80; background: #f0f3f7; border-color: #cdd6e2; }
+  .family-badge.schema, .family-badge.tool { color: var(--evidence-text); background: var(--evidence-bg);
+                                             border-color: var(--evidence-border); }
+  .detail-title { font-size: 15px; font-weight: 650; margin: 8px 0 2px; word-break: break-word; line-height: 1.4; }
+  .detail-sub { color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 11px;
+                margin-bottom: 10px; word-break: break-all; }
+  .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .kv { border-top: 1px solid var(--border); }
+  .kv-row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .kv-key { flex: none; width: 86px; color: var(--muted); font-size: 12px; padding-top: 1px; }
+  .kv-val { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-start; }
+  .kv-text { white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
+  .link-chip {
+    font-size: 11.5px; font-family: ui-monospace, Consolas, monospace; color: var(--accent);
+    background: var(--accent-soft); border: 1px solid #c9dcf2; border-radius: 999px; padding: 1px 9px;
   }
-  .tag.link { color: var(--accent); cursor: pointer; border-color: #c3d6ef; background: #eef4fb; }
-  .tag.link:hover { border-color: var(--accent); }
-  .family-pill {
-    border-radius: 999px; font-size: 11px; padding: 1px 9px; border: 1px solid; font-weight: 600;
+  .link-chip:hover { border-color: var(--accent); }
+  .warn-item { background: #faf2e4; border: 1px solid #ecd3ae; color: #6e4a21; border-radius: 8px;
+               padding: 8px 10px; margin-bottom: 8px; font-size: 12px; word-break: break-word; }
+
+  /* ---- schema / tool docs ---- */
+  .doc { display: block; overflow: auto; padding: 18px 20px 30px; }
+  .doc h2 { font-size: 14px; margin: 22px 0 10px; }
+  .doc h2:first-child { margin-top: 2px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; cursor: pointer;
+    transition: box-shadow .15s, border-color .15s, transform .15s;
   }
-  .family-pill.term { background: var(--term-bg); border-color: var(--term-border); color: var(--term-text); }
-  .family-pill.mapping { background: var(--mapping-bg); border-color: var(--mapping-border); color: var(--mapping-text); }
-  .family-pill.constraint { background: var(--constraint-bg); border-color: var(--constraint-border); color: var(--constraint-text); }
-  .family-pill.evidence { background: var(--evidence-bg); border-color: var(--evidence-border); color: var(--evidence-text); }
-  .family-pill.relation, .family-pill.reference, .family-pill.schema, .family-pill.tool, .family-pill.evolution {
-    background: var(--bg); border-color: var(--border); color: var(--muted);
+  .card:hover { border-color: var(--accent); box-shadow: 0 6px 18px rgba(30, 45, 70, .10); transform: translateY(-1px); }
+  .card-title { font-weight: 650; margin-bottom: 3px; word-break: break-word; }
+  .card-sub { color: var(--muted); font-size: 12px; line-height: 1.55; margin-bottom: 6px; }
+  .card-body { font-size: 11.5px; color: var(--accent); font-weight: 600; }
+  .manifest {
+    background: #22303f; color: #d9e2ee; border-radius: 12px; padding: 14px 16px;
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.65;
   }
-  .muted { color: var(--muted); }
+
+  /* ---- scrollbars ---- */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #cdd6e2; border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #b6c2d2; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
 </style>
 </head>
 <body>
 <header>
-  <div class="brand">EvoOntology <span class="sep">·</span>
-    <span class="badge version" id="version-badge"></span>
-    <span class="badge" id="active-badge"></span>
-  </div>
-  <div id="evolution-chips" title="Evolution metadata"></div>
+  <div class="brand">EvoOntology<span class="sep"> · </span>语义层浏览器</div>
+  <span class="badge version" id="badge-version"></span>
+  <span class="badge" id="badge-state"></span>
+  <div id="evolution-chips"></div>
   <div class="spacer"></div>
   <div class="search-box">
-    <input id="search-input" type="text" placeholder="搜索 Term / Mapping（名称或 ID）" spellcheck="false">
-    <button id="search-btn">搜索</button>
+    <input id="search-input" type="text" autocomplete="off" spellcheck="false"
+           placeholder="搜索 Term / Mapping / Constraint / Evidence">
     <span id="search-status"></span>
+    <div id="search-results" hidden></div>
   </div>
 </header>
 <nav>
-  <button class="tab active" data-view="content">Content</button>
-  <button class="tab" data-view="schema">Schema</button>
-  <button class="tab" data-view="tool">Tool</button>
+  <button class="tab active" data-view="content" type="button">本体内容</button>
+  <button class="tab" data-view="schema" type="button">Schema 层</button>
+  <button class="tab" data-view="tool" type="button">Tool 层</button>
 </nav>
 <main>
   <div id="views">
@@ -199,585 +227,828 @@
       <div id="cy-wrap">
         <div id="cy"></div>
         <div id="empty-hint"></div>
-      </div>
-      <div id="toolbar">
-        <div class="filter-group" id="object-filters"><span class="filter-title">Objects</span></div>
-        <div class="filter-group" id="relation-filters"><span class="filter-title">Relations</span></div>
-        <div class="actions">
-          <button id="btn-fit">Fit</button>
-          <button id="btn-reset">Reset</button>
-          <button id="btn-export">Export PNG</button>
+        <div class="glass" id="legend"><div class="glass-title">图例</div></div>
+        <div class="glass" id="graph-actions">
+          <button id="btn-fit" type="button" title="缩放至适应所有可见元素">适应视图</button>
+          <button id="btn-layout" type="button" title="对可见元素重新计算布局">重新布局</button>
+          <button id="btn-expand-all" type="button" title="展开所有 Term 的关联对象">展开全部</button>
+          <button id="btn-collapse-all" type="button" title="收起所有关联对象，仅保留 Term 与语义关系">收起全部</button>
+          <button id="btn-reset" type="button" title="重置过滤、搜索与布局">重置</button>
         </div>
+        <div class="glass" id="filters">
+          <div class="glass-title">显示过滤</div>
+          <label><input type="checkbox" id="chk-relations" checked><span class="swatch relation"></span>语义关系</label>
+          <label><input type="checkbox" data-family="mapping" checked><span class="swatch mapping"></span>Mapping</label>
+          <label><input type="checkbox" data-family="constraint" checked><span class="swatch constraint"></span>Constraint</label>
+          <label><input type="checkbox" data-family="evidence" checked><span class="swatch evidence"></span>Evidence</label>
+          <label class="subtle"><input type="checkbox" id="chk-labels">显示关系标签</label>
+        </div>
+        <div id="tooltip" hidden></div>
       </div>
+      <div id="hint-bar">默认仅展示 Term 与语义关系，连线更清晰；双击 Term 卡片（或点详情中的“展开关联对象”）可查看其 Mapping / Constraint / Evidence。</div>
     </section>
     <section id="view-schema" class="view doc" hidden></section>
     <section id="view-tool" class="view doc" hidden></section>
   </div>
-  <aside id="detail-panel">
-    <div id="detail-title"></div>
-    <div id="detail-sub"></div>
-    <div id="detail-body"></div>
+  <aside id="detail">
+    <div id="detail-empty">点击图中的节点、连线，或 Schema / Tool 页签中的卡片，即可在这里查看详情。</div>
+    <div id="detail-body" hidden></div>
   </aside>
 </main>
-<script>
-__CYTOSCAPE_JS__
+<script>__CYTOSCAPE_JS__
 </script>
 <script>
 window.EVO_DATA = __DATA_JSON__;
 </script>
 <script>
 (function () {
-  "use strict";
+  'use strict';
 
-  var DATA = window.EVO_DATA;
-  var OBJECT_FAMILIES = ["term", "mapping", "constraint", "evidence"];
-  var OBJECT_FILTER_LABELS = { term: "Terms", mapping: "Mappings", constraint: "Constraints", evidence: "Evidence" };
-  var RELATION_FILTER_LABELS = {
-    association: "Association", hierarchy: "Hierarchy", composition: "Composition",
-    equivalence: "Equivalence", derivation: "Derivation"
+  var DATA = window.EVO_DATA || {};
+  var FAMILY_LABEL = {
+    term: 'Term', mapping: 'Mapping', constraint: 'Constraint', evidence: 'Evidence',
+    relation: 'Semantic Relation', reference: 'Reference', schema: 'Schema', tool: 'Tool'
   };
+  var FAMILY_ORDER = ['term', 'mapping', 'constraint', 'evidence'];
 
-  /* ============================== detail panel ============================== */
-
-  var detailTitle = document.getElementById("detail-title");
-  var detailSub = document.getElementById("detail-sub");
-  var detailBody = document.getElementById("detail-body");
-  var cy = null;
-
-  function clearChildren(el) { while (el.firstChild) el.removeChild(el.firstChild); }
-
-  function textEl(tag, text) {
-    var el = document.createElement(tag);
-    el.textContent = text;
-    return el;
+  function $(selector, root) { return (root || document).querySelector(selector); }
+  function $all(selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); }
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+  function truncate(text, max) {
+    text = String(text == null ? '' : text);
+    return text.length > max ? text.slice(0, max - 1) + '\u2026' : text;
   }
 
-  function pillEl(family, label) {
-    var el = textEl("span", label || family);
-    el.className = "family-pill " + family;
-    return el;
-  }
+  /* ================= header ================= */
 
-  function valueEl(value) {
-    var text = String(value);
-    var el = textEl("span", text);
-    var element = cy ? cy.getElementById(text) : null;
-    if (element && element.length) {
-      el.className = "tag link";
-      el.addEventListener("click", function () { focusElement(element); });
-    } else {
-      el.className = "tag";
+  var meta = DATA.meta || {};
+  $('#badge-version').textContent = meta.version || '';
+  var stateBadge = $('#badge-state');
+  if (meta.active) { stateBadge.textContent = 'active \u7248\u672c'; stateBadge.classList.add('active'); }
+  else { stateBadge.textContent = '\u6307\u5b9a\u7248\u672c'; stateBadge.classList.add('explicit'); }
+
+  var evo = DATA.evolution || {};
+  var chipWrap = $('#evolution-chips');
+  function addChip(text, cls, title) {
+    var chip = el('span', 'chip' + (cls ? ' ' + cls : ''), text);
+    if (title) chip.title = title;
+    chipWrap.appendChild(chip);
+    return chip;
+  }
+  if (evo.initial_build) {
+    addChip('Initial Build \u00b7 \u521d\u59cb\u6784\u5efa', 'ok', '\u8be5\u7248\u672c\u7531\u521d\u59cb\u6784\u5efa\u751f\u6210\uff0c\u5c1a\u65e0\u6f14\u5316\u8bb0\u5f55');
+  } else {
+    addChip(evo.label || 'Evolution', '', 'run_id: ' + (evo.run_id || ''));
+    if (evo.parent_version || evo.accepted_version) {
+      addChip((evo.parent_version || '?') + ' \u2192 ' + (evo.accepted_version || '?'),
+              evo.decision === 'accepted' ? 'ok' : 'warn',
+              'decision: ' + (evo.decision || ''));
     }
-    return el;
+    if (evo.target_dimension) addChip('\u7ef4\u5ea6: ' + evo.target_dimension);
+    (evo.changed_components || []).forEach(function (component) { addChip(component); });
+    if (evo.hypothesis) addChip(truncate(evo.hypothesis, 40), '', evo.hypothesis);
+  }
+  if (meta.warnings && meta.warnings.length) {
+    var warnChip = addChip(meta.warnings.length + ' \u6761\u8b66\u544a', 'warn', '\u70b9\u51fb\u67e5\u770b\u88ab\u8df3\u8fc7\u7684\u635f\u574f\u5f15\u7528');
+    warnChip.addEventListener('click', showWarnings);
   }
 
-  function showDetail(family, title, subtitle, pairs) {
-    clearChildren(detailTitle);
-    detailTitle.appendChild(pillEl(family, family));
-    detailTitle.appendChild(textEl("span", title));
-    detailSub.textContent = subtitle || "";
-    clearChildren(detailBody);
-    if (!pairs || !pairs.length) {
-      var empty = textEl("p", "（无更多字段）");
-      empty.className = "muted";
-      detailBody.appendChild(empty);
-      return;
-    }
-    pairs.forEach(function (pair) {
-      var row = document.createElement("div");
-      row.className = "kv";
-      var k = textEl("div", pair[0]);
-      k.className = "k";
-      row.appendChild(k);
-      var v = document.createElement("div");
-      v.className = "v";
-      var value = pair[1];
-      if (Array.isArray(value)) {
-        value.forEach(function (item, index) {
-          if (index) v.appendChild(document.createTextNode(" "));
-          v.appendChild(valueEl(item));
-        });
-      } else {
-        v.appendChild(valueEl(value));
-      }
-      row.appendChild(v);
-      detailBody.appendChild(row);
+  /* ================= tabs (\u5fc5\u987b\u5728\u56fe\u8c31\u521d\u59cb\u5316\u4e4b\u524d\u7ed1\u5b9a) ================= */
+
+  var views = { content: $('#view-content'), schema: $('#view-schema'), tool: $('#view-tool') };
+  var tabButtons = $all('nav .tab');
+  function showView(name) {
+    tabButtons.forEach(function (button) {
+      button.classList.toggle('active', button.getAttribute('data-view') === name);
     });
+    Object.keys(views).forEach(function (key) { views[key].hidden = key !== name; });
+    if (name === 'content' && window.__cy) window.__cy.resize();
   }
-
-  function showDefaultDetail() {
-    clearChildren(detailTitle);
-    detailTitle.appendChild(textEl("span", "详情"));
-    detailSub.textContent = "";
-    clearChildren(detailBody);
-    var hint = textEl("p", "点击图中的节点或连线查看 schema 定义的字段；点击详情面板中的 ID 可跳转到对应对象。");
-    hint.className = "muted";
-    detailBody.appendChild(hint);
-    var counts = DATA.meta.counts || {};
-    [
-      ["Version", DATA.meta.version],
-      ["Terms", counts.terms], ["Mappings", counts.mappings], ["Relations", counts.relations],
-      ["Constraints", counts.constraints], ["Evidence", counts.evidence]
-    ].forEach(function (pair) {
-      var row = document.createElement("div");
-      row.className = "kv";
-      var k = textEl("div", pair[0]);
-      k.className = "k";
-      row.appendChild(k);
-      var v = textEl("div", String(pair[1]));
-      v.className = "v";
-      row.appendChild(v);
-      detailBody.appendChild(row);
-    });
-  }
-
-  /* ============================== graph ============================== */
-
-  cy = window.cy = cytoscape({
-    container: document.getElementById("cy"),
-    elements: { nodes: DATA.content.nodes, edges: DATA.content.edges },
-    wheelSensitivity: 0.25,
-    style: [
-      { selector: "node", style: {
-        "shape": "roundrectangle",
-        "background-color": "#e8ebef",
-        "border-width": 1,
-        "border-color": "#c3c9d2",
-        "label": "data(label)",
-        "text-wrap": "wrap",
-        "text-max-width": "150px",
-        "font-size": 11,
-        "color": "#253244",
-        "text-valign": "center",
-        "text-halign": "center",
-        "padding": "6px",
-        "width": 96, "height": 34
-      }},
-      { selector: 'node[family="term"]', style: {
-        "background-color": "#dceafc", "border-color": "#8fb3e3", "color": "#1f3b5c",
-        "width": 124, "height": 48, "font-size": 12.5, "text-max-width": "190px", "border-width": 1.2
-      }},
-      { selector: 'node[family="mapping"]', style: {
-        "background-color": "#d9efe8", "border-color": "#84c0af", "color": "#1e4d40",
-        "width": 108, "height": 38, "font-size": 11
-      }},
-      { selector: 'node[family="constraint"]', style: {
-        "background-color": "#fceadb", "border-color": "#e0b184", "color": "#6e4a21",
-        "width": 84, "height": 28, "font-size": 9.5
-      }},
-      { selector: 'node[family="evidence"]', style: {
-        "background-color": "#e9e6f1", "border-color": "#aca2c8", "color": "#4a4063",
-        "width": 84, "height": 28, "font-size": 9.5
-      }},
-      { selector: "edge", style: {
-        "curve-style": "bezier",
-        "width": 1.5,
-        "line-color": "#8a9bb5",
-        "target-arrow-color": "#8a9bb5",
-        "source-arrow-color": "#8a9bb5"
-      }},
-      { selector: 'edge[family="relation"]', style: {
-        "label": "data(label)",
-        "font-size": 9,
-        "color": "#55657e",
-        "text-background-color": "#ffffff",
-        "text-background-opacity": 1,
-        "text-background-padding": "2px",
-        "target-arrow-shape": "none"
-      }},
-      { selector: 'edge[family="relation"][relation_type="hierarchy"]', style: {
-        "target-arrow-shape": "triangle", "line-style": "solid"
-      }},
-      { selector: 'edge[family="relation"][relation_type="composition"]', style: {
-        "target-arrow-shape": "diamond", "line-style": "solid"
-      }},
-      { selector: 'edge[family="relation"][relation_type="derivation"]', style: {
-        "target-arrow-shape": "vee", "line-style": "dashed"
-      }},
-      { selector: 'edge[family="relation"][relation_type="equivalence"]', style: {
-        "line-style": "dashed", "target-arrow-shape": "none"
-      }},
-      { selector: 'edge[family="relation"][relation_type="association"]', style: {
-        "line-style": "solid", "target-arrow-shape": "none"
-      }},
-      { selector: 'edge[family="reference"]', style: {
-        "width": 1, "line-color": "#d0d5dd", "label": "", "target-arrow-shape": "none"
-      }},
-      { selector: 'edge[family="reference"]:selected', style: {
-        "label": "data(kind)", "font-size": 9, "color": "#8a94a2",
-        "text-background-color": "#ffffff", "text-background-opacity": 1,
-        "text-background-padding": "2px"
-      }},
-      { selector: ":selected", style: {
-        "border-color": "#3d6db5", "border-width": 2.5,
-        "line-color": "#3d6db5", "target-arrow-color": "#3d6db5", "source-arrow-color": "#3d6db5"
-      }},
-      { selector: ".dimmed", style: { "opacity": 0.16 }},
-      { selector: ".search-match", style: { "border-color": "#d9a441", "border-width": 3 }}
-    ]
+  tabButtons.forEach(function (button) {
+    button.addEventListener('click', function () { showView(button.getAttribute('data-view')); });
   });
 
-  if (!DATA.content.nodes.length) {
-    var hintEl = document.getElementById("empty-hint");
-    hintEl.textContent = "该版本没有 Content 记录。请先运行 /evo-build 构建初始语义层。";
-    hintEl.style.display = "flex";
+  /* ================= legend ================= */
+
+  var counts = meta.counts || {};
+  var legend = $('#legend');
+  FAMILY_ORDER.forEach(function (family) {
+    var row = el('div', 'lg-item');
+    row.appendChild(el('span', 'swatch ' + family));
+    row.appendChild(el('span', 'lg-name', FAMILY_LABEL[family]));
+    row.appendChild(el('span', 'lg-count', String(counts[family + 's'] != null ? counts[family + 's'] : 0)));
+    legend.appendChild(row);
+  });
+  var relRow = el('div', 'lg-item');
+  relRow.appendChild(el('span', 'swatch relation'));
+  relRow.appendChild(el('span', 'lg-name', 'Semantic Relation'));
+  relRow.appendChild(el('span', 'lg-count', String(counts.relations || 0)));
+  legend.appendChild(relRow);
+
+  /* ================= detail panel ================= */
+
+  var detailEmpty = $('#detail-empty');
+  var detailBody = $('#detail-body');
+  var recordIndex = {};   // record_id -> element id (graph \u521d\u59cb\u5316\u65f6\u586b\u5145)
+
+  function renderDetail(model) {
+    detailEmpty.hidden = true;
+    detailBody.hidden = false;
+    detailBody.innerHTML = '';
+    detailBody.appendChild(el('span', 'family-badge ' + model.family,
+                              FAMILY_LABEL[model.family] || model.family));
+    detailBody.appendChild(el('div', 'detail-title', model.title));
+    if (model.subtitle) detailBody.appendChild(el('div', 'detail-sub', model.subtitle));
+    if (model.actions && model.actions.length) {
+      var bar = el('div', 'detail-actions');
+      model.actions.forEach(function (action) {
+        var button = el('button', action.primary ? 'primary' : '', action.label);
+        button.type = 'button';
+        button.addEventListener('click', action.onClick);
+        bar.appendChild(button);
+      });
+      detailBody.appendChild(bar);
+    }
+    if (model.pairs && model.pairs.length) {
+      var table = el('div', 'kv');
+      model.pairs.forEach(function (pair) {
+        var row = el('div', 'kv-row');
+        row.appendChild(el('div', 'kv-key', pair[0]));
+        var valBox = el('div', 'kv-val');
+        var items = Array.isArray(pair[1]) ? pair[1] : [pair[1]];
+        items.forEach(function (item) { valBox.appendChild(renderValue(item, model.recordId)); });
+        row.appendChild(valBox);
+        table.appendChild(row);
+      });
+      detailBody.appendChild(table);
+    }
+    detailBody.scrollTop = 0;
   }
 
-  cy.layout({
-    name: "cose", animate: false, fit: true, padding: 48,
-    nodeDimensionsIncludeLabels: true
-  }).run();
-  cy.fit(48);
-
-  function clearHighlight() {
-    cy.elements().removeClass("dimmed search-match");
+  function renderValue(value, selfRecordId) {
+    var targetId = typeof value === 'string' ? recordIndex[value] : null;
+    if (targetId && value !== selfRecordId) {
+      var chip = el('button', 'link-chip', value);
+      chip.type = 'button';
+      chip.title = '\u5b9a\u4f4d\u5230 ' + value;
+      chip.addEventListener('click', function () { focusElement(targetId); });
+      return chip;
+    }
+    return el('span', 'kv-text', String(value));
   }
 
-  function nodeName(id) {
-    var n = cy.getElementById(id);
-    return n.length ? (n.data("label") || id) : id;
+  function showWarnings() {
+    detailEmpty.hidden = true;
+    detailBody.hidden = false;
+    detailBody.innerHTML = '';
+    detailBody.appendChild(el('div', 'detail-title', '\u6570\u636e\u8d28\u91cf\u8b66\u544a'));
+    detailBody.appendChild(el('div', 'detail-sub', '\u4ee5\u4e0b\u5f15\u7528\u65e0\u6cd5\u89e3\u6790\uff0c\u5df2\u88ab\u8df3\u8fc7\uff0c\u672a\u751f\u6210\u865a\u62df\u5bf9\u8c61'));
+    var list = el('div', 'warn-list');
+    (meta.warnings || []).forEach(function (warning) { list.appendChild(el('div', 'warn-item', warning)); });
+    detailBody.appendChild(list);
+    detailBody.scrollTop = 0;
+  }
+  /* ================= graph: state ================= */
+
+  var cy = null;
+  var owners = {};          // satellite node id -> Set(term node id)
+  var termOfMapping = {};   // mapping node id -> term node id
+  var familyByNode = {};    // node id -> family
+  var expanded = new Set(); // term node ids whose satellites are visible
+  var expandAllFlag = false;
+  var familyVisible = { mapping: true, constraint: true, evidence: true };
+  var relationsVisible = true;
+  var labelToggleOn = false;
+
+  function addOwner(satelliteId, termId) {
+    if (!owners[satelliteId]) owners[satelliteId] = new Set();
+    owners[satelliteId].add(termId);
+  }
+
+  function focusElement(elementId) {
+    if (!window.__cy) return;
+    var elem = window.__cy.getElementById(elementId);
+    if (!elem.length) return;
+    var data = elem.data();
+    if (elem.isNode()) {
+      var fam = data.family;
+      if (fam !== 'term' && !familyVisible[fam]) {
+        familyVisible[fam] = true;
+        syncFilterBoxes();
+      }
+      if (fam !== 'term' && elem.hidden()) {
+        var ownerTerms = owners[elem.id()] ? Array.from(owners[elem.id()]) : [];
+        ownerTerms.forEach(function (termId) { expanded.add(termId); });
+        expandAllFlag = false;
+        applyVisibility();
+      }
+    } else if (elem.hidden()) {
+      if (elem.data().family === 'relation') {
+        relationsVisible = true;
+      } else {
+        [elem.source(), elem.target()].forEach(function (endpoint) {
+          if (endpoint.data().family !== 'term' && owners[endpoint.id()]) {
+            owners[endpoint.id()].forEach(function (termId) { expanded.add(termId); });
+          }
+        });
+      }
+      syncFilterBoxes();
+      applyVisibility();
+    }
+    elem.select();
+    window.__cy.animate({ center: { eles: elem }, duration: 300 });
+    elem.addClass('flash');
+    setTimeout(function () { elem.removeClass('flash'); }, 1500);
+  }
+
+  /* ================= graph: style ================= */
+
+  var STYLE = [
+    { selector: 'node', style: {
+        'label': 'data(display)',
+        'font-family': '"Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+        'font-size': 11,
+        'color': '#2a3a4e',
+        'text-wrap': 'wrap',
+        'text-max-width': '120px',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'border-width': 1.5,
+        'border-color': '#c9d3e0',
+        'background-color': '#ffffff',
+        'overlay-opacity': 0,
+        'transition-property': 'opacity border-width border-color',
+        'transition-duration': 120
+    }},
+    { selector: 'node[family="term"]', style: {
+        'shape': 'round-rectangle',
+        'width': 'label', 'height': 'label', 'padding': '10px',
+        'background-color': '#e6eefb', 'border-color': '#9db9e2', 'color': '#24466e',
+        'font-size': 12, 'font-weight': 'bold', 'text-max-width': '150px'
+    }},
+    { selector: 'node[family="mapping"]', style: {
+        'shape': 'round-rectangle',
+        'width': 'label', 'height': 'label', 'padding': '7px',
+        'background-color': '#e2f2ec', 'border-color': '#8ec8b4', 'color': '#1f5747',
+        'font-size': 10, 'text-max-width': '120px'
+    }},
+    { selector: 'node[family="constraint"]', style: {
+        'shape': 'hexagon', 'width': 118, 'height': 38,
+        'background-color': '#fbeedd', 'border-color': '#dcb68a', 'color': '#7a5220',
+        'font-size': 9.5, 'text-max-width': '94px'
+    }},
+    { selector: 'node[family="evidence"]', style: {
+        'shape': 'ellipse', 'width': 112, 'height': 38,
+        'background-color': '#ebe7f4', 'border-color': '#b3a8d0', 'color': '#51476e',
+        'font-size': 9.5, 'text-max-width': '84px'
+    }},
+    { selector: 'edge', style: {
+        'curve-style': 'bezier',
+        'width': 1.4,
+        'line-color': '#aab9cd',
+        'target-arrow-shape': 'none',
+        'arrow-scale': 0.85,
+        'opacity': 0.9,
+        'font-size': 9,
+        'color': '#5c6f88',
+        'text-background-color': '#f4f6fa',
+        'text-background-opacity': 0.92,
+        'text-background-padding': '2px',
+        'text-rotation': 'autorotate',
+        'transition-property': 'opacity',
+        'transition-duration': 120
+    }},
+    { selector: 'edge[family="relation"]', style: { 'width': 1.7, 'line-color': '#8fa4c0' } },
+    { selector: 'edge[relation_type="hierarchy"]', style: {
+        'target-arrow-shape': 'triangle', 'target-arrow-color': '#8fa4c0' } },
+    { selector: 'edge[relation_type="composition"]', style: {
+        'target-arrow-shape': 'vee', 'target-arrow-color': '#8fa4c0' } },
+    { selector: 'edge[relation_type="derivation"]', style: {
+        'line-style': 'dashed', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#8fa4c0' } },
+    { selector: 'edge[relation_type="equivalence"]', style: { 'line-color': '#a799c4' } },
+    { selector: 'edge[family="reference"]', style: {
+        'width': 1, 'line-style': 'dotted', 'line-color': '#c6d1de',
+        'target-arrow-shape': 'triangle', 'target-arrow-color': '#c6d1de',
+        'arrow-scale': 0.7, 'opacity': 0.85 } },
+    { selector: 'edge.label-on', style: { 'label': 'data(label)' } },
+    { selector: 'node:selected', style: { 'border-color': '#4a7dc0', 'border-width': 2.5 } },
+    { selector: 'edge:selected', style: {
+        'line-color': '#4a7dc0', 'width': 2.4, 'target-arrow-color': '#4a7dc0', 'opacity': 1 } },
+    { selector: '.dim', style: { 'opacity': 0.16 } },
+    { selector: '.flash', style: { 'border-color': '#4a7dc0', 'border-width': 3.5 } }
+  ];
+
+  /* ================= graph: init ================= */
+
+  function initGraph() {
+    var nodes = DATA.content && DATA.content.nodes ? DATA.content.nodes : [];
+    var edges = DATA.content && DATA.content.edges ? DATA.content.edges : [];
+    if (!nodes.length) { showEmpty('该版本没有任何语义对象。'); return; }
+
+    nodes.forEach(function (n) {
+      var d = n.data;
+      familyByNode[d.id] = d.family;
+      recordIndex[d.record_id] = d.id;
+      d.display = d.family === 'term'
+        ? d.label + (d.sublabel ? '\n' + d.sublabel : '')
+        : truncate(d.label, 26);
+    });
+    edges.forEach(function (e) {
+      var d = e.data;
+      if (!d.label) d.label = d.kind || '';
+      if (d.family === 'relation' && d.record_id) recordIndex[d.record_id] = d.id;
+    });
+
+    edges.forEach(function (e) {
+      var d = e.data;
+      if (d.family !== 'reference' || d.kind !== 'grounded_by') return;
+      addOwner(d.target, d.source);
+      termOfMapping[d.target] = d.source;
+    });
+    edges.forEach(function (e) {
+      var d = e.data;
+      if (d.family !== 'reference') return;
+      if (d.kind !== 'constrained_by' && d.kind !== 'supported_by') return;
+      if (familyByNode[d.source] === 'term') addOwner(d.target, d.source);
+      else if (familyByNode[d.source] === 'mapping' && termOfMapping[d.source]) {
+        addOwner(d.target, termOfMapping[d.source]);
+      }
+    });
+
+    cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: { nodes: nodes, edges: edges },
+      style: STYLE,
+      minZoom: 0.15,
+      maxZoom: 2.5,
+      wheelSensitivity: 0.25
+    });
+    window.__cy = cy;
+
+    applyVisibility();
+    runLayout(false);
+    wireGraphEvents();
+    wireToolbarAndFilters();
+  }
+
+  function showEmpty(message) {
+    var hint = $('#empty-hint');
+    hint.textContent = message;
+    hint.style.display = 'flex';
+  }
+
+  /* ================= graph: visibility & layout ================= */
+
+  function satelliteVisible(nodeId) {
+    if (!familyVisible[familyByNode[nodeId]]) return false;
+    if (expandAllFlag) return true;
+    var set = owners[nodeId];
+    if (!set) return false;
+    var it = set.values();
+    var step;
+    while (!(step = it.next()).done) {
+      if (expanded.has(step.value)) return true;
+    }
+    return false;
+  }
+
+  function applyVisibility() {
+    if (!cy) return;
+    cy.batch(function () {
+      cy.nodes().forEach(function (n) {
+        var visible = n.data().family === 'term' ? true : satelliteVisible(n.id());
+        n.style('display', visible ? 'element' : 'none');
+      });
+      cy.edges().forEach(function (e) {
+        var visible;
+        if (e.data().family === 'relation') visible = relationsVisible;
+        else visible = e.source().visible() && e.target().visible();
+        e.style('display', visible ? 'element' : 'none');
+      });
+    });
+  }
+
+  function awayAngle(term, position) {
+    var neighbors = term.neighborhood('node[family="term"]');
+    if (!neighbors.length) return -Math.PI / 2;
+    var cx = 0, cySum = 0;
+    neighbors.forEach(function (m) { cx += m.position().x; cySum += m.position().y; });
+    cx /= neighbors.length;
+    cySum /= neighbors.length;
+    var angle = Math.atan2(position.y - cySum, position.x - cx);
+    return isNaN(angle) ? -Math.PI / 2 : angle;
+  }
+
+  function layoutSatellites() {
+    if (!cy) return;
+    var byOwner = {};
+    cy.nodes().forEach(function (n) {
+      if (n.data().family === 'term') return;
+      var set = owners[n.id()];
+      if (!set || !set.size) return;
+      var primary = Array.from(set)[0];
+      (byOwner[primary] = byOwner[primary] || []).push(n);
+    });
+    cy.batch(function () {
+      Object.keys(byOwner).forEach(function (termId) {
+        var term = cy.getElementById(termId);
+        if (!term.length) return;
+        var tp = term.position();
+        var sats = byOwner[termId].sort(function (a, b) { return a.id() < b.id() ? -1 : 1; });
+        var base = awayAngle(term, tp);
+        var radius = Math.min(190, 92 + sats.length * 9);
+        var span = Math.min(2 * Math.PI, Math.PI * (0.55 + 0.22 * sats.length));
+        sats.forEach(function (n, i) {
+          var angle = sats.length === 1
+            ? base
+            : base - span / 2 + (i * span) / (sats.length - 1);
+          n.position({ x: tp.x + radius * Math.cos(angle), y: tp.y + radius * Math.sin(angle) });
+        });
+      });
+    });
+  }
+
+  function runLayout(fitAfter) {
+    if (!cy) return;
+    var visible = cy.elements(':visible');
+    if (!visible.length) return;
+    visible.layout({
+      name: 'cose',
+      animate: false,
+      randomize: true,
+      fit: true,
+      padding: 42,
+      nodeRepulsion: 7000,
+      idealEdgeLength: 100,
+      edgeElasticity: 120,
+      nestingFactor: 1.2,
+      gravityRangeCompound: 1.5,
+      gravityCompound: 1.0,
+      numIter: 2000,
+      nodeDimensionsIncludeLabels: true
+    }).run();
+    layoutSatellites();
+    if (fitAfter !== false) cy.fit(cy.elements(':visible'), 42);
+  }
+
+  function syncFilterBoxes() {
+    var chkRelations = $('#chk-relations');
+    if (chkRelations) chkRelations.checked = relationsVisible;
+    $all('#filters input[data-family]').forEach(function (box) {
+      box.checked = familyVisible[box.getAttribute('data-family')];
+    });
+  }
+  /* ================= graph: expand / collapse ================= */
+
+  function toggleExpand(termId) {
+    if (expandAllFlag) {
+      expandAllFlag = false;
+      expanded.clear();
+      cy.nodes('[family="term"]').forEach(function (n) {
+        if (n.id() !== termId) expanded.add(n.id());
+      });
+    } else if (expanded.has(termId)) {
+      expanded.delete(termId);
+    } else {
+      expanded.add(termId);
+    }
+    applyVisibility();
+  }
+
+  function expandEverything() {
+    if (!cy) return;
+    expandAllFlag = true;
+    cy.nodes('[family="term"]').forEach(function (n) { expanded.add(n.id()); });
+    applyVisibility();
+    layoutSatellites();
+    cy.fit(cy.elements(':visible'), 42);
+  }
+
+  function collapseEverything() {
+    expandAllFlag = false;
+    expanded.clear();
+    applyVisibility();
+  }
+
+  function resetView() {
+    if (!cy) return;
+    expandAllFlag = false;
+    expanded.clear();
+    familyVisible = { mapping: true, constraint: true, evidence: true };
+    relationsVisible = true;
+    labelToggleOn = false;
+    var chkLabels = $('#chk-labels');
+    if (chkLabels) chkLabels.checked = false;
+    syncFilterBoxes();
+    cy.elements('.label-on').removeClass('label-on');
+    cy.elements('.dim').removeClass('dim');
+    var input = $('#search-input');
+    input.value = '';
+    $('#search-status').textContent = '';
+    $('#search-results').hidden = true;
+    applyVisibility();
+    runLayout(true);
+    detailEmpty.hidden = false;
+    detailBody.hidden = true;
+  }
+
+  /* ================= graph: interactions ================= */
+
+  function focusDim(elem) {
+    var hood = elem.closedNeighborhood();
+    cy.batch(function () {
+      cy.elements().addClass('dim');
+      hood.removeClass('dim');
+    });
   }
 
   function showNodeDetail(node) {
     var d = node.data();
-    showDetail(d.family, d.label || d.id, d.id, d.detail || []);
+    var actions = [];
+    if (d.family === 'term') {
+      var isExpanded = expandAllFlag || expanded.has(d.id);
+      actions.push({
+        label: isExpanded ? '收起关联对象' : '展开关联对象',
+        primary: true,
+        onClick: function () { toggleExpand(d.id); showNodeDetail(node); }
+      });
+    }
+    actions.push({
+      label: '居中',
+      onClick: function () { cy.animate({ center: { eles: node }, duration: 280 }); }
+    });
+    renderDetail({
+      family: d.family,
+      title: d.label,
+      subtitle: d.record_id,
+      recordId: d.record_id,
+      pairs: d.detail,
+      actions: actions
+    });
   }
 
   function showEdgeDetail(edge) {
     var d = edge.data();
-    var kind = d.family === "relation" ? d.relation_type : d.kind;
-    var title = kind + "：" + nodeName(d.source) + " → " + nodeName(d.target);
-    showDetail(d.family, title, d.record_id || d.id, d.detail || []);
+    var sourceLabel = cy.getElementById(d.source).data('label') || d.source;
+    var targetLabel = cy.getElementById(d.target).data('label') || d.target;
+    renderDetail({
+      family: d.family === 'relation' ? 'relation' : 'reference',
+      title: d.family === 'relation' ? (d.relation_type || 'relation') : (d.kind || 'reference'),
+      subtitle: sourceLabel + ' \u2192 ' + targetLabel,
+      recordId: d.record_id || null,
+      pairs: d.detail,
+      actions: [{
+        label: '居中',
+        onClick: function () { cy.animate({ center: { eles: edge }, duration: 280 }); }
+      }]
+    });
   }
 
-  function focusElement(element) {
-    clearHighlight();
-    if (element.isNode()) {
-      var hood = element.closedNeighborhood();
-      cy.elements().not(hood).addClass("dimmed");
-      showNodeDetail(element);
-      cy.animate({ center: { eles: element }, duration: 220 });
+  var tooltip = $('#tooltip');
+
+  function showTooltip(node) {
+    var d = node.data();
+    tooltip.innerHTML = '';
+    tooltip.appendChild(el('div', 'tt-title', d.label));
+    if (d.family === 'term') {
+      if (d.definition) tooltip.appendChild(el('div', 'tt-line', truncate(d.definition, 160)));
+      var hint = (expandAllFlag || expanded.has(d.id))
+        ? '双击收起关联对象'
+        : '双击展开 Mapping / Constraint / Evidence';
+      tooltip.appendChild(el('div', 'tt-line', hint));
     } else {
-      showEdgeDetail(element);
+      tooltip.appendChild(el('div', 'tt-line', FAMILY_LABEL[d.family] + ' · 点击查看详情'));
     }
-    element.select();
+    tooltip.hidden = false;
+    moveTooltipTo(node);
   }
 
-  cy.on("tap", "node", function (evt) {
-    clearHighlight();
-    var node = evt.target;
-    var hood = node.closedNeighborhood();
-    cy.elements().not(hood).addClass("dimmed");
-    showNodeDetail(node);
-  });
+  function moveTooltipTo(node) {
+    var wrap = $('#cy-wrap');
+    var pos = node.renderedPosition();
+    var width = wrap.clientWidth;
+    var height = wrap.clientHeight;
+    var x = Math.max(8, Math.min(pos.x + 16, width - tooltip.offsetWidth - 8));
+    var y = Math.max(8, Math.min(pos.y + 16, height - tooltip.offsetHeight - 8));
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
 
-  cy.on("tap", "edge", function (evt) {
-    clearHighlight();
-    showEdgeDetail(evt.target);
-  });
-
-  cy.on("tap", function (evt) {
-    if (evt.target === cy) { clearHighlight(); showDefaultDetail(); }
-  });
-
-  /* ============================== search ============================== */
-
-  var searchInput = document.getElementById("search-input");
-  var searchStatus = document.getElementById("search-status");
-
-  function runSearch() {
-    var query = searchInput.value.trim().toLowerCase();
-    cy.nodes().removeClass("search-match");
-    if (!query) { searchStatus.textContent = ""; return; }
-    var matches = cy.nodes().filter(function (n) {
-      var d = n.data();
-      if (d.family !== "term" && d.family !== "mapping") return false;
-      if ((d.label || "").toLowerCase().indexOf(query) !== -1) return true;
-      if ((d.id || "").toLowerCase().indexOf(query) !== -1) return true;
-      return (d.search || []).some(function (s) { return s.indexOf(query) !== -1; });
+  function wireGraphEvents() {
+    cy.on('tap', function (event) {
+      if (event.target === cy) cy.elements('.dim').removeClass('dim');
     });
-    searchStatus.textContent = matches.length ? (matches.length + " 个匹配") : "无匹配";
-    if (matches.length) {
-      matches.addClass("search-match");
-      focusElement(matches[0]);
-    }
+    cy.on('select', 'node', function (event) {
+      focusDim(event.target);
+      showNodeDetail(event.target);
+    });
+    cy.on('select', 'edge', function (event) {
+      focusDim(event.target);
+      event.target.addClass('label-on');
+      showEdgeDetail(event.target);
+    });
+    cy.on('unselect', 'edge', function (event) {
+      if (!labelToggleOn) event.target.removeClass('label-on');
+    });
+    cy.on('dbltap', 'node[family="term"]', function (event) {
+      toggleExpand(event.target.id());
+    });
+    cy.on('mouseover', 'node', function (event) { showTooltip(event.target); });
+    cy.on('mouseout', 'node', function () { tooltip.hidden = true; });
+    cy.on('mouseover', 'edge', function (event) { event.target.addClass('label-on'); });
+    cy.on('mouseout', 'edge', function (event) {
+      if (!labelToggleOn && !event.target.selected()) event.target.removeClass('label-on');
+    });
   }
 
-  document.getElementById("search-btn").addEventListener("click", runSearch);
-  searchInput.addEventListener("keydown", function (evt) {
-    if (evt.key === "Enter") runSearch();
-  });
-
-  /* ============================== filters ============================== */
-
-  function makeCheckbox(container, key, label, dotClass) {
-    var labelEl = document.createElement("label");
-    var box = document.createElement("input");
-    box.type = "checkbox";
-    box.checked = true;
-    box.dataset.key = key;
-    box.addEventListener("change", applyFilters);
-    var dot = document.createElement("span");
-    dot.className = "dot " + dotClass;
-    labelEl.appendChild(box);
-    labelEl.appendChild(dot);
-    labelEl.appendChild(textEl("span", label));
-    container.appendChild(labelEl);
-    return box;
-  }
-
-  var objectFilterBoxes = {};
-  var objectFiltersEl = document.getElementById("object-filters");
-  OBJECT_FAMILIES.forEach(function (family) {
-    objectFilterBoxes[family] = makeCheckbox(objectFiltersEl, family, OBJECT_FILTER_LABELS[family], family);
-  });
-
-  var relationFilterBoxes = {};
-  var relationFiltersEl = document.getElementById("relation-filters");
-  Object.keys(RELATION_FILTER_LABELS).forEach(function (relationType) {
-    relationFilterBoxes[relationType] = makeCheckbox(relationFiltersEl, relationType, RELATION_FILTER_LABELS[relationType], "relation");
-  });
-
-  function applyFilters() {
-    cy.batch(function () {
-      cy.nodes().forEach(function (node) {
-        var box = objectFilterBoxes[node.data("family")];
-        node.style("display", box && box.checked ? "element" : "none");
+  function wireToolbarAndFilters() {
+    $('#btn-fit').addEventListener('click', function () { cy.fit(cy.elements(':visible'), 42); });
+    $('#btn-layout').addEventListener('click', function () { runLayout(true); });
+    $('#btn-expand-all').addEventListener('click', expandEverything);
+    $('#btn-collapse-all').addEventListener('click', collapseEverything);
+    $('#btn-reset').addEventListener('click', resetView);
+    $all('#filters input[data-family]').forEach(function (box) {
+      box.addEventListener('change', function () {
+        familyVisible[box.getAttribute('data-family')] = box.checked;
+        applyVisibility();
       });
-      cy.edges().forEach(function (edge) {
-        var visible = edge.source().style("display") !== "none" &&
-                      edge.target().style("display") !== "none";
-        if (visible && edge.data("family") === "relation") {
-          var relBox = relationFilterBoxes[edge.data("relation_type")];
-          if (relBox && !relBox.checked) visible = false;
-        }
-        edge.style("display", visible ? "element" : "none");
+    });
+    $('#chk-relations').addEventListener('change', function () {
+      relationsVisible = this.checked;
+      applyVisibility();
+    });
+    $('#chk-labels').addEventListener('change', function () {
+      labelToggleOn = this.checked;
+      cy.batch(function () {
+        cy.edges().forEach(function (e) { e.toggleClass('label-on', labelToggleOn); });
       });
     });
   }
 
-  /* ============================== toolbar ============================== */
+  /* ================= search ================= */
 
-  document.getElementById("btn-fit").addEventListener("click", function () { cy.fit(48); });
+  var searchInput = $('#search-input');
+  var searchStatus = $('#search-status');
+  var searchResults = $('#search-results');
 
-  document.getElementById("btn-reset").addEventListener("click", function () {
-    clearHighlight();
-    cy.$(":selected").unselect();
-    cy.elements().style("display", "element");
-    Object.keys(objectFilterBoxes).forEach(function (key) { objectFilterBoxes[key].checked = true; });
-    Object.keys(relationFilterBoxes).forEach(function (key) { relationFilterBoxes[key].checked = true; });
-    searchInput.value = "";
-    searchStatus.textContent = "";
-    showDefaultDetail();
-    cy.fit(48);
-  });
-
-  document.getElementById("btn-export").addEventListener("click", function () {
-    var link = document.createElement("a");
-    link.href = cy.png({ full: true, bg: "#ffffff", scale: 2 });
-    link.download = DATA.meta.version + ".png";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-
-  /* ============================== header / evolution ============================== */
-
-  document.getElementById("version-badge").textContent = DATA.meta.version;
-  var activeBadge = document.getElementById("active-badge");
-  if (DATA.meta.active) {
-    activeBadge.textContent = "Active";
-    activeBadge.className = "badge active";
-  } else {
-    activeBadge.textContent = "Explicit";
-    activeBadge.className = "badge explicit";
+  function searchNodes(query) {
+    query = query.trim().toLowerCase();
+    if (!query) return [];
+    var matches = [];
+    ((DATA.content && DATA.content.nodes) || []).forEach(function (n) {
+      var d = n.data;
+      var hay = [d.label, d.record_id].concat(d.search || []);
+      var hit = hay.some(function (item) {
+        return item && String(item).toLowerCase().indexOf(query) !== -1;
+      });
+      if (hit) matches.push(d);
+    });
+    return matches.slice(0, 12);
   }
 
-  var chipsEl = document.getElementById("evolution-chips");
-  var evo = DATA.evolution || {};
-
-  function addChip(text, warn, onClick) {
-    var chip = textEl("span", text);
-    chip.className = "chip" + (warn ? " warn" : "");
-    if (onClick) chip.addEventListener("click", onClick);
-    chipsEl.appendChild(chip);
-    return chip;
-  }
-
-  function showEvolutionDetail() {
-    if (evo.initial_build) {
-      showDetail("evolution", "Initial Build", "", [
-        ["Current Version", evo.current_version || DATA.meta.version],
-        ["Evolution", "尚无进化记录（Initial Build）"]
-      ]);
+  searchInput.addEventListener('input', function () {
+    var query = searchInput.value.trim();
+    searchResults.innerHTML = '';
+    if (!query) {
+      searchResults.hidden = true;
+      searchStatus.textContent = '';
       return;
     }
-    showDetail("evolution", evo.label, evo.run_id, [
-      ["Current Version", evo.current_version],
-      ["Parent Version", evo.parent_version],
-      ["Target Dimension", evo.target_dimension],
-      ["Decision", evo.decision],
-      ["Accepted Version", evo.accepted_version],
-      ["Changed Components", evo.changed_components],
-      ["Hypothesis", evo.hypothesis],
-      ["Updated At", evo.updated_at]
-    ]);
-  }
-
-  if (evo.initial_build) {
-    addChip("Initial Build", false, showEvolutionDetail);
-  } else {
-    addChip(evo.label || "Evolution", false, showEvolutionDetail);
-    if (evo.parent_version) addChip("Parent: " + evo.parent_version, false, showEvolutionDetail);
-    if (evo.target_dimension) addChip("Dimension: " + evo.target_dimension, false, showEvolutionDetail);
-    if (evo.decision) addChip("Decision: " + evo.decision, false, showEvolutionDetail);
-  }
-
-  var warningCount = (DATA.meta.warnings || []).length;
-  if (warningCount) {
-    addChip("⚠ " + warningCount + " warnings", true, function () {
-      showDetail("reference", "Reference warnings", "断裂引用已被跳过，未虚构任何图对象。",
-        DATA.meta.warnings.map(function (warning, index) { return ["#" + (index + 1), warning]; }));
-    });
-  }
-
-  /* ============================== schema view ============================== */
-
-  function renderSchemaView() {
-    var view = document.getElementById("view-schema");
-    clearChildren(view);
-    var schema = DATA.schema;
-
-    view.appendChild(textEl("h2", "Object Types"));
-    var cards = document.createElement("div");
-    cards.className = "cards";
-    schema.object_types.forEach(function (objectType) {
-      var card = document.createElement("div");
-      card.className = "card";
-      var name = document.createElement("div");
-      name.className = "card-name";
-      name.appendChild(pillEl("schema", objectType.name));
-      card.appendChild(name);
-      var desc = textEl("div", objectType.description);
-      desc.className = "card-desc";
-      card.appendChild(desc);
-      var meta = textEl("div", objectType.fields.length + " fields: " + objectType.fields.join(", "));
-      meta.className = "card-meta";
-      card.appendChild(meta);
-      card.addEventListener("click", function () {
-        showDetail("schema", objectType.name, objectType.description, [
-          ["Fields", objectType.fields]
-        ]);
+    var matches = searchNodes(query);
+    searchStatus.textContent = matches.length ? matches.length + ' 个匹配' : '无匹配';
+    matches.forEach(function (d) {
+      var item = el('div', 'sr-item');
+      item.appendChild(el('span', 'swatch ' + d.family));
+      var textBox = el('div', 'sr-text');
+      textBox.appendChild(el('div', 'sr-label', d.label));
+      textBox.appendChild(el('div', 'sr-id', d.record_id));
+      item.appendChild(textBox);
+      item.addEventListener('click', function () {
+        searchResults.hidden = true;
+        focusElement(d.id);
       });
-      cards.appendChild(card);
+      searchResults.appendChild(item);
     });
-    view.appendChild(cards);
-
-    view.appendChild(textEl("h2", "Relation Types"));
-    var relWrap = document.createElement("div");
-    schema.relation_types.forEach(function (relationType) {
-      var chip = document.createElement("span");
-      chip.className = "rel-chip";
-      chip.appendChild(textEl("span", relationType.name));
-      var arrow = textEl("span", relationType.directed ? "→" : "↔");
-      arrow.className = "arrow";
-      chip.appendChild(arrow);
-      chip.addEventListener("click", function () {
-        showDetail("schema", relationType.name, "Semantic Relation", [
-          ["Direction", relationType.directed ? "directed" : "undirected / symmetric"],
-          ["Meaning", relationType.description],
-          ["Record", schema.relation_record.name],
-          ["Record Fields", schema.relation_record.fields]
-        ]);
-      });
-      relWrap.appendChild(chip);
-    });
-    view.appendChild(relWrap);
-
-    view.appendChild(textEl("h2", "Reference Rules"));
-    schema.reference_rules.forEach(function (rule) {
-      var row = document.createElement("div");
-      row.className = "ref-rule";
-      var head = document.createElement("div");
-      head.appendChild(textEl("b", rule.from));
-      head.appendChild(textEl("span", "  — " + rule.name + " →  "));
-      head.appendChild(textEl("b", rule.to));
-      row.appendChild(head);
-      var desc = textEl("div", rule.description);
-      desc.className = "card-desc";
-      row.appendChild(desc);
-      row.addEventListener("click", function () {
-        showDetail("schema", rule.name, "Structural Reference", [
-          ["From", rule.from], ["To", rule.to], ["Meaning", rule.description]
-        ]);
-      });
-      view.appendChild(row);
-    });
-  }
-
-  /* ============================== tool view ============================== */
-
-  function renderToolView() {
-    var view = document.getElementById("view-tool");
-    clearChildren(view);
-    var tools = DATA.tools;
-
-    view.appendChild(textEl("h2", "Semantic Tools"));
-    var cards = document.createElement("div");
-    cards.className = "cards";
-    (tools.tools || []).forEach(function (tool) {
-      var card = document.createElement("div");
-      card.className = "card";
-      var name = document.createElement("div");
-      name.className = "card-name";
-      name.appendChild(pillEl("tool", "tool"));
-      name.appendChild(textEl("span", tool.name));
-      card.appendChild(name);
-      var desc = textEl("div", tool.description);
-      desc.className = "card-desc";
-      card.appendChild(desc);
-      var params = document.createElement("div");
-      (tool.parameters || []).forEach(function (param) {
-        var p = textEl("span", param);
-        p.className = "param";
-        params.appendChild(p);
-      });
-      card.appendChild(params);
-      card.addEventListener("click", function () {
-        showDetail("tool", tool.name, "Semantic MCP tool", [
-          ["Description", tool.description],
-          ["Parameters", tool.parameters]
-        ]);
-      });
-      cards.appendChild(card);
-    });
-    view.appendChild(cards);
-
-    view.appendChild(textEl("h2", "Manifest"));
-    var pre = textEl("pre", tools.manifest || "");
-    pre.className = "manifest";
-    view.appendChild(pre);
-  }
-
-  /* ============================== tabs ============================== */
-
-  var tabButtons = Array.prototype.slice.call(document.querySelectorAll("nav .tab"));
-  tabButtons.forEach(function (button) {
-    button.addEventListener("click", function () {
-      tabButtons.forEach(function (b) { b.classList.toggle("active", b === button); });
-      var target = button.dataset.view;
-      document.getElementById("view-content").hidden = target !== "content";
-      document.getElementById("view-schema").hidden = target !== "schema";
-      document.getElementById("view-tool").hidden = target !== "tool";
-      if (target === "content") cy.resize();
-    });
+    searchResults.hidden = false;
   });
 
-  /* ============================== boot ============================== */
+  searchInput.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      var first = searchResults.querySelector('.sr-item');
+      if (first) first.click();
+    } else if (event.key === 'Escape') {
+      searchResults.hidden = true;
+      searchInput.blur();
+    }
+  });
 
-  renderSchemaView();
-  renderToolView();
-  showDefaultDetail();
+  document.addEventListener('click', function (event) {
+    if (!event.target.closest || !event.target.closest('.search-box')) {
+      searchResults.hidden = true;
+    }
+  });
+  /* ================= schema / tool views ================= */
+
+  function cardGrid(items) {
+    var grid = el('div', 'cards');
+    items.forEach(function (item) {
+      var card = el('div', 'card');
+      card.appendChild(el('div', 'card-title', item.title));
+      if (item.subtitle) card.appendChild(el('div', 'card-sub', item.subtitle));
+      if (item.body) card.appendChild(el('div', 'card-body', item.body));
+      card.addEventListener('click', function () {
+        renderDetail({
+          family: item.badge,
+          title: item.title,
+          subtitle: '',
+          recordId: null,
+          pairs: item.pairs || [],
+          actions: []
+        });
+      });
+      grid.appendChild(card);
+    });
+    return grid;
+  }
+
+  function buildSchemaView() {
+    var view = views.schema;
+    var schema = DATA.schema || {};
+    view.appendChild(el('h2', '', '对象类型（Schema Layer 定义）'));
+    view.appendChild(cardGrid((schema.object_types || []).map(function (item) {
+      return {
+        badge: 'schema',
+        title: item.name,
+        subtitle: item.description,
+        body: item.fields.length + ' 个字段',
+        pairs: [['说明', item.description], ['字段', item.fields]]
+      };
+    })));
+    if (schema.relation_record) {
+      view.appendChild(el('h2', '', 'Relation 记录'));
+      view.appendChild(cardGrid([{
+        badge: 'relation',
+        title: schema.relation_record.name,
+        subtitle: schema.relation_record.description,
+        body: schema.relation_record.fields.length + ' 个字段',
+        pairs: [['说明', schema.relation_record.description], ['字段', schema.relation_record.fields]]
+      }]));
+    }
+    view.appendChild(el('h2', '', '语义关系类型'));
+    view.appendChild(cardGrid((schema.relation_types || []).map(function (item) {
+      return {
+        badge: 'relation',
+        title: item.name,
+        subtitle: item.description,
+        body: item.directed ? '有向' : '无向（对称）',
+        pairs: [['说明', item.description], ['方向性', item.directed ? '有向' : '无向（对称）']]
+      };
+    })));
+    view.appendChild(el('h2', '', '结构引用规则'));
+    view.appendChild(cardGrid((schema.reference_rules || []).map(function (item) {
+      return {
+        badge: 'reference',
+        title: item.name,
+        subtitle: item.from + ' \u2192 ' + item.to,
+        body: item.description,
+        pairs: [['From', item.from], ['To', item.to], ['说明', item.description]]
+      };
+    })));
+  }
+
+  function buildToolView() {
+    var view = views.tool;
+    var toolData = DATA.tools || {};
+    view.appendChild(el('h2', '', '语义工具（MCP Tool Layer）'));
+    view.appendChild(cardGrid((toolData.tools || []).map(function (tool) {
+      return {
+        badge: 'tool',
+        title: tool.name,
+        subtitle: tool.description,
+        body: (tool.parameters || []).join('   '),
+        pairs: [['描述', tool.description], ['参数', tool.parameters || []]]
+      };
+    })));
+    view.appendChild(el('h2', '', 'Layer Manifest'));
+    view.appendChild(el('div', 'manifest', toolData.manifest || ''));
+  }
+
+  /* ================= boot ================= */
+
+  buildSchemaView();
+  buildToolView();
+  try {
+    initGraph();
+  } catch (err) {
+    showEmpty('图谱初始化失败：' + (err && err.message ? err.message : err) +
+              '\nSchema / Tool 页签仍可正常使用。');
+    if (window.console && console.error) console.error(err);
+  }
 })();
 </script>
 </body>

@@ -170,19 +170,28 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
             constraints_by_target.setdefault(constraint.target, []).append(constraint.id)
     term_names = {t.id: (t.name or t.id) for t in store.terms.values()}
 
+    def _nid(family: str, record_id: str) -> str:
+        # Prefix ids so record ids that collide with Object.prototype keys
+        # (e.g. a Term named "constructor") cannot poison Cytoscape internals.
+        return f"{family}:{record_id}"
+
     def _add_node(record_id: str, family: str, label: str, search: List[str],
-                  detail: List[List[Any]]) -> None:
+                  detail: List[List[Any]], extra: Optional[Dict[str, Any]] = None) -> None:
         if record_id in used_ids:
             warnings.append(f"duplicate object id skipped: {record_id!r}")
             return
         used_ids.add(record_id)
-        nodes.append({"data": {
-            "id": record_id,
+        data = {
+            "id": _nid(family, record_id),
+            "record_id": record_id,
             "family": family,
             "label": label,
             "search": sorted({s.lower() for s in search if s}),
             "detail": detail,
-        }})
+        }
+        if extra:
+            data.update(extra)
+        nodes.append({"data": data})
 
     def _add_edge(edge_id: str, family: str, source: str, target: str,
                   extra: Dict[str, Any]) -> None:
@@ -191,6 +200,15 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
         edges.append({"data": data})
 
     for term in store.terms.values():
+        term_maps = mappings_by_term.get(term.id, [])
+        sublabel = ""
+        if term_maps:
+            first = store.mappings.get(term_maps[0])
+            grounding = ".".join(part for part in (first.table, first.column) if part) if first else ""
+            if grounding:
+                sublabel = grounding + (f" +{len(term_maps) - 1}" if len(term_maps) > 1 else "")
+            else:
+                sublabel = f"{len(term_maps)} mapping(s)"
         _add_node(term.id, "term", term.name or term.id,
                   [term.name, term.id, *term.aliases],
                   _pairs([
@@ -205,7 +223,8 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                       ("Constraints", sorted(constraints_by_target.get(term.id, []))),
                       ("Evidence", term.evidence_refs),
                       ("Lifecycle", term.lifecycle_state),
-                  ]))
+                  ]),
+                  {"sublabel": sublabel, "definition": term.definition or ""})
 
     for mapping in store.mappings.values():
         grounding = ".".join(part for part in (mapping.table, mapping.column) if part)
@@ -259,7 +278,8 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
     for relation in store.relations.values():
         if relation.source in store.terms and relation.target in store.terms:
             relation_type = relation.relation_type or "association"
-            _add_edge(f"rel:{relation.id}", "relation", relation.source, relation.target, {
+            _add_edge(f"rel:{relation.id}", "relation",
+                      _nid("term", relation.source), _nid("term", relation.target), {
                 "relation_type": relation_type,
                 "record_id": relation.id,
                 "label": relation_type,
@@ -286,7 +306,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
             continue
         if mapping.term_id in store.terms:
             _add_edge(f"ref:grounded_by:{mapping.term_id}:{mapping.id}", "reference",
-                      mapping.term_id, mapping.id, {
+                      _nid("term", mapping.term_id), _nid("mapping", mapping.id), {
                           "kind": "grounded_by",
                           "detail": _pairs([
                               ("Reference", "grounded_by"),
@@ -304,8 +324,9 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
         if not constraint.target:
             continue
         if constraint.target in store.terms or constraint.target in store.mappings:
+            target_family = "term" if constraint.target in store.terms else "mapping"
             _add_edge(f"ref:constrained_by:{constraint.target}:{constraint.id}", "reference",
-                      constraint.target, constraint.id, {
+                      _nid(target_family, constraint.target), _nid("constraint", constraint.id), {
                           "kind": "constrained_by",
                           "detail": _pairs([
                               ("Reference", "constrained_by"),
@@ -324,8 +345,9 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
     for owner in (*store.terms.values(), *store.mappings.values()):
         for ref in owner.evidence_refs:
             if ref in evidence_ids:
+                owner_family = "term" if owner.id in store.terms else "mapping"
                 _add_edge(f"ref:supported_by:{owner.id}:{ref}", "reference",
-                          owner.id, ref, {
+                          _nid(owner_family, owner.id), _nid("evidence", ref), {
                               "kind": "supported_by",
                               "detail": _pairs([
                                   ("Reference", "supported_by"),
