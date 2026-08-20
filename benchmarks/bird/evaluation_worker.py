@@ -44,6 +44,8 @@ def main() -> None:
     job = json.loads(Path(args.job).read_text(encoding="utf-8"))
 
     config = ExperimentConfig.from_yaml(job["config_path"])
+    if job.get("semantic_version"):
+        config.semantic.version = job["semantic_version"]
 
     llm_kwargs = dict(job.get("llm_kwargs", {}))
     api_key = os.getenv(job.get("api_key_env", "BIRD_AGENT_API_KEY"), "")

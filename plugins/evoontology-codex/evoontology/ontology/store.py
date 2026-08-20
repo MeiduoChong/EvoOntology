@@ -175,6 +175,27 @@ class SemanticStore:
         cls.set_active(str(root), new_version)
         return new_version
 
+    @classmethod
+    def publish(cls, path: Optional[PathLike], candidate_version: str, new_version: str) -> str:
+        """Publish a candidate as a new official version without overwriting.
+
+        Unlike :meth:`promote`, an existing ``new_version`` is never replaced:
+        identical content makes the call a safe retry, different content raises
+        ``FileExistsError``. Returns the published version name.
+        """
+        root = resolve_workspace(path)
+        src = root / "versions" / candidate_version
+        if not src.is_dir():
+            raise FileNotFoundError(f"Candidate version missing: {src}")
+        dst = root / "versions" / new_version
+        if dst.exists():
+            if not _same_version_content(src, dst):
+                raise FileExistsError(f"Official version already exists: {dst}")
+        else:
+            shutil.copytree(src, dst)
+        cls.set_active(str(root), new_version)
+        return new_version
+
     @staticmethod
     def list_versions(path: Optional[PathLike] = None) -> List[str]:
         """Return the names of all versions present under ``versions/``."""
@@ -203,6 +224,20 @@ class SemanticStore:
             "constraints": len(self.constraints),
             "evidence": len(self.evidence),
         }
+
+
+def _same_version_content(src: Path, dst: Path) -> bool:
+    """True when both version directories hold identical record files."""
+    if not dst.is_dir():
+        return False
+    for filename in VERSION_FILES:
+        src_file = src / filename
+        dst_file = dst / filename
+        if not src_file.is_file() or not dst_file.is_file():
+            return False
+        if src_file.read_bytes() != dst_file.read_bytes():
+            return False
+    return True
 
 
 def _load_json(path: Path):

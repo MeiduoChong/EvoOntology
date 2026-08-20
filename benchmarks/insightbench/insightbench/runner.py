@@ -176,6 +176,7 @@ class BatchRunner:
                 context=context,
                 semantic_enabled=self.agent_config.get("semantic_enabled", False),
                 semantic_store_path=self.agent_config.get("semantic_store_path"),
+                semantic_version=self.agent_config.get("semantic_version"),
                 semantic_max_tool_rounds=self.agent_config.get(
                     "semantic_max_tool_rounds", 12
                 ),

@@ -75,6 +75,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         "temperature": 0,
         "semantic_enabled": args.semantic_layer,
         "semantic_store_path": args.semantic_store,
+        "semantic_version": args.semantic_version,
         "semantic_max_tool_rounds": args.semantic_max_tool_rounds,
         "record_trajectories": args.record_trajectories,
         "split": args.split,
@@ -127,6 +128,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("-o", "--openai-api-key", default=None)
     run.add_argument("--semantic-layer", action="store_true")
     run.add_argument("--semantic-store", default=None)
+    run.add_argument(
+        "--semantic-version", default=None,
+        help="Explicit semantic version to load (default: active)",
+    )
     run.add_argument("--semantic-max-tool-rounds", type=int, default=12)
     run.add_argument(
         "--record-trajectories", action="store_true",

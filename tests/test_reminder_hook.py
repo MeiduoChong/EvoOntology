@@ -1,6 +1,7 @@
 """Session-start reminder hook integration tests."""
 
 import importlib.util
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -41,7 +42,12 @@ def test_hook_initializes_legacy_workspace_and_counts_existing_tasks(
     assert _load_hook().main() == 0
 
     assert (workspace / "state.json").is_file()
-    assert "30 new trajectories >= 30" in capsys.readouterr().out
+    payload = json.loads(capsys.readouterr().out)
+    assert "30 new trajectories >= 30" in payload["systemMessage"]
+    assert (
+        "30 new trajectories >= 30"
+        in payload["hookSpecificOutput"]["additionalContext"]
+    )
 
 
 def test_hook_does_not_initialize_project_without_active_layer(

@@ -49,9 +49,13 @@ def main() -> int:
         "The EvoOntology semantic layer has pending evolution work.\n"
         + "\n".join(reminders)
     )
+    visible_message = "\n".join(reminders)
     print(
         json.dumps(
             {
+                # additionalContext is deliberately hidden from the terminal;
+                # systemMessage makes the due reminder visible to the user.
+                "systemMessage": visible_message,
                 "hookSpecificOutput": {
                     "hookEventName": "SessionStart",
                     "additionalContext": context,

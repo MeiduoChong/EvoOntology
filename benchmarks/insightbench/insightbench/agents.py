@@ -34,6 +34,7 @@ class Agent:
         context="This is a dataset that could potentially consist of interesting insights",
         semantic_enabled=False,
         semantic_store_path=None,
+        semantic_version=None,
         semantic_max_tool_rounds=12,
         semantic_domain=None,
     ):
@@ -59,6 +60,7 @@ class Agent:
             context=context,
             semantic_enabled=semantic_enabled,
             semantic_store_path=semantic_store_path,
+            semantic_version=semantic_version,
             semantic_max_tool_rounds=semantic_max_tool_rounds,
             semantic_domain=semantic_domain,
         )
@@ -189,6 +191,7 @@ class AgentPoirot:
         n_retries=5,
         semantic_enabled=False,
         semantic_store_path=None,
+        semantic_version=None,
         semantic_max_tool_rounds=12,
         semantic_domain=None,
     ):
@@ -206,6 +209,7 @@ class AgentPoirot:
         self.n_retries = n_retries
         self.semantic_enabled = semantic_enabled
         self.semantic_store_path = semantic_store_path
+        self.semantic_version = semantic_version
         self.semantic_max_tool_rounds = semantic_max_tool_rounds
         self.semantic_domain = semantic_domain
         self.semantic_events = []
@@ -248,6 +252,7 @@ class AgentPoirot:
                 table=self.table,
                 table_user=self.table_user,
                 store_path=self.semantic_store_path,
+                version=self.semantic_version,
                 trace_events=self.semantic_events,
                 domain=self.semantic_domain,
             )

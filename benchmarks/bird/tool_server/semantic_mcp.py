@@ -22,9 +22,9 @@ from tceo.runtime import BIRDSemanticLayer
 
 
 class SemanticMCPServer:
-    def __init__(self, store_path: str, db_id: str = ""):
+    def __init__(self, store_path: str, db_id: str = "", version: str = ""):
         self.db_id = db_id
-        self.layer = BIRDSemanticLayer(store_path)
+        self.layer = BIRDSemanticLayer(store_path, version=version)
         self.server = Server("bird-semantic-mcp")
         self._register_handlers()
 
@@ -133,8 +133,10 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="BIRD semantic MCP server")
     parser.add_argument("--store", required=True)
     parser.add_argument("--db-id", default="")
+    parser.add_argument("--version", default="",
+                        help="Explicit semantic version to serve (default: active)")
     args = parser.parse_args()
-    await SemanticMCPServer(args.store, args.db_id).run()
+    await SemanticMCPServer(args.store, args.db_id, args.version).run()
 
 
 if __name__ == "__main__":

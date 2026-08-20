@@ -21,8 +21,9 @@ class BIRDSemanticLayer:
     MAX_RESOLVE = 5
 
     def __init__(self, store_path: str, min_browse_score: int = 0,
-                 max_browse_results: int = 0, use_basic_browse: bool = False):
-        self.loader = SemanticLayerLoader.load(store_path)
+                 max_browse_results: int = 0, use_basic_browse: bool = False,
+                 version: str = ""):
+        self.loader = SemanticLayerLoader.load(store_path, version=version)
         self._binder = DeterministicBinder(
             mappings=self.loader.mappings,
             terms=self.loader.terms,

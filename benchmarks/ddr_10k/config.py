@@ -71,6 +71,7 @@ class SemanticConfig:
     """Static TCEO semantic layer runtime configuration."""
     enabled: bool = False
     store_path: str = "./.evoontology"
+    version: str = ""
     exposed_tools: List[str] = field(default_factory=lambda: [
         "browse_semantics", "resolve_semantics",
     ])
@@ -177,6 +178,7 @@ class Config:
             semantic = data["semantic"] or {}
             self.semantic.enabled = semantic.get("enabled", self.semantic.enabled)
             self.semantic.store_path = semantic.get("store_path", self.semantic.store_path)
+            self.semantic.version = semantic.get("version", self.semantic.version)
             self.semantic.exposed_tools = semantic.get(
                 "exposed_tools", self.semantic.exposed_tools
             )

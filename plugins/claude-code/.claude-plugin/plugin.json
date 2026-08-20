@@ -1,6 +1,6 @@
 {
   "name": "evoontology",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Self-evolving ontology layer for data agents: /evo-build and /evo-evolve commands, builder/evolver skills, a semantic MCP runtime, and a session-start evolution reminder.",
   "author": {
     "name": "Eric Chong"

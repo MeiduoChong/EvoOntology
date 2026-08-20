@@ -12,8 +12,9 @@ from .models import Constraint, Evidence, Mapping, Relation, Term
 class SemanticLayerLoader:
     """Implementation of SemanticLayerLoader."""
 
-    def __init__(self, store_path: str):
+    def __init__(self, store_path: str, version: str = ""):
         self.store_path = Path(store_path)
+        self._requested_version = str(version or "")
         self.terms: Dict[str, Term] = {}
         self.mappings: Dict[str, Mapping] = {}
         self.relations: Dict[str, Relation] = {}
@@ -24,8 +25,8 @@ class SemanticLayerLoader:
         self._loaded = False
 
     @classmethod
-    def load(cls, store_path: str) -> "SemanticLayerLoader":
-        instance = cls(store_path)
+    def load(cls, store_path: str, version: str = "") -> "SemanticLayerLoader":
+        instance = cls(store_path, version=version)
         instance._load_all()
         return instance
 
@@ -33,7 +34,9 @@ class SemanticLayerLoader:
         if not self.store_path.exists():
             raise FileNotFoundError(f"Semantic-layer directory does not exist: {self.store_path}")
 
-        self.version, self._records = SemanticStore.load_records(str(self.store_path))
+        self.version, self._records = SemanticStore.load_records(
+            str(self.store_path), version=self._requested_version or None
+        )
 
         self._load_terms()
         self._load_mappings()

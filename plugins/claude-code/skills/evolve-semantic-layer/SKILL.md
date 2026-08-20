@@ -5,15 +5,16 @@ description: This skill is triggered when the user requests to "self-evolve the 
 
 # Self-Evolving Semantic Layer
 
-Continuously improve the complete semantic-layer system until a credible and
+Continuously improve the semantic-layer system until a credible and
 reproducibly better version is obtained.
 
-Evolution targets the three ontology-layer dimensions — Content, Tool, and
-Schema — and, when the attributed mechanism calls for it, the related prompt,
-workflow, or runtime components. A Candidate may modify any of these; every
-change must stay traceable and reversible so the Parent can be restored, and
-domain knowledge must remain in versioned semantic artifacts rather than being
-hidden in prompt or orchestration code.
+Evolution operates along three dimensions — **Content, Tool, and Schema**.
+When the attributed mechanism involves related prompt, workflow, or runtime
+components, they may be modified as part of the corresponding evolution
+dimension.
+
+All Candidate changes must be traceable to their target dimension and
+reversible to the Parent state.
 
 ## Core Principles
 
@@ -39,7 +40,8 @@ Define the optimization objective, acceptance criteria, and unacceptable
 regressions before expensive experiments.
 
 Do not rely only on current conversation context. Reuse persisted project and
-evolution state whenever available.
+evolution state whenever available. If a previous evolution run is still
+open, resume that EvolutionSession instead of starting a new one.
 
 **Stage Output:** A fixed optimization objective and the prior knowledge needed
 for evolution.
@@ -61,7 +63,9 @@ for evolution.
      Validation Reserve according to
      `references/semantic-layer-data-boundary.md`.
 
-3. Fix the Evaluator and acceptance criteria.
+3. Fix the Evaluator and acceptance criteria. For a new run, confirm the
+   round budget with the user first (default: 8 rounds); the budget is frozen
+   for the run and a resumed run reuses it without asking again.
 
 4. Persist the frozen run context under
    `.evoontology/evolution/<round>/context.json`, including the Parent,
@@ -78,7 +82,9 @@ validation data, and evaluation protocol.
 ### Step 1 — Diagnose Problems from Historical Trajectories
 
 Do not rely only on existing failure traces. Analyze both what the system has
-done and what it should have done but did not.
+done and what it should have done but did not. When trajectory sources or
+their scope are not yet settled, confirm them with the user and persist the
+confirmed source references for this run.
 
 1. Compare successful, failed, improved, and regressed cases to understand the analysis paths actually taken by the Agent.
 2. Examine analysis coverage and identify important dimensions, metrics, concepts, relations, hypotheses, and analysis directions that were ignored, repeatedly missed, or never explored.
@@ -132,9 +138,12 @@ highest-priority mechanism.
 
 **Stage Output:** A prioritized set of experimentally testable causal explanations with corresponding evidence and remaining uncertainty.
 
-### Step 3 — Patch the Parent Ontology
+### Step 3 — Patch the Parent System
 
 1. Select the mechanism currently most valuable to validate.
+
+   Record the primary evolution dimension as Content, Tool, or Schema.
+
 2. Convert the mechanism into a clear, falsifiable hypothesis describing:
    * Current limitation;
    * Why it causes the observed problem;
@@ -164,9 +173,18 @@ has meaningfully changed.
 ### Step 4 — Evaluate and Gate the Candidate
 
 Compare Parent and Candidate under a controlled and reproducible evaluation
-protocol.
+protocol. Evaluate the Candidate as its own stored version; the active
+version must not be modified during comparison.
 
 1. Keep inputs, data splits, models, Evaluator, budget, and runtime configuration consistent.
+
+   Evaluate according to the persisted project mode:
+
+   * **Fixed-Split Mode:** compare Parent and Candidate on the frozen validation
+     subset using the configured Evaluator.
+   * **Rolling-Trajectory Mode:** compare Parent and Candidate on the Validation
+     Reserve using the configured LLM Judge.
+
 2. Analyze:
    * Whether target metrics improve;
    * Whether improvement covers the original problem;
@@ -190,7 +208,7 @@ After the decision:
 1. Update the problem map and causal understanding.
 2. Mark solved problems, remaining limitations, newly discovered issues, and disproven explanations.
 3. Preserve the main validated mechanisms, rejected hypotheses, and unresolved uncertainty needed for later rounds.
-4. **Accept** — publish the Candidate as the next semantic version (`semantic_vN+1`), switch `active.json` to it, advance the checkpoint, and end the run.
+4. **Accept** — mark the Candidate as accepted and end Candidate search. Proceed to Finalize Evolution Run.
 5. **Reject** — write `evolution/<round>/result.json`, update the attribution and problem map, then design a new Candidate targeting the next most valuable mechanism and repeat Step 1–4. Do not advance the checkpoint and do not end the run.
 6. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
 
@@ -205,16 +223,25 @@ evaluation) forces an Incomplete stop.
 ### Finalize Evolution Run
 
 A run ends only on Accept or on an external Incomplete stop; a Reject loops
-back to a new Candidate within the same frozen batch.
+back to a new Candidate within the same frozen batch. The final report must
+be based on the session's terminal state and the saved run records, not on
+conversation memory.
 
 When the run ends, preserve the evolution record, including:
 
 - frozen run context;
+- target evolution dimension and changed components;
 - problem map and hypotheses;
 - all Candidate changes and their decisions;
 - evaluation results;
 - final decision;
 - unresolved system issues.
+
+In `.evoontology/evolution/<round>/result.json`, record:
+
+- `target_dimension`: `content`, `tool`, or `schema`;
+- `changed_components`: the components actually modified in this round, such
+  as semantic content, prompt, workflow, runtime, tool, or schema.
 
 If a Candidate was accepted:
 

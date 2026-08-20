@@ -5,13 +5,16 @@ description: This skill is triggered when the user requests to "self-evolve the 
 
 # Self-Evolving Semantic Layer
 
-Continuously improve the complete semantic-layer system until a credible and
+Continuously improve the semantic-layer system until a credible and
 reproducibly better version is obtained.
 
-The evolution target may include semantic content, tools, and schema,
-together with related prompts, interfaces, workflows, or runtime components
-when they are part of the attributed mechanism. Evolution may correct
-existing designs, add missing capabilities, or adjust system structures.
+Evolution operates along three dimensions — **Content, Tool, and Schema**.
+When the attributed mechanism involves related prompt, workflow, or runtime
+components, they may be modified as part of the corresponding evolution
+dimension.
+
+All Candidate changes must be traceable to their target dimension and
+reversible to the Parent state.
 
 ## Core Principles
 
@@ -24,26 +27,64 @@ existing designs, add missing capabilities, or adjust system structures.
 
 ## Before Evolution
 
-1. Read previous evolution records and accumulated knowledge if they exist.
-2. Read the current semantic layer, tools, Builder, runtime flow, evaluation setup, and previous experiments.
-3. Define optimization objectives, acceptance criteria, and unacceptable regressions.
-4. Preserve a reproducible Parent before making changes.
-5. Preserve the key objective, Parent version, and prior findings needed to continue the evolution process.
+Read:
 
-Do not rely only on current conversation context. Evolution must preserve
-knowledge across iterations.
+- `references/project-context.md`;
+- `references/semantic-layer-data-boundary.md`;
+- previous evolution records and accumulated knowledge, if they exist.
 
-If objectives or acceptance criteria are materially unclear, confirm them
-before expensive experiments.
+Read the current semantic layer, tools, Builder, runtime flow, and evaluation
+setup.
 
-**Stage Output:** A fixed optimization objective and a Parent that can be fairly compared.
+Define the optimization objective, acceptance criteria, and unacceptable
+regressions before expensive experiments.
+
+Do not rely only on current conversation context. Reuse persisted project and
+evolution state whenever available. If a previous evolution run is still
+open, resume that EvolutionSession instead of starting a new one.
+
+**Stage Output:** A fixed optimization objective and the prior knowledge needed
+for evolution.
 
 ## Evolution Loop
+
+### Step 0 — Resolve and Freeze Evolution Context
+
+1. Read `.evoontology/project.json`, the current Parent, and the latest
+   completed evolution checkpoint.
+
+2. Resolve the data for this evolution run:
+
+   * **Fixed-Split Mode:** reuse the persisted evolution-training and
+     validation subsets.
+
+   * **Rolling-Trajectory Mode:** collect eligible Task trajectories after the
+     latest checkpoint, freeze the batch, and split it into Evolution Pool and
+     Validation Reserve according to
+     `references/semantic-layer-data-boundary.md`.
+
+3. Fix the Evaluator and acceptance criteria. For a new run, confirm the
+   round budget with the user first (default: 8 rounds); the budget is frozen
+   for the run and a resumed run reuses it without asking again.
+
+4. Persist the frozen run context under
+   `.evoontology/evolution/<round>/context.json`, including the Parent,
+   checkpoint, input IDs, validation IDs, and Evaluator reference.
+
+Record IDs only; do not duplicate trajectory files.
+
+If the available data is insufficient for trustworthy evolution and
+validation, preserve the Parent and stop without advancing the checkpoint.
+
+**Stage Output:** A reproducible evolution run with fixed Parent, inputs,
+validation data, and evaluation protocol.
 
 ### Step 1 — Diagnose Problems from Historical Trajectories
 
 Do not rely only on existing failure traces. Analyze both what the system has
-done and what it should have done but did not.
+done and what it should have done but did not. When trajectory sources or
+their scope are not yet settled, confirm them with the user and persist the
+confirmed source references for this run.
 
 1. Compare successful, failed, improved, and regressed cases to understand the analysis paths actually taken by the Agent.
 2. Examine analysis coverage and identify important dimensions, metrics, concepts, relations, hypotheses, and analysis directions that were ignored, repeatedly missed, or never explored.
@@ -97,9 +138,12 @@ highest-priority mechanism.
 
 **Stage Output:** A prioritized set of experimentally testable causal explanations with corresponding evidence and remaining uncertainty.
 
-### Step 3 — Patch the Parent Ontology
+### Step 3 — Patch the Parent System
 
 1. Select the mechanism currently most valuable to validate.
+
+   Record the primary evolution dimension as Content, Tool, or Schema.
+
 2. Convert the mechanism into a clear, falsifiable hypothesis describing:
    * Current limitation;
    * Why it causes the observed problem;
@@ -129,18 +173,31 @@ has meaningfully changed.
 ### Step 4 — Evaluate and Gate the Candidate
 
 Compare Parent and Candidate under a controlled and reproducible evaluation
-protocol.
+protocol. Evaluate the Candidate as its own stored version; the active
+version must not be modified during comparison.
 
 1. Keep inputs, data splits, models, Evaluator, budget, and runtime configuration consistent.
+
+   Evaluate according to the persisted project mode:
+
+   * **Fixed-Split Mode:** compare Parent and Candidate on the frozen validation
+     subset using the configured Evaluator.
+   * **Rolling-Trajectory Mode:** compare Parent and Candidate on the Validation
+     Reserve using the configured LLM Judge.
+
 2. Analyze:
    * Whether target metrics improve;
    * Whether improvement covers the original problem;
    * Whether new regressions or limitations appear;
    * Whether improvement matches the proposed causal mechanism.
 3. Determine the Candidate result:
-   * Accept the Candidate when it provides reproducible improvement without unacceptable regression;
-   * Revise the intervention or causal hypothesis when results are partial or mixed;
-   * Reject and roll back the Candidate when it does not provide trustworthy improvement.
+   * **Accept:** the Candidate provides reproducible improvement without
+     unacceptable regression;
+
+   * **Reject:** the Candidate does not provide trustworthy improvement,
+     including results that are partial or mixed;
+
+   * **Incomplete:** formal evaluation cannot be completed reliably.
 
 Do not accept a Candidate only because a final metric improves. Evaluation
 should also deepen understanding of semantic-layer limitations and guide
@@ -151,23 +208,63 @@ After the decision:
 1. Update the problem map and causal understanding.
 2. Mark solved problems, remaining limitations, newly discovered issues, and disproven explanations.
 3. Preserve the main validated mechanisms, rejected hypotheses, and unresolved uncertainty needed for later rounds.
-4. If the Candidate is accepted, update the Parent and continue from the most relevant step when valuable problems remain.
-5. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
+4. **Accept** — mark the Candidate as accepted and end Candidate search. Proceed to Finalize Evolution Run.
+5. **Reject** — write `evolution/<round>/result.json`, update the attribution and problem map, then design a new Candidate targeting the next most valuable mechanism and repeat Step 1–4. Do not advance the checkpoint and do not end the run.
+6. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
 
 Candidate failure, unknown attribution, no-op results, or temporary lack of
 effective hypotheses do not indicate completion. They provide information for
-the next evolution cycle.
+the next evolution cycle. Keep iterating until Accept, or until an external
+condition (exhausted budget, user interruption, missing data, or unreliable
+evaluation) forces an Incomplete stop.
 
 **Stage Output:** A Parent/Candidate decision, updated evolution knowledge, and a clear next direction or rollback point.
+
+### Finalize Evolution Run
+
+A run ends only on Accept or on an external Incomplete stop; a Reject loops
+back to a new Candidate within the same frozen batch. The final report must
+be based on the session's terminal state and the saved run records, not on
+conversation memory.
+
+When the run ends, preserve the evolution record, including:
+
+- frozen run context;
+- target evolution dimension and changed components;
+- problem map and hypotheses;
+- all Candidate changes and their decisions;
+- evaluation results;
+- final decision;
+- unresolved system issues.
+
+In `.evoontology/evolution/<round>/result.json`, record:
+
+- `target_dimension`: `content`, `tool`, or `schema`;
+- `changed_components`: the components actually modified in this round, such
+  as semantic content, prompt, workflow, runtime, tool, or schema.
+
+If a Candidate was accepted:
+
+1. run deterministic validation;
+2. save it as the next semantic version;
+3. update `active.json`;
+4. advance the evolution checkpoint once.
+
+If the run ended Incomplete, do not advance the checkpoint and do not switch
+`active.json`; the same batch is retried on the next run.
+
+**Stage Output:** Persisted evolution results, updated active version when
+accepted, and consistent evolution state.
 
 ## Completion Conditions
 
 Only declare success when the final version satisfies:
 
-* Target metrics improve;
-* Results are reproducible and evidence-supported;
-* No unacceptable regression exists;
-* Final version can be activated and rerun.
+- the accepted version outperforms the starting Parent under the configured
+  evaluation protocol;
+- the result is reproducible and evidence-supported;
+- no unacceptable regression exists;
+- the accepted version can be activated and rerun.
 
 If execution stops due to user interruption, exhausted budget, missing data
 or permissions, or unreliable evaluation, mark status as `incomplete`.

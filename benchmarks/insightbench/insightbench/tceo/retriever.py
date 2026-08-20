@@ -56,10 +56,11 @@ class InsightSemanticLayer:
         store_path: Optional[str] = None,
         trace_events: Optional[List[dict]] = None,
         domain: Optional[str] = None,
+        version: Optional[str] = None,
     ) -> "InsightSemanticLayer":
         inventory = InsightAdapter().build(table, table_user)
         return cls(
-            store=VersionedSemanticStore.load(store_path),
+            store=VersionedSemanticStore.load(store_path, version=version),
             inventory=inventory,
             trace_events=trace_events,
             domain=domain,

@@ -17,10 +17,13 @@ skills bundled in this plugin's `skills/` directory.
 - **Evolve** — when the user asks to "evolve the ontology" or runs `/evo-evolve`,
   execute the `evolve-semantic-layer` skill (see
   `skills/evolve-semantic-layer/SKILL.md`) following
-  Diagnose → Attribute → Patch → Evaluate/Gate. Accept a candidate by promoting
-  it to the next `semantic_vN` and switching `active.json`. Persist
-  `evolution/<round>/result.json` before advancing the checkpoint after an
-  Accept or Reject; do not advance it for an Incomplete run.
+  Diagnose → Attribute → Patch → Evaluate/Gate. Drive the loop through an
+  `EvolutionSession` from the shared core: resume an existing session when one
+  is running, confirm the round budget with the user only when creating a new
+  run, and evaluate Candidates on independent versions without switching
+  `active.json`. Only an accepted Candidate is published as the next
+  `semantic_vN`, switches `active.json`, and advances the checkpoint; an
+  Incomplete run changes neither.
 
 ## Semantic MCP tools
 

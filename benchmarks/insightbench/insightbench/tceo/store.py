@@ -60,10 +60,10 @@ class VersionedSemanticStore:
         )
 
     @classmethod
-    def load(cls, path: Optional[str] = None) -> "VersionedSemanticStore":
-        """Load the immutable version selected by ``active.json``."""
+    def load(cls, path: Optional[str] = None, version: Optional[str] = None) -> "VersionedSemanticStore":
+        """Load the version selected by ``active.json`` or given explicitly."""
         store_dir = Path(path) if path else _DEFAULT_STORE_DIR
-        version, raw_records = SemanticStore.load_records(str(store_dir))
+        version, raw_records = SemanticStore.load_records(str(store_dir), version=version)
         required = {
             "terms": Term,
             "relations": Relation,

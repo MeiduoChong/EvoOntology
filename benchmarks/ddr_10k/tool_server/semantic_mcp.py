@@ -21,8 +21,8 @@ from tceo.runtime import DDRSemanticLayer
 
 
 class SemanticMCPServer:
-    def __init__(self, store_path: str):
-        self.layer = DDRSemanticLayer.load(store_path)
+    def __init__(self, store_path: str, version: str = ""):
+        self.layer = DDRSemanticLayer.load(store_path, version=version or None)
         self.server = Server("ddr-semantic-mcp")
         self._register_handlers()
 
@@ -129,8 +129,10 @@ class SemanticMCPServer:
 async def main() -> None:
     parser = argparse.ArgumentParser(description="DDR semantic MCP server")
     parser.add_argument("--store", required=True)
+    parser.add_argument("--version", default="",
+                        help="Explicit semantic version to serve (default: active)")
     args = parser.parse_args()
-    await SemanticMCPServer(args.store).run()
+    await SemanticMCPServer(args.store, args.version).run()
 
 
 if __name__ == "__main__":

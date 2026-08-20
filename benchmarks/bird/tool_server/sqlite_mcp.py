@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # project root -> 
 class SQLiteMCPServer:
     """Implementation of SQLiteMCPServer."""
 
-    def __init__(self, db_path: str, semantic_store: str = ""):
+    def __init__(self, db_path: str, semantic_store: str = "", semantic_version: str = ""):
         self.db_path = Path(db_path)
         if not self.db_path.exists():
             raise FileNotFoundError(f"Database file does not exist: {db_path}")
@@ -31,7 +31,7 @@ class SQLiteMCPServer:
         if semantic_store and Path(semantic_store).exists():
             try:
                 from tceo.runtime import BIRDSemanticLayer
-                self._semantic_layer = BIRDSemanticLayer(semantic_store)
+                self._semantic_layer = BIRDSemanticLayer(semantic_store, version=semantic_version)
             except Exception:
                 pass
         self._register_handlers()
@@ -301,9 +301,11 @@ async def main():
     parser.add_argument("--db-path", required=True, help="Path to the SQLite database file")
     parser.add_argument("--semantic-store", default="",
                         help="Optional semantic-layer directory for column annotations")
+    parser.add_argument("--version", default="",
+                        help="Explicit semantic version to serve (default: active)")
     args = parser.parse_args()
 
-    server = SQLiteMCPServer(args.db_path, args.semantic_store)
+    server = SQLiteMCPServer(args.db_path, args.semantic_store, args.version)
     await server.run()
 
 

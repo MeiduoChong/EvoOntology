@@ -1017,6 +1017,8 @@ async def main():
     parser.add_argument("--code-server", help="Path to Code MCP server script")
     parser.add_argument("--semantic-server", help="Path to TCEO semantic MCP server script")
     parser.add_argument("--semantic-store", help="Path to the EvoOntology workspace")
+    parser.add_argument("--semantic-version", default="",
+                        help="Explicit semantic version to load (default: active)")
     parser.add_argument("--servers", help="JSON file with MCP server configurations")
 
     # Config file arguments
@@ -1115,11 +1117,14 @@ async def main():
             if not args.semantic_store:
                 print("Error: --semantic-store is required when --semantic-server is enabled")
                 return
+            semantic_server_args = ["--store", args.semantic_store]
+            if args.semantic_version:
+                semantic_server_args += ["--version", args.semantic_version]
             mcp_configs.append(MCPServerConfig(
                 name="semantic",
                 script_path=args.semantic_server,
                 description="TCEO semantic definitions, physical mappings, and analysis constraints",
-                args=["--store", args.semantic_store],
+                args=semantic_server_args,
             ))
 
     if not mcp_configs:
@@ -1134,7 +1139,7 @@ async def main():
     if args.semantic_store:
         try:
             from tceo.runtime import DDRSemanticLayer
-            layer = DDRSemanticLayer.load(args.semantic_store)
+            layer = DDRSemanticLayer.load(args.semantic_store, version=args.semantic_version or None)
             exposed_tools = [
                 item.strip()
                 for item in os.getenv(

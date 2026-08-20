@@ -94,6 +94,8 @@ class PatientBatchAnalyzer(BaseBatchAnalyzer):
                 "--semantic-server", "tool_server/semantic_mcp.py",
                 "--semantic-store", kwargs["semantic_store_path"],
             ])
+            if kwargs.get("semantic_version"):
+                cmd.extend(["--semantic-version", kwargs["semantic_version"]])
 
         # We do NOT pass --data-path override unless specific need, but user said NO overrides.
         # So we trust config.yaml loaded by sqlite_mcp.py via --config
@@ -182,6 +184,8 @@ class CompanyBatchAnalyzer(BaseBatchAnalyzer):
                 "--semantic-server", "tool_server/semantic_mcp.py",
                 "--semantic-store", kwargs["semantic_store_path"],
             ])
+            if kwargs.get("semantic_version"):
+                cmd.extend(["--semantic-version", kwargs["semantic_version"]])
 
         # Pass max_turns if provided
         if kwargs.get("max_turns"):
@@ -265,6 +269,8 @@ class UserBatchAnalyzer(BaseBatchAnalyzer):
                 "--semantic-server", "tool_server/semantic_mcp.py",
                 "--semantic-store", kwargs["semantic_store_path"],
             ])
+            if kwargs.get("semantic_version"):
+                cmd.extend(["--semantic-version", kwargs["semantic_version"]])
 
         # Pass max_turns if provided
         if kwargs.get("max_turns"):
@@ -324,6 +330,8 @@ Examples:
     parser.add_argument("--model", help="Override Agent model from config")
     parser.add_argument("--api-key", help="Override Agent API key")
     parser.add_argument("--base-url", help="Override Agent API base URL")
+    parser.add_argument("--semantic-version", default="",
+                        help="Explicit semantic version to use (overrides the config)")
     parser.add_argument("--yes", action="store_true",
                         help="Skip confirmation prompt (for non-interactive/orchestrator use)")
 
@@ -362,13 +370,17 @@ Examples:
     max_retries = config.agent.max_retries or 2
     max_turns = config.agent.max_turns or 100
     log_level = config.agent.log_level or "INFO"
+    if args.semantic_version:
+        config.semantic.version = args.semantic_version
     semantic_enabled = config.semantic.enabled
     semantic_store_path = config.semantic.store_path
     semantic_exposed_tools = config.semantic.exposed_tools
     if semantic_enabled:
         try:
             from tceo.store import VersionedSemanticStore
-            semantic_version = VersionedSemanticStore.load(semantic_store_path).version
+            semantic_version = VersionedSemanticStore.load(
+                semantic_store_path, version=config.semantic.version or None
+            ).version
         except Exception as e:
             parser.error(f"semantic layer is enabled but cannot be loaded: {e}")
     else:
@@ -412,6 +424,7 @@ Examples:
         "skip_confirm": args.yes,
         "semantic_enabled": semantic_enabled,
         "semantic_store_path": semantic_store_path,
+        "semantic_version": config.semantic.version,
     }
 
     # Run analysis

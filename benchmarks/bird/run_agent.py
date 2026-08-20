@@ -37,10 +37,14 @@ async def main():
                         help="Temperature override (default: 0)")
     parser.add_argument("--split", default="",
                         help="Split label recorded in the trajectory (e.g. train/test)")
+    parser.add_argument("--semantic-version", default="",
+                        help="Explicit semantic version to use (overrides the config)")
     args = parser.parse_args()
 
 
     config = ExperimentConfig.from_yaml(args.config)
+    if args.semantic_version:
+        config.semantic.version = args.semantic_version
 
 
     provider = args.llm_provider or config.agent.provider
@@ -76,6 +80,11 @@ async def main():
                     server_args[i] = store_path
                 elif i > 0 and server_args[i - 1] == "--db-id":
                     server_args[i] = db_id
+                elif i > 0 and server_args[i - 1] == "--version":
+                    server_args[i] = config.semantic.version
+        if (str(s.get("module", "")).endswith(("semantic_mcp", "sqlite_mcp"))
+                and config.semantic.version and "--version" not in server_args):
+            server_args.extend(["--version", config.semantic.version])
 
         mcp_configs.append({
             "name": s["name"],
@@ -90,7 +99,7 @@ async def main():
         store_path = config.semantic.store_path or str(SEMANTIC_LAYER_DIR / db_id)
         try:
             from tceo.runtime import BIRDSemanticLayer
-            layer = BIRDSemanticLayer(store_path)
+            layer = BIRDSemanticLayer(store_path, version=config.semantic.version)
             semantic_manifest = layer.manifest(db_id=db_id)
             print(f"Semantic layer loaded: {store_path}")
             print(f"  {layer.loader.stats()}")

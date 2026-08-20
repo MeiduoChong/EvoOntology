@@ -21,8 +21,8 @@ class DDRSemanticLayer:
         self._resolved_mentions: Dict[str, str] = {}
 
     @classmethod
-    def load(cls, store_path: Optional[str] = None) -> "DDRSemanticLayer":
-        return cls(VersionedSemanticStore.load(store_path))
+    def load(cls, store_path: Optional[str] = None, version: Optional[str] = None) -> "DDRSemanticLayer":
+        return cls(VersionedSemanticStore.load(store_path, version=version))
 
     @property
     def version(self) -> str:

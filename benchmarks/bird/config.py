@@ -33,6 +33,7 @@ class SemanticConfig:
     """Implementation of SemanticConfig."""
     enabled: bool = False
     store_path: str = ""
+    version: str = ""
 
 
 @dataclass

@@ -33,9 +33,17 @@ class SemanticLayer:
         self.store = store
 
     @classmethod
-    def load(cls, store_path: str) -> "SemanticLayer":
+    def load(cls, store_path: str, version: Optional[str] = None) -> "SemanticLayer":
+        """Load the active version, or an explicit version when given.
+
+        Explicit version selection lets Candidate evaluations run without
+        switching ``active.json``.
+        """
         try:
-            store = SemanticStore.load(store_path)
+            if version:
+                store = SemanticStore.load_version(store_path, version)
+            else:
+                store = SemanticStore.load(store_path)
         except FileNotFoundError:
             store = cls._empty_store()
         return cls(store)

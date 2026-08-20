@@ -150,8 +150,10 @@ async def run_single_question(question_data: dict, config: ExperimentConfig,
         semantic_store_path = config.semantic.store_path or str(
             SEMANTIC_LAYER_DIR / db_id
         )
+    semantic_version = config.semantic.version if config.semantic.enabled else ""
     for s in config.mcp_servers:
         server_args = list(s.get("args", []))
+        serves_semantics = str(s.get("module", "")).endswith(("semantic_mcp", "sqlite_mcp"))
         for i, val in enumerate(server_args):
             if val == "" or val is None:
                 if i > 0 and server_args[i - 1] == "--db-path":
@@ -162,6 +164,10 @@ async def run_single_question(question_data: dict, config: ExperimentConfig,
                     server_args[i] = db_id
                 elif i > 0 and server_args[i - 1] == "--semantic-store":
                     server_args[i] = semantic_store_path if semantic_store_path else ""
+                elif i > 0 and server_args[i - 1] == "--version" and serves_semantics:
+                    server_args[i] = semantic_version
+        if serves_semantics and semantic_version and "--version" not in server_args:
+            server_args.extend(["--version", semantic_version])
 
         mcp_configs.append({
             "name": s["name"],
@@ -176,7 +182,7 @@ async def run_single_question(question_data: dict, config: ExperimentConfig,
         store_path = config.semantic.store_path or str(SEMANTIC_LAYER_DIR / db_id)
         if Path(store_path).exists():
             try:
-                layer = runtime_class(store_path)
+                layer = runtime_class(store_path, version=config.semantic.version)
                 semantic_manifest = layer.manifest(db_id=db_id)
             except Exception:
                 pass
@@ -448,11 +454,16 @@ async def main():
     parser.add_argument("--timeout", type=int, default=180, help="Per-question timeout in seconds (default: 180)")
     parser.add_argument("--max-retries", type=int, default=2,
                         help="Per-question retries (default: 2; triggered by timeout, exception, or EX=False)")
+    parser.add_argument("--semantic-version", default="",
+                        help="Explicit semantic version to evaluate "
+                             "(overrides semantic.version in the config)")
     parser.add_argument("--resume", default="",
                         help="Resume from a previous run directory and skip completed questions")
     args = parser.parse_args()
 
     config = ExperimentConfig.from_yaml(args.config)
+    if args.semantic_version:
+        config.semantic.version = args.semantic_version
 
     llm_kwargs = {
         "provider_type": args.llm_provider or config.agent.provider,
@@ -701,6 +712,7 @@ async def main():
                 "save_traces": args.save_traces,
                 "record_trajectories": args.record_trajectories,
                 "split": split_name,
+                "semantic_version": config.semantic.version,
             }, ensure_ascii=False, indent=2), encoding="utf-8")
 
             payload = None

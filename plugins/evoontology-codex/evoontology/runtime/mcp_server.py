@@ -58,8 +58,8 @@ _TOOLS = [
 class SemanticMCPServer:
     """Serve the two semantic tools over newline-delimited JSON-RPC."""
 
-    def __init__(self, store_path: str):
-        self.layer = SemanticLayer.load(store_path)
+    def __init__(self, store_path: str, version: str = ""):
+        self.layer = SemanticLayer.load(store_path, version=version or None)
 
     def dispatch(self, method: str, params: Dict[str, Any]) -> Any:
         if method == "initialize":
@@ -156,8 +156,13 @@ def main() -> None:
         default=None,
         help="Workspace root containing active.json (default: <cwd>/.evoontology)",
     )
+    parser.add_argument(
+        "--version",
+        default="",
+        help="Explicit semantic version to serve (default: active version)",
+    )
     args = parser.parse_args()
-    SemanticMCPServer(str(resolve_workspace(args.store))).run()
+    SemanticMCPServer(str(resolve_workspace(args.store)), version=args.version).run()
 
 
 if __name__ == "__main__":

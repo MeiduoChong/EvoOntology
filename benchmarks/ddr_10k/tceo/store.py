@@ -32,10 +32,10 @@ class VersionedSemanticStore:
         self.root_dir = root_dir
 
     @classmethod
-    def load(cls, path: Optional[str] = None) -> "VersionedSemanticStore":
-        """Load the semantic version selected by ``active.json``."""
+    def load(cls, path: Optional[str] = None, version: Optional[str] = None) -> "VersionedSemanticStore":
+        """Load the version selected by ``active.json`` or given explicitly."""
         store_dir = Path(path) if path else DEFAULT_STORE_DIR
-        version, raw_records = SemanticStore.load_records(str(store_dir))
+        version, raw_records = SemanticStore.load_records(str(store_dir), version=version)
         required = {
             "terms": Term,
             "relations": Relation,
