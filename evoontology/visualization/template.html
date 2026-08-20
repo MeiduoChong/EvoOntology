@@ -1,0 +1,784 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --panel: #ffffff;
+    --border: #e2e7ee;
+    --text: #253244;
+    --muted: #64748b;
+    --accent: #3d6db5;
+    --term-bg: #dceafc;      --term-border: #8fb3e3;   --term-text: #1f3b5c;
+    --mapping-bg: #d9efe8;   --mapping-border: #84c0af; --mapping-text: #1e4d40;
+    --constraint-bg: #fceadb; --constraint-border: #e0b184; --constraint-text: #6e4a21;
+    --evidence-bg: #e9e6f1;  --evidence-border: #aca2c8; --evidence-text: #4a4063;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+                 Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 13px; display: flex; flex-direction: column; overflow: hidden;
+  }
+  button {
+    font: inherit; color: var(--text); background: var(--panel);
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---- header ---- */
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 10px 18px;
+    background: var(--panel); border-bottom: 1px solid var(--border); flex: none;
+  }
+  .brand { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .brand .sep { color: var(--muted); font-weight: 400; margin: 0 2px; }
+  .badge {
+    display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 12px;
+    font-weight: 500; border: 1px solid var(--border); background: var(--bg);
+  }
+  .badge.version { color: var(--accent); border-color: #c3d6ef; background: #eef4fb; font-family: ui-monospace, Consolas, monospace; }
+  .badge.active { color: #1e6b45; border-color: #bfe0cd; background: #e9f6ef; }
+  .badge.explicit { color: #8a5a1e; border-color: #ecd3ae; background: #faf2e4; }
+  #evolution-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
+  .chip {
+    border: 1px solid var(--border); background: var(--panel); color: var(--muted);
+    border-radius: 999px; padding: 2px 10px; font-size: 12px; white-space: nowrap;
+    cursor: pointer; max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .chip:hover { color: var(--accent); border-color: var(--accent); }
+  .chip.warn { color: #8a5a1e; border-color: #ecd3ae; background: #faf2e4; }
+  .spacer { flex: 1; }
+  .search-box { display: flex; align-items: center; gap: 6px; }
+  .search-box input {
+    font: inherit; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
+    width: 230px; color: var(--text); background: var(--panel); outline: none;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  #search-status { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+  /* ---- tabs ---- */
+  nav {
+    display: flex; gap: 4px; padding: 8px 18px 0; flex: none;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  nav button {
+    border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0;
+    background: transparent; color: var(--muted); padding: 6px 16px;
+  }
+  nav button.active {
+    background: var(--bg); border-color: var(--border); color: var(--text); font-weight: 600;
+  }
+
+  /* ---- main layout ---- */
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: 0; }
+  #views { grid-column: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+  /* ---- content view ---- */
+  #view-content { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  #cy-wrap { position: relative; grid-row: 1; margin: 12px 12px 0; border: 1px solid var(--border);
+             border-radius: 10px; background: var(--panel); overflow: hidden; }
+  #cy { position: absolute; inset: 0; }
+  #empty-hint {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 14px; text-align: center; padding: 20px;
+  }
+  #toolbar {
+    grid-row: 2; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 10px 12px 12px;
+  }
+  .filter-group {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+  }
+  .filter-title { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .filter-group label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid; }
+  .dot.term { background: var(--term-bg); border-color: var(--term-border); }
+  .dot.mapping { background: var(--mapping-bg); border-color: var(--mapping-border); }
+  .dot.constraint { background: var(--constraint-bg); border-color: var(--constraint-border); }
+  .dot.evidence { background: var(--evidence-bg); border-color: var(--evidence-border); }
+  .dot.relation { background: #ffffff; border-color: #8a9bb5; border-radius: 0; height: 2px; width: 14px; }
+  .actions { display: flex; gap: 8px; margin-left: auto; }
+
+  /* ---- schema / tool views ---- */
+  .doc { overflow: auto; padding: 16px 18px 24px; }
+  .doc h2 { font-size: 14px; margin: 18px 0 10px; }
+  .doc h2:first-child { margin-top: 4px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; cursor: pointer;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card .card-name { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .card .card-desc { color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  .card .card-meta { color: var(--muted); font-size: 11px; margin-top: 8px; font-family: ui-monospace, Consolas, monospace; line-height: 1.5; word-break: break-all; }
+  .rel-chip {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px; margin: 0 8px 8px 0;
+    cursor: pointer; font-size: 12px;
+  }
+  .rel-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .rel-chip .arrow { color: var(--muted); }
+  .ref-rule {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 8px; cursor: pointer; font-size: 12px; color: var(--muted);
+  }
+  .ref-rule:hover { border-color: var(--accent); }
+  .ref-rule b { color: var(--text); font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+  pre.manifest {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; white-space: pre-wrap; word-break: break-word; font-size: 12px;
+    font-family: ui-monospace, Consolas, monospace; line-height: 1.6;
+  }
+  .param { font-family: ui-monospace, Consolas, monospace; font-size: 11px; background: var(--bg);
+           border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin: 2px 4px 2px 0;
+           display: inline-block; }
+
+  /* ---- detail panel ---- */
+  #detail-panel {
+    grid-column: 2; grid-row: 1; background: var(--panel);
+    border-left: 1px solid var(--border); overflow: auto; padding: 14px 16px 24px; min-height: 0;
+  }
+  #detail-title { font-size: 14px; margin: 2px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #detail-sub { color: var(--muted); font-size: 12px; margin: 2px 0 12px; word-break: break-all; }
+  .kv { border-top: 1px solid var(--border); padding: 7px 0; }
+  .kv .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .kv .v { font-size: 12.5px; line-height: 1.55; word-break: break-word; }
+  .tag {
+    display: inline-block; background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 7px; margin: 2px 4px 2px 0; font-size: 11.5px; font-family: ui-monospace, Consolas, monospace;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .tag.link { color: var(--accent); cursor: pointer; border-color: #c3d6ef; background: #eef4fb; }
+  .tag.link:hover { border-color: var(--accent); }
+  .family-pill {
+    border-radius: 999px; font-size: 11px; padding: 1px 9px; border: 1px solid; font-weight: 600;
+  }
+  .family-pill.term { background: var(--term-bg); border-color: var(--term-border); color: var(--term-text); }
+  .family-pill.mapping { background: var(--mapping-bg); border-color: var(--mapping-border); color: var(--mapping-text); }
+  .family-pill.constraint { background: var(--constraint-bg); border-color: var(--constraint-border); color: var(--constraint-text); }
+  .family-pill.evidence { background: var(--evidence-bg); border-color: var(--evidence-border); color: var(--evidence-text); }
+  .family-pill.relation, .family-pill.reference, .family-pill.schema, .family-pill.tool, .family-pill.evolution {
+    background: var(--bg); border-color: var(--border); color: var(--muted);
+  }
+  .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">EvoOntology <span class="sep">·</span>
+    <span class="badge version" id="version-badge"></span>
+    <span class="badge" id="active-badge"></span>
+  </div>
+  <div id="evolution-chips" title="Evolution metadata"></div>
+  <div class="spacer"></div>
+  <div class="search-box">
+    <input id="search-input" type="text" placeholder="搜索 Term / Mapping（名称或 ID）" spellcheck="false">
+    <button id="search-btn">搜索</button>
+    <span id="search-status"></span>
+  </div>
+</header>
+<nav>
+  <button class="tab active" data-view="content">Content</button>
+  <button class="tab" data-view="schema">Schema</button>
+  <button class="tab" data-view="tool">Tool</button>
+</nav>
+<main>
+  <div id="views">
+    <section id="view-content" class="view">
+      <div id="cy-wrap">
+        <div id="cy"></div>
+        <div id="empty-hint"></div>
+      </div>
+      <div id="toolbar">
+        <div class="filter-group" id="object-filters"><span class="filter-title">Objects</span></div>
+        <div class="filter-group" id="relation-filters"><span class="filter-title">Relations</span></div>
+        <div class="actions">
+          <button id="btn-fit">Fit</button>
+          <button id="btn-reset">Reset</button>
+          <button id="btn-export">Export PNG</button>
+        </div>
+      </div>
+    </section>
+    <section id="view-schema" class="view doc" hidden></section>
+    <section id="view-tool" class="view doc" hidden></section>
+  </div>
+  <aside id="detail-panel">
+    <div id="detail-title"></div>
+    <div id="detail-sub"></div>
+    <div id="detail-body"></div>
+  </aside>
+</main>
+<script>
+__CYTOSCAPE_JS__
+</script>
+<script>
+window.EVO_DATA = __DATA_JSON__;
+</script>
+<script>
+(function () {
+  "use strict";
+
+  var DATA = window.EVO_DATA;
+  var OBJECT_FAMILIES = ["term", "mapping", "constraint", "evidence"];
+  var OBJECT_FILTER_LABELS = { term: "Terms", mapping: "Mappings", constraint: "Constraints", evidence: "Evidence" };
+  var RELATION_FILTER_LABELS = {
+    association: "Association", hierarchy: "Hierarchy", composition: "Composition",
+    equivalence: "Equivalence", derivation: "Derivation"
+  };
+
+  /* ============================== detail panel ============================== */
+
+  var detailTitle = document.getElementById("detail-title");
+  var detailSub = document.getElementById("detail-sub");
+  var detailBody = document.getElementById("detail-body");
+  var cy = null;
+
+  function clearChildren(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+  function textEl(tag, text) {
+    var el = document.createElement(tag);
+    el.textContent = text;
+    return el;
+  }
+
+  function pillEl(family, label) {
+    var el = textEl("span", label || family);
+    el.className = "family-pill " + family;
+    return el;
+  }
+
+  function valueEl(value) {
+    var text = String(value);
+    var el = textEl("span", text);
+    var element = cy ? cy.getElementById(text) : null;
+    if (element && element.length) {
+      el.className = "tag link";
+      el.addEventListener("click", function () { focusElement(element); });
+    } else {
+      el.className = "tag";
+    }
+    return el;
+  }
+
+  function showDetail(family, title, subtitle, pairs) {
+    clearChildren(detailTitle);
+    detailTitle.appendChild(pillEl(family, family));
+    detailTitle.appendChild(textEl("span", title));
+    detailSub.textContent = subtitle || "";
+    clearChildren(detailBody);
+    if (!pairs || !pairs.length) {
+      var empty = textEl("p", "（无更多字段）");
+      empty.className = "muted";
+      detailBody.appendChild(empty);
+      return;
+    }
+    pairs.forEach(function (pair) {
+      var row = document.createElement("div");
+      row.className = "kv";
+      var k = textEl("div", pair[0]);
+      k.className = "k";
+      row.appendChild(k);
+      var v = document.createElement("div");
+      v.className = "v";
+      var value = pair[1];
+      if (Array.isArray(value)) {
+        value.forEach(function (item, index) {
+          if (index) v.appendChild(document.createTextNode(" "));
+          v.appendChild(valueEl(item));
+        });
+      } else {
+        v.appendChild(valueEl(value));
+      }
+      row.appendChild(v);
+      detailBody.appendChild(row);
+    });
+  }
+
+  function showDefaultDetail() {
+    clearChildren(detailTitle);
+    detailTitle.appendChild(textEl("span", "详情"));
+    detailSub.textContent = "";
+    clearChildren(detailBody);
+    var hint = textEl("p", "点击图中的节点或连线查看 schema 定义的字段；点击详情面板中的 ID 可跳转到对应对象。");
+    hint.className = "muted";
+    detailBody.appendChild(hint);
+    var counts = DATA.meta.counts || {};
+    [
+      ["Version", DATA.meta.version],
+      ["Terms", counts.terms], ["Mappings", counts.mappings], ["Relations", counts.relations],
+      ["Constraints", counts.constraints], ["Evidence", counts.evidence]
+    ].forEach(function (pair) {
+      var row = document.createElement("div");
+      row.className = "kv";
+      var k = textEl("div", pair[0]);
+      k.className = "k";
+      row.appendChild(k);
+      var v = textEl("div", String(pair[1]));
+      v.className = "v";
+      row.appendChild(v);
+      detailBody.appendChild(row);
+    });
+  }
+
+  /* ============================== graph ============================== */
+
+  cy = window.cy = cytoscape({
+    container: document.getElementById("cy"),
+    elements: { nodes: DATA.content.nodes, edges: DATA.content.edges },
+    wheelSensitivity: 0.25,
+    style: [
+      { selector: "node", style: {
+        "shape": "roundrectangle",
+        "background-color": "#e8ebef",
+        "border-width": 1,
+        "border-color": "#c3c9d2",
+        "label": "data(label)",
+        "text-wrap": "wrap",
+        "text-max-width": "150px",
+        "font-size": 11,
+        "color": "#253244",
+        "text-valign": "center",
+        "text-halign": "center",
+        "padding": "6px",
+        "width": 96, "height": 34
+      }},
+      { selector: 'node[family="term"]', style: {
+        "background-color": "#dceafc", "border-color": "#8fb3e3", "color": "#1f3b5c",
+        "width": 124, "height": 48, "font-size": 12.5, "text-max-width": "190px", "border-width": 1.2
+      }},
+      { selector: 'node[family="mapping"]', style: {
+        "background-color": "#d9efe8", "border-color": "#84c0af", "color": "#1e4d40",
+        "width": 108, "height": 38, "font-size": 11
+      }},
+      { selector: 'node[family="constraint"]', style: {
+        "background-color": "#fceadb", "border-color": "#e0b184", "color": "#6e4a21",
+        "width": 84, "height": 28, "font-size": 9.5
+      }},
+      { selector: 'node[family="evidence"]', style: {
+        "background-color": "#e9e6f1", "border-color": "#aca2c8", "color": "#4a4063",
+        "width": 84, "height": 28, "font-size": 9.5
+      }},
+      { selector: "edge", style: {
+        "curve-style": "bezier",
+        "width": 1.5,
+        "line-color": "#8a9bb5",
+        "target-arrow-color": "#8a9bb5",
+        "source-arrow-color": "#8a9bb5"
+      }},
+      { selector: 'edge[family="relation"]', style: {
+        "label": "data(label)",
+        "font-size": 9,
+        "color": "#55657e",
+        "text-background-color": "#ffffff",
+        "text-background-opacity": 1,
+        "text-background-padding": "2px",
+        "target-arrow-shape": "none"
+      }},
+      { selector: 'edge[family="relation"][relation_type="hierarchy"]', style: {
+        "target-arrow-shape": "triangle", "line-style": "solid"
+      }},
+      { selector: 'edge[family="relation"][relation_type="composition"]', style: {
+        "target-arrow-shape": "diamond", "line-style": "solid"
+      }},
+      { selector: 'edge[family="relation"][relation_type="derivation"]', style: {
+        "target-arrow-shape": "vee", "line-style": "dashed"
+      }},
+      { selector: 'edge[family="relation"][relation_type="equivalence"]', style: {
+        "line-style": "dashed", "target-arrow-shape": "none"
+      }},
+      { selector: 'edge[family="relation"][relation_type="association"]', style: {
+        "line-style": "solid", "target-arrow-shape": "none"
+      }},
+      { selector: 'edge[family="reference"]', style: {
+        "width": 1, "line-color": "#d0d5dd", "label": "", "target-arrow-shape": "none"
+      }},
+      { selector: 'edge[family="reference"]:selected', style: {
+        "label": "data(kind)", "font-size": 9, "color": "#8a94a2",
+        "text-background-color": "#ffffff", "text-background-opacity": 1,
+        "text-background-padding": "2px"
+      }},
+      { selector: ":selected", style: {
+        "border-color": "#3d6db5", "border-width": 2.5,
+        "line-color": "#3d6db5", "target-arrow-color": "#3d6db5", "source-arrow-color": "#3d6db5"
+      }},
+      { selector: ".dimmed", style: { "opacity": 0.16 }},
+      { selector: ".search-match", style: { "border-color": "#d9a441", "border-width": 3 }}
+    ]
+  });
+
+  if (!DATA.content.nodes.length) {
+    var hintEl = document.getElementById("empty-hint");
+    hintEl.textContent = "该版本没有 Content 记录。请先运行 /evo-build 构建初始语义层。";
+    hintEl.style.display = "flex";
+  }
+
+  cy.layout({
+    name: "cose", animate: false, fit: true, padding: 48,
+    nodeDimensionsIncludeLabels: true
+  }).run();
+  cy.fit(48);
+
+  function clearHighlight() {
+    cy.elements().removeClass("dimmed search-match");
+  }
+
+  function nodeName(id) {
+    var n = cy.getElementById(id);
+    return n.length ? (n.data("label") || id) : id;
+  }
+
+  function showNodeDetail(node) {
+    var d = node.data();
+    showDetail(d.family, d.label || d.id, d.id, d.detail || []);
+  }
+
+  function showEdgeDetail(edge) {
+    var d = edge.data();
+    var kind = d.family === "relation" ? d.relation_type : d.kind;
+    var title = kind + "：" + nodeName(d.source) + " → " + nodeName(d.target);
+    showDetail(d.family, title, d.record_id || d.id, d.detail || []);
+  }
+
+  function focusElement(element) {
+    clearHighlight();
+    if (element.isNode()) {
+      var hood = element.closedNeighborhood();
+      cy.elements().not(hood).addClass("dimmed");
+      showNodeDetail(element);
+      cy.animate({ center: { eles: element }, duration: 220 });
+    } else {
+      showEdgeDetail(element);
+    }
+    element.select();
+  }
+
+  cy.on("tap", "node", function (evt) {
+    clearHighlight();
+    var node = evt.target;
+    var hood = node.closedNeighborhood();
+    cy.elements().not(hood).addClass("dimmed");
+    showNodeDetail(node);
+  });
+
+  cy.on("tap", "edge", function (evt) {
+    clearHighlight();
+    showEdgeDetail(evt.target);
+  });
+
+  cy.on("tap", function (evt) {
+    if (evt.target === cy) { clearHighlight(); showDefaultDetail(); }
+  });
+
+  /* ============================== search ============================== */
+
+  var searchInput = document.getElementById("search-input");
+  var searchStatus = document.getElementById("search-status");
+
+  function runSearch() {
+    var query = searchInput.value.trim().toLowerCase();
+    cy.nodes().removeClass("search-match");
+    if (!query) { searchStatus.textContent = ""; return; }
+    var matches = cy.nodes().filter(function (n) {
+      var d = n.data();
+      if (d.family !== "term" && d.family !== "mapping") return false;
+      if ((d.label || "").toLowerCase().indexOf(query) !== -1) return true;
+      if ((d.id || "").toLowerCase().indexOf(query) !== -1) return true;
+      return (d.search || []).some(function (s) { return s.indexOf(query) !== -1; });
+    });
+    searchStatus.textContent = matches.length ? (matches.length + " 个匹配") : "无匹配";
+    if (matches.length) {
+      matches.addClass("search-match");
+      focusElement(matches[0]);
+    }
+  }
+
+  document.getElementById("search-btn").addEventListener("click", runSearch);
+  searchInput.addEventListener("keydown", function (evt) {
+    if (evt.key === "Enter") runSearch();
+  });
+
+  /* ============================== filters ============================== */
+
+  function makeCheckbox(container, key, label, dotClass) {
+    var labelEl = document.createElement("label");
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = true;
+    box.dataset.key = key;
+    box.addEventListener("change", applyFilters);
+    var dot = document.createElement("span");
+    dot.className = "dot " + dotClass;
+    labelEl.appendChild(box);
+    labelEl.appendChild(dot);
+    labelEl.appendChild(textEl("span", label));
+    container.appendChild(labelEl);
+    return box;
+  }
+
+  var objectFilterBoxes = {};
+  var objectFiltersEl = document.getElementById("object-filters");
+  OBJECT_FAMILIES.forEach(function (family) {
+    objectFilterBoxes[family] = makeCheckbox(objectFiltersEl, family, OBJECT_FILTER_LABELS[family], family);
+  });
+
+  var relationFilterBoxes = {};
+  var relationFiltersEl = document.getElementById("relation-filters");
+  Object.keys(RELATION_FILTER_LABELS).forEach(function (relationType) {
+    relationFilterBoxes[relationType] = makeCheckbox(relationFiltersEl, relationType, RELATION_FILTER_LABELS[relationType], "relation");
+  });
+
+  function applyFilters() {
+    cy.batch(function () {
+      cy.nodes().forEach(function (node) {
+        var box = objectFilterBoxes[node.data("family")];
+        node.style("display", box && box.checked ? "element" : "none");
+      });
+      cy.edges().forEach(function (edge) {
+        var visible = edge.source().style("display") !== "none" &&
+                      edge.target().style("display") !== "none";
+        if (visible && edge.data("family") === "relation") {
+          var relBox = relationFilterBoxes[edge.data("relation_type")];
+          if (relBox && !relBox.checked) visible = false;
+        }
+        edge.style("display", visible ? "element" : "none");
+      });
+    });
+  }
+
+  /* ============================== toolbar ============================== */
+
+  document.getElementById("btn-fit").addEventListener("click", function () { cy.fit(48); });
+
+  document.getElementById("btn-reset").addEventListener("click", function () {
+    clearHighlight();
+    cy.$(":selected").unselect();
+    cy.elements().style("display", "element");
+    Object.keys(objectFilterBoxes).forEach(function (key) { objectFilterBoxes[key].checked = true; });
+    Object.keys(relationFilterBoxes).forEach(function (key) { relationFilterBoxes[key].checked = true; });
+    searchInput.value = "";
+    searchStatus.textContent = "";
+    showDefaultDetail();
+    cy.fit(48);
+  });
+
+  document.getElementById("btn-export").addEventListener("click", function () {
+    var link = document.createElement("a");
+    link.href = cy.png({ full: true, bg: "#ffffff", scale: 2 });
+    link.download = DATA.meta.version + ".png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  /* ============================== header / evolution ============================== */
+
+  document.getElementById("version-badge").textContent = DATA.meta.version;
+  var activeBadge = document.getElementById("active-badge");
+  if (DATA.meta.active) {
+    activeBadge.textContent = "Active";
+    activeBadge.className = "badge active";
+  } else {
+    activeBadge.textContent = "Explicit";
+    activeBadge.className = "badge explicit";
+  }
+
+  var chipsEl = document.getElementById("evolution-chips");
+  var evo = DATA.evolution || {};
+
+  function addChip(text, warn, onClick) {
+    var chip = textEl("span", text);
+    chip.className = "chip" + (warn ? " warn" : "");
+    if (onClick) chip.addEventListener("click", onClick);
+    chipsEl.appendChild(chip);
+    return chip;
+  }
+
+  function showEvolutionDetail() {
+    if (evo.initial_build) {
+      showDetail("evolution", "Initial Build", "", [
+        ["Current Version", evo.current_version || DATA.meta.version],
+        ["Evolution", "尚无进化记录（Initial Build）"]
+      ]);
+      return;
+    }
+    showDetail("evolution", evo.label, evo.run_id, [
+      ["Current Version", evo.current_version],
+      ["Parent Version", evo.parent_version],
+      ["Target Dimension", evo.target_dimension],
+      ["Decision", evo.decision],
+      ["Accepted Version", evo.accepted_version],
+      ["Changed Components", evo.changed_components],
+      ["Hypothesis", evo.hypothesis],
+      ["Updated At", evo.updated_at]
+    ]);
+  }
+
+  if (evo.initial_build) {
+    addChip("Initial Build", false, showEvolutionDetail);
+  } else {
+    addChip(evo.label || "Evolution", false, showEvolutionDetail);
+    if (evo.parent_version) addChip("Parent: " + evo.parent_version, false, showEvolutionDetail);
+    if (evo.target_dimension) addChip("Dimension: " + evo.target_dimension, false, showEvolutionDetail);
+    if (evo.decision) addChip("Decision: " + evo.decision, false, showEvolutionDetail);
+  }
+
+  var warningCount = (DATA.meta.warnings || []).length;
+  if (warningCount) {
+    addChip("⚠ " + warningCount + " warnings", true, function () {
+      showDetail("reference", "Reference warnings", "断裂引用已被跳过，未虚构任何图对象。",
+        DATA.meta.warnings.map(function (warning, index) { return ["#" + (index + 1), warning]; }));
+    });
+  }
+
+  /* ============================== schema view ============================== */
+
+  function renderSchemaView() {
+    var view = document.getElementById("view-schema");
+    clearChildren(view);
+    var schema = DATA.schema;
+
+    view.appendChild(textEl("h2", "Object Types"));
+    var cards = document.createElement("div");
+    cards.className = "cards";
+    schema.object_types.forEach(function (objectType) {
+      var card = document.createElement("div");
+      card.className = "card";
+      var name = document.createElement("div");
+      name.className = "card-name";
+      name.appendChild(pillEl("schema", objectType.name));
+      card.appendChild(name);
+      var desc = textEl("div", objectType.description);
+      desc.className = "card-desc";
+      card.appendChild(desc);
+      var meta = textEl("div", objectType.fields.length + " fields: " + objectType.fields.join(", "));
+      meta.className = "card-meta";
+      card.appendChild(meta);
+      card.addEventListener("click", function () {
+        showDetail("schema", objectType.name, objectType.description, [
+          ["Fields", objectType.fields]
+        ]);
+      });
+      cards.appendChild(card);
+    });
+    view.appendChild(cards);
+
+    view.appendChild(textEl("h2", "Relation Types"));
+    var relWrap = document.createElement("div");
+    schema.relation_types.forEach(function (relationType) {
+      var chip = document.createElement("span");
+      chip.className = "rel-chip";
+      chip.appendChild(textEl("span", relationType.name));
+      var arrow = textEl("span", relationType.directed ? "→" : "↔");
+      arrow.className = "arrow";
+      chip.appendChild(arrow);
+      chip.addEventListener("click", function () {
+        showDetail("schema", relationType.name, "Semantic Relation", [
+          ["Direction", relationType.directed ? "directed" : "undirected / symmetric"],
+          ["Meaning", relationType.description],
+          ["Record", schema.relation_record.name],
+          ["Record Fields", schema.relation_record.fields]
+        ]);
+      });
+      relWrap.appendChild(chip);
+    });
+    view.appendChild(relWrap);
+
+    view.appendChild(textEl("h2", "Reference Rules"));
+    schema.reference_rules.forEach(function (rule) {
+      var row = document.createElement("div");
+      row.className = "ref-rule";
+      var head = document.createElement("div");
+      head.appendChild(textEl("b", rule.from));
+      head.appendChild(textEl("span", "  — " + rule.name + " →  "));
+      head.appendChild(textEl("b", rule.to));
+      row.appendChild(head);
+      var desc = textEl("div", rule.description);
+      desc.className = "card-desc";
+      row.appendChild(desc);
+      row.addEventListener("click", function () {
+        showDetail("schema", rule.name, "Structural Reference", [
+          ["From", rule.from], ["To", rule.to], ["Meaning", rule.description]
+        ]);
+      });
+      view.appendChild(row);
+    });
+  }
+
+  /* ============================== tool view ============================== */
+
+  function renderToolView() {
+    var view = document.getElementById("view-tool");
+    clearChildren(view);
+    var tools = DATA.tools;
+
+    view.appendChild(textEl("h2", "Semantic Tools"));
+    var cards = document.createElement("div");
+    cards.className = "cards";
+    (tools.tools || []).forEach(function (tool) {
+      var card = document.createElement("div");
+      card.className = "card";
+      var name = document.createElement("div");
+      name.className = "card-name";
+      name.appendChild(pillEl("tool", "tool"));
+      name.appendChild(textEl("span", tool.name));
+      card.appendChild(name);
+      var desc = textEl("div", tool.description);
+      desc.className = "card-desc";
+      card.appendChild(desc);
+      var params = document.createElement("div");
+      (tool.parameters || []).forEach(function (param) {
+        var p = textEl("span", param);
+        p.className = "param";
+        params.appendChild(p);
+      });
+      card.appendChild(params);
+      card.addEventListener("click", function () {
+        showDetail("tool", tool.name, "Semantic MCP tool", [
+          ["Description", tool.description],
+          ["Parameters", tool.parameters]
+        ]);
+      });
+      cards.appendChild(card);
+    });
+    view.appendChild(cards);
+
+    view.appendChild(textEl("h2", "Manifest"));
+    var pre = textEl("pre", tools.manifest || "");
+    pre.className = "manifest";
+    view.appendChild(pre);
+  }
+
+  /* ============================== tabs ============================== */
+
+  var tabButtons = Array.prototype.slice.call(document.querySelectorAll("nav .tab"));
+  tabButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      tabButtons.forEach(function (b) { b.classList.toggle("active", b === button); });
+      var target = button.dataset.view;
+      document.getElementById("view-content").hidden = target !== "content";
+      document.getElementById("view-schema").hidden = target !== "schema";
+      document.getElementById("view-tool").hidden = target !== "tool";
+      if (target === "content") cy.resize();
+    });
+  });
+
+  /* ============================== boot ============================== */
+
+  renderSchemaView();
+  renderToolView();
+  showDefaultDetail();
+})();
+</script>
+</body>
+</html>

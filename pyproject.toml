@@ -28,6 +28,9 @@ Issues = "https://github.com/Cmd210/EvoOntology/issues"
 [tool.setuptools.packages.find]
 include = ["evoontology", "evoontology.*"]
 
+[tool.setuptools.package-data]
+"evoontology.visualization" = ["template.html", "vendor/*.js", "vendor/*.txt"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
@@ -35,3 +38,4 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = ["E402", "E501"]
+

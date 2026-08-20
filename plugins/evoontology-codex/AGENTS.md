@@ -1,4 +1,4 @@
-# EvoOntology — Codex Instructions
+﻿# EvoOntology — Codex Instructions
 
 This project uses EvoOntology: a versioned, self-evolving ontology layer between
 natural-language questions and the underlying data. The deterministic core lives
@@ -25,6 +25,12 @@ skills bundled in this plugin's `skills/` directory.
   `semantic_vN`, switches `active.json`, and advances the checkpoint; an
   Incomplete run changes neither.
 
+- **Visualize** — when the user asks to "visualize the ontology" or runs
+  `$evo-visualize`, execute the `evo-visualize` skill (see
+  `skills/evo-visualize/SKILL.md`). It calls Core `visualize()` to render the
+  active (or an explicitly requested) version as a standalone offline HTML
+  under `<workspace>/visualizations/`, read-only.
+
 ## Semantic MCP tools
 
 The `evo-semantic` MCP server exposes two bounded navigation tools plus a
@@ -47,3 +53,5 @@ python -c "from evoontology import EvolutionTrigger; import json; t=EvolutionTri
 
 If `evolution_due` is true, remind the user that `/evo-evolve` is available.
 Never start evolution automatically.
+
+

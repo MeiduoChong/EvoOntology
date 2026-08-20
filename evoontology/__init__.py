@@ -1,4 +1,4 @@
-"""EvoOntology core — deterministic capabilities for the self-evolving ontology layer.
+﻿"""EvoOntology core — deterministic capabilities for the self-evolving ontology layer.
 
 Layout follows the product design doc:
 
@@ -30,6 +30,7 @@ from .ontology.store import SemanticStore
 from .runtime.runtime import SemanticLayer
 from .trajectory.trajectory import TrajectoryStore, from_message_trace, truncate_result
 from .trigger.trigger import EvolutionTrigger
+from .visualization import visualize
 from .workspace import ensure_workspace, load_project, resolve_workspace, save_project
 
 __version__ = "1.1.0"
@@ -54,6 +55,7 @@ __all__ = [
     "ensure_workspace",
     "load_project",
     "save_project",
+  "visualize",
     "truncate_result",
     "from_message_trace",
     "Term",
@@ -62,3 +64,4 @@ __all__ = [
     "Constraint",
     "Evidence",
 ]
+
