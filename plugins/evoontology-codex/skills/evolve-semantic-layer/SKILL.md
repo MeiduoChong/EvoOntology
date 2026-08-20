@@ -67,9 +67,10 @@ for evolution.
    round budget with the user first (default: 8 rounds); the budget is frozen
    for the run and a resumed run reuses it without asking again.
 
-4. Persist the frozen run context under
-   `.evoontology/evolution/<round>/context.json`, including the Parent,
-   checkpoint, input IDs, validation IDs, and Evaluator reference.
+4. Persist the frozen run context through EvolutionSession: `start_run`
+   writes `evolution/run_N/run.json` with the Parent, adapter, frozen
+   budget, and acceptance criteria. Keep the batch's input IDs, validation
+   IDs, and Evaluator reference with the run's evaluation setup.
 
 Record IDs only; do not duplicate trajectory files.
 
@@ -222,7 +223,11 @@ After the decision:
 2. Mark solved problems, remaining limitations, newly discovered issues, and disproven explanations.
 3. Preserve the main validated mechanisms, rejected hypotheses, and unresolved uncertainty needed for later rounds.
 4. **Accept** — mark the Candidate as accepted and end Candidate search. Proceed to Finalize Evolution Run.
-5. **Reject** — write `evolution/<round>/result.json`, update the attribution and problem map, then design a new Candidate targeting the next most valuable mechanism and repeat Step 1–4. Do not advance the checkpoint and do not end the run.
+5. **Reject** — record the round through EvolutionSession (`record_round`
+   appends the summary to `evolution/run_N/rounds.jsonl`), update the
+   attribution and problem map, then design a new Candidate targeting the
+   next most valuable mechanism and repeat Step 1–4. Do not advance the
+   checkpoint and do not end the run.
 6. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
 
 Candidate failure, unknown attribution, no-op results, or temporary lack of
@@ -250,11 +255,16 @@ When the run ends, preserve the evolution record, including:
 - final decision;
 - unresolved system issues.
 
-In `.evoontology/evolution/<round>/result.json`, record:
+In the run records, also capture:
 
-- `target_dimension`: `content`, `tool`, or `schema`;
-- `changed_components`: the components actually modified in this round, such
-  as semantic content, prompt, workflow, runtime, tool, or schema.
+- the target dimension of each round: `content`, `tool`, or `schema`;
+- the components actually modified in the round, such as semantic content,
+  prompt, workflow, runtime, tool, or schema.
+
+Rejected rounds carry them in their `rounds.jsonl` summary (via
+`record_round`); the accepted round carries them in the final run report,
+which must be based on `run.json`, `rounds.jsonl`, `trajectory-sources.json`,
+and the summaries under `evaluations/`.
 
 If a Candidate was accepted:
 

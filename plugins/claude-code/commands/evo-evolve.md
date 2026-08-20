@@ -32,6 +32,7 @@ Incomplete 结束。
 python -m evoontology.validate --root <workspace> --version <candidate>
 ```
 
-Accept 后按 `docs/versioning.md` 发布为 `semantic_vN+1` 并推进 checkpoint；Reject 保留
-Parent、写 `evolution/<round>/result.json` 后继续下一轮 Candidate（不推进 checkpoint，
-也不结束 run）；Incomplete 不推进 checkpoint 并结束本次 run。
+Accept 后经 `EvolutionSession.accept()` 发布为 `semantic_vN+1` 并推进 checkpoint；
+Reject 保留 Parent、经 `record_round` 把轮次摘要追加到 `evolution/run_N/rounds.jsonl`
+后继续下一轮 Candidate（不推进 checkpoint，也不结束 run）；Incomplete 不推进
+checkpoint 并结束本次 run。
