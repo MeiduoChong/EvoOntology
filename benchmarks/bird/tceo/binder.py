@@ -78,6 +78,7 @@ class DeterministicBinder:
                         confidence="low",
                     ))
 
+        self._cached_bindings = bindings
         return bindings
 
     # ------------------------------------------------------------------

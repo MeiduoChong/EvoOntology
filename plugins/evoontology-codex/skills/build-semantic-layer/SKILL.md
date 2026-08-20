@@ -23,6 +23,7 @@ Read:
 - references/semantic-schema.md
 - references/semantic-interaction-protocol.md
 - references/semantic-layer-data-boundary.md
+- references/project-context.md
 
 The generated semantic layer MUST follow semantic-schema.md.
 
@@ -38,11 +39,58 @@ follow semantic-layer-data-boundary.md.
 
 # Builder Workflow
 
+## Step 0 — Initialize Build Context
+
+Before construction, establish the project context and data boundary.
+
+If an active semantic version already exists, do not rebuild or overwrite it. Direct the user to evolution unless they explicitly request a new workspace or destructive reinitialization.
+### 1. Resolve context
+
+If `.evoontology/project.json` exists, load and reuse the persisted project
+context. Do not re-infer or overwrite it unless the user explicitly requests
+reconfiguration.
+
+Otherwise, determine the project mode:
+
+- **Fixed-Split Mode:** a predefined dataset split and external Evaluator are
+  available.
+- **Rolling-Trajectory Mode:** the semantic layer is initialized from a seed
+  workload and later evolves from accumulated Task trajectories.
+
+Resolve the target data source, workload source, and Evaluator. When Ground
+Truth exists, register its location for Evaluator use only; Builder and Evolver
+must not read it.
+
+### 2. Establish data boundary
+
+For **Fixed-Split Mode**:
+
+- create or load the frozen split defined by
+  `references/semantic-layer-data-boundary.md`;
+- identify the evolution-training, validation, and held-out subsets;
+- expose only the permitted construction/evolution workload to the Builder.
+
+For **Rolling-Trajectory Mode**:
+
+- use the resolved seed workload and target data environment for initial
+  construction;
+- do not create Fold A/B or a validation reserve during initial build.
+
+### 3. Confirm and persist
+
+Present the resolved mode, data/workload sources, Evaluator, and data boundary
+for confirmation.
+
+After confirmation, persist the project context in the EvoOntology workspace.
+Later evolution runs must reuse this context rather than infer it again.
+
+**Stage Output:** A confirmed and persisted project context and data boundary.
+
 ## Step 1 — Workload-Guided Probing
 
 ### Understand workload requirements
 
-Read only the analytical questions in the frozen construction split.
+Read only the workload permitted by the persisted project boundary: the frozen construction split in Fixed-Split Mode, or the seed workload in Rolling-Trajectory Mode.
 
 Identify:
 
@@ -176,27 +224,25 @@ Revise unsupported, ambiguous, incomplete, or schema-invalid objects.
 
 ### Publish
 
-Create a versioned semantic layer containing:
+Publish the initial semantic-layer version with:
 
-- semantic objects;
-- evidence records;
-- build metadata, including rejected-candidate rationale where analytically
-  significant;
-- construction split identifier;
-- validation results;
-- known limitations.
+- semantic objects and evidence;
+- known limitations;
+- build metadata;
+- project mode and data-boundary metadata;
+- split identifier when using Fixed-Split Mode;
+- seed-workload source when using Rolling-Trajectory Mode.
 
-This version becomes the initial semantic layer and the starting point for
-future evolution.
+Complete publication through EvoOntology Core in this order:
 
-After the validated version is published, initialize its evolution trigger:
+1. run deterministic validation required for persistence and runtime loading;
+2. save the initial version as `versions/semantic_v0/`;
+3. set `active.json` to `semantic_v0`;
+4. initialize the evolution trigger state in `state.json`.
 
-```bash
-python -c "from evoontology import EvolutionTrigger; EvolutionTrigger(r'<workspace>').initialize()"
-```
+Initial build is not an evolution run. Evolution-history fields such as
+`last_evolution_trajectory` and `last_evolution_time` must remain unset until
+the first evolution run completes.
 
-This operation is idempotent. It starts the time-based reminder from the
-initial publication without resetting existing trajectories or user-defined
-thresholds.
-
-**Stage Output:** A validated and versioned initial semantic layer.
+**Stage Output:** An activated initial semantic layer with initialized
+evolution-trigger state.

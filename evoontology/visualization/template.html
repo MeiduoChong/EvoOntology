@@ -197,6 +197,12 @@
     background: #22303f; color: #d9e2ee; border-radius: 12px; padding: 14px 16px;
     font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.65;
   }
+  .doc-note { color: var(--muted); font-size: 12.5px; line-height: 1.65; margin: 0 0 10px; max-width: 860px; }
+  .doc h3 { font-size: 12.5px; margin: 0 0 8px; color: #51637a; }
+  .schema-subsection {
+    margin: 10px 0 4px; padding: 12px 14px 14px; border: 1px dashed #c3cede;
+    border-left: 3px solid #b9c8dc; border-radius: 12px; background: rgba(238, 242, 248, .55);
+  }
 
   /* ---- scrollbars ---- */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -338,33 +344,51 @@ window.EVO_DATA = __DATA_JSON__;
     button.addEventListener('click', function () { showView(button.getAttribute('data-view')); });
   });
 
-  /* ================= legend ================= */
+  /* ================= legend =================
+     图例统计始终按图谱中实际渲染的元素（DATA.content）汇总，而不是版本的
+     记录总数（meta.counts）：坏引用导致记录被跳过时图例仍与图谱一致；
+     与记录总数不一致时以“渲染数 / 记录总数”标注，悬停可查看说明。 */
 
   var counts = meta.counts || {};
-  var legend = $('#legend');
-  FAMILY_ORDER.forEach(function (family) {
-    var row = el('div', 'lg-item');
-    row.appendChild(el('span', 'swatch ' + family));
-    row.appendChild(el('span', 'lg-name', FAMILY_LABEL[family]));
-    var key = COUNT_KEY[family] || family + 's';
-    row.appendChild(el('span', 'lg-count', String(counts[key] != null ? counts[key] : 0)));
-    legend.appendChild(row);
+  var contentNodes = (DATA.content && DATA.content.nodes) || [];
+  var contentEdges = (DATA.content && DATA.content.edges) || [];
+  var nodeCountByFamily = {};
+  contentNodes.forEach(function (n) {
+    var fam = n.data && n.data.family;
+    if (fam) nodeCountByFamily[fam] = (nodeCountByFamily[fam] || 0) + 1;
   });
-  var sameTableCount = ((DATA.content && DATA.content.edges) || []).filter(function (e) {
+  var relationEdgeCount = contentEdges.filter(function (e) {
+    return e.data && e.data.family === 'relation';
+  }).length;
+  var sameTableCount = contentEdges.filter(function (e) {
     return e.data && e.data.kind === 'same_table';
   }).length;
-  if (sameTableCount) {
-    var stRow = el('div', 'lg-item');
-    stRow.appendChild(el('span', 'swatch same-table'));
-    stRow.appendChild(el('span', 'lg-name', '同表关联'));
-    stRow.appendChild(el('span', 'lg-count', String(sameTableCount)));
-    legend.appendChild(stRow);
+
+  var legend = $('#legend');
+  function addLegendRow(swatchClass, name, rendered, total) {
+    var row = el('div', 'lg-item');
+    row.appendChild(el('span', 'swatch ' + swatchClass));
+    row.appendChild(el('span', 'lg-name', name));
+    var label = String(rendered);
+    var mismatch = total != null && total !== rendered;
+    if (mismatch) label = rendered + ' / ' + total;
+    var count = el('span', 'lg-count', label);
+    if (mismatch) {
+      count.title = '已渲染 ' + rendered + ' 个；该版本记录共 ' + total +
+                    ' 条，其中 ' + (total - rendered) +
+                    ' 条因引用无法解析被跳过（见顶栏警告）';
+    }
+    row.appendChild(count);
+    legend.appendChild(row);
   }
-  var relRow = el('div', 'lg-item');
-  relRow.appendChild(el('span', 'swatch relation'));
-  relRow.appendChild(el('span', 'lg-name', 'Semantic Relation'));
-  relRow.appendChild(el('span', 'lg-count', String(counts.relations || 0)));
-  legend.appendChild(relRow);
+  FAMILY_ORDER.forEach(function (family) {
+    var key = COUNT_KEY[family] || family + 's';
+    addLegendRow(family, FAMILY_LABEL[family], nodeCountByFamily[family] || 0,
+                 counts[key] != null ? counts[key] : null);
+  });
+  if (sameTableCount) addLegendRow('same-table', '同表关联', sameTableCount, null);
+  addLegendRow('relation', 'Semantic Relation', relationEdgeCount,
+               counts.relations != null ? counts.relations : null);
 
   /* ================= detail panel ================= */
 
@@ -1082,25 +1106,39 @@ window.EVO_DATA = __DATA_JSON__;
       };
     })));
     if (schema.relation_record) {
-      view.appendChild(el('h2', '', 'Relation 记录'));
+      var typeNames = (schema.relation_types || []).map(function (item) { return item.name; });
+      view.appendChild(el('h2', '', 'Relation（语义关系）'));
+      view.appendChild(el('p', 'doc-note',
+        'Relation 记录 Term 与 Term 之间的语义关系，在内容图谱中渲染为连线。' +
+        '每条 Relation 的 relation_type 字段必须取下方嵌套列出的受控值之一。'));
       view.appendChild(cardGrid([{
         badge: 'relation',
         title: schema.relation_record.name,
         subtitle: schema.relation_record.description,
         body: schema.relation_record.fields.length + ' 个字段',
-        pairs: [['说明', schema.relation_record.description], ['字段', schema.relation_record.fields]]
+        pairs: [
+          ['说明', schema.relation_record.description],
+          ['字段', schema.relation_record.fields],
+          ['relation_type 取值', typeNames.length ? typeNames : '—']
+        ]
       }]));
+      var sub = el('div', 'schema-subsection');
+      sub.appendChild(el('h3', '', 'relation_type 受控取值（Relation 记录字段）'));
+      sub.appendChild(cardGrid((schema.relation_types || []).map(function (item) {
+        return {
+          badge: 'relation',
+          title: item.name,
+          subtitle: item.description,
+          body: item.directed ? '有向' : '无向（对称）',
+          pairs: [
+            ['归属', 'Relation.relation_type 字段的受控取值'],
+            ['说明', item.description],
+            ['方向性', item.directed ? '有向' : '无向（对称）']
+          ]
+        };
+      })));
+      view.appendChild(sub);
     }
-    view.appendChild(el('h2', '', '语义关系类型'));
-    view.appendChild(cardGrid((schema.relation_types || []).map(function (item) {
-      return {
-        badge: 'relation',
-        title: item.name,
-        subtitle: item.description,
-        body: item.directed ? '有向' : '无向（对称）',
-        pairs: [['说明', item.description], ['方向性', item.directed ? '有向' : '无向（对称）']]
-      };
-    })));
     view.appendChild(el('h2', '', '结构引用规则'));
     view.appendChild(cardGrid((schema.reference_rules || []).map(function (item) {
       return {

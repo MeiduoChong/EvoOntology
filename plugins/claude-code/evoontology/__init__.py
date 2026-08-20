@@ -55,7 +55,7 @@ __all__ = [
     "ensure_workspace",
     "load_project",
     "save_project",
-  "visualize",
+    "visualize",
     "truncate_result",
     "from_message_trace",
     "Term",

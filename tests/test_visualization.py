@@ -239,6 +239,31 @@ def test_schema_view_reflects_core_model():
     assert "source" in schema["relation_record"]["fields"]
 
 
+def test_legend_counts_follow_rendered_graph_elements(tmp_path):
+    """图例统计必须按实际渲染进图谱的元素（DATA.content）汇总。
+
+    存在坏引用时，记录会被跳过且不进入图谱；此时图例若继续按版本记录总数
+    （meta.counts）统计就会虚高，与图中可见对象不一致。
+    """
+    ws = ensure_workspace(tmp_path)
+    save_project(_project("fixed_split"), ws)
+    SemanticStore.save_version(ws, "semantic_v0", _records(broken=True))
+    SemanticStore.set_active(ws, "semantic_v0")
+    html = visualize(workspace=ws, open_browser=False).read_text(encoding="utf-8")
+    assert "nodeCountByFamily" in html, "legend must count rendered nodes per family"
+    assert "relationEdgeCount" in html, "legend must count rendered relation edges"
+    assert "counts[family + 's']" not in html, "legend must not use store record counts"
+
+
+def test_schema_view_nests_relation_types_under_relation(workspace):
+    """语义关系类型是 Relation 记录的 relation_type 字段取值，必须嵌套在
+    Relation 小节内展示，而不是与 Relation 记录并列的独立小节。"""
+    html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
+    assert "Relation（语义关系）" in html
+    assert "relation_type 受控取值" in html
+    assert "'语义关系类型'" not in html, "relation types must not stay a standalone section"
+
+
 def test_tool_view_uses_real_registry(workspace):
     tools = build_tool_view(SemanticStore.load(workspace))
     assert [tool["name"] for tool in tools["tools"]] == [

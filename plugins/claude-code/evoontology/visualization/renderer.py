@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..ontology.models import Constraint, Evidence, Mapping, Relation, Term
 from ..ontology.store import SemanticStore
-from ..runtime.mcp_server import _TOOLS
+from ..runtime.tools import TOOLS
 from ..runtime.runtime import SemanticLayer
 from ..workspace import PathLike, resolve_workspace
 
@@ -436,7 +436,7 @@ def build_tool_view(store: SemanticStore) -> Dict[str, Any]:
     """Describe the current Tool Layer from the real runtime/tool registry."""
     layer = SemanticLayer(store)
     tools = []
-    for spec in _TOOLS:
+    for spec in TOOLS:
         schema = spec.get("inputSchema", {})
         required = set(schema.get("required", []))
         tools.append({

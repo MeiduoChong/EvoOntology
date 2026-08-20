@@ -79,3 +79,90 @@ def test_execute_dispatch(tmp_path):
     layer = SemanticLayer.load(str(tmp_path))
     result = layer.execute("browse_semantics", {"query": "region", "kind": "term"})
     assert result["matched_total"] == 1
+
+
+def test_resolve_by_semantic_id(tmp_path):
+    _init(tmp_path)
+    layer = SemanticLayer.load(str(tmp_path))
+    result = layer.resolve(mentions=["t1"])
+    resolved = result["results"][0]
+    assert resolved["status"] == "resolved"
+    assert resolved["query_type"] == "semantic_id"
+    assert resolved["term"]["name"] == "net_income"
+    assert len(resolved["mappings"]) == 1
+
+
+def test_resolve_expands_evidence(tmp_path):
+    records = {
+        "terms": [
+            {
+                "id": "term_revenue",
+                "name": "revenue",
+                "type": "metric",
+                "definition": "total revenue",
+                "aliases": ["sales revenue"],
+                "evidence_refs": ["ev_revenue"],
+            }
+        ],
+        "mappings": [
+            {
+                "id": "map_revenue",
+                "term_id": "term_revenue",
+                "table": "financials",
+                "column": "revenue",
+                "evidence_refs": ["ev_revenue"],
+            }
+        ],
+        "relations": [],
+        "constraints": [
+            {
+                "id": "con_revenue",
+                "target": "term_revenue",
+                "severity": "warn",
+                "description": "exclude refunds",
+                "evidence_refs": ["ev_revenue"],
+            }
+        ],
+        "evidence": [
+            {
+                "id": "ev_revenue",
+                "source": "schema",
+                "query": "PRAGMA table_info(financials)",
+                "result": "revenue exists",
+                "validation_method": "schema check",
+                "timestamp": "2026-08-20T00:00:00Z",
+            }
+        ],
+    }
+    ensure_workspace(str(tmp_path))
+    SemanticStore.save_version(str(tmp_path), "semantic_v0", records)
+    SemanticStore.set_active(str(tmp_path), "semantic_v0")
+    layer = SemanticLayer.load(str(tmp_path))
+    result = layer.resolve(mentions=["revenue"])
+    evidence = result["results"][0]["evidence"]
+    assert [item["id"] for item in evidence] == ["ev_revenue"]
+    assert evidence[0]["query"] == "PRAGMA table_info(financials)"
+
+
+def test_resolve_context_disambiguates(tmp_path):
+    records = {
+        "terms": [
+            {"id": "t_net", "name": "net_income", "type": "metric",
+             "definition": "net income", "aliases": ["profit"]},
+            {"id": "t_gross", "name": "gross_profit", "type": "metric",
+             "definition": "gross profit before costs", "aliases": ["profit"]},
+        ],
+        "mappings": [],
+        "relations": [],
+        "constraints": [],
+        "evidence": [],
+    }
+    ensure_workspace(str(tmp_path))
+    SemanticStore.save_version(str(tmp_path), "semantic_v0", records)
+    SemanticStore.set_active(str(tmp_path), "semantic_v0")
+    layer = SemanticLayer.load(str(tmp_path))
+    without_context = layer.resolve(mentions=["profit"])
+    assert without_context["results"][0]["status"] == "ambiguous"
+    with_context = layer.resolve(mentions=["profit"], context="net income")
+    assert with_context["results"][0]["status"] == "resolved"
+    assert with_context["results"][0]["term"]["name"] == "net_income"

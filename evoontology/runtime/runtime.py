@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional
 
+from ..ontology.models import Term
 from ..ontology.store import SemanticStore
 
 _ACTIVE_STATES = {"validated", "active"}
@@ -194,6 +195,13 @@ class SemanticLayer:
         name = getattr(item, "name", "") or ""
         if not name and kind == "mapping":
             name = f"{getattr(item, 'term_id', '')} -> {getattr(item, 'table', '')}"
+        elif not name and kind == "relation":
+            relation_type = getattr(item, "relation_type", "")
+            name = relation_type or (
+                f"{getattr(item, 'source', '')} -> {getattr(item, 'target', '')}"
+            )
+        elif not name and kind == "constraint":
+            name = getattr(item, "constraint_type", "") or item.id
         return {
             "id": item.id,
             "name": name,
@@ -206,8 +214,16 @@ class SemanticLayer:
                     [
                         name,
                         str(getattr(item, "definition", "") or ""),
+                        str(getattr(item, "description", "") or ""),
                         " ".join(getattr(item, "aliases", []) or []),
                         str(getattr(item, "term_id", "") or ""),
+                        str(getattr(item, "source", "") or ""),
+                        str(getattr(item, "target", "") or ""),
+                        str(getattr(item, "relation_type", "") or ""),
+                        str(getattr(item, "constraint_type", "") or ""),
+                        " ".join(getattr(item, "trigger_keywords", []) or []),
+                        str(getattr(item, "table", "") or ""),
+                        str(getattr(item, "column", "") or ""),
                     ],
                 )
             ),
@@ -217,12 +233,21 @@ class SemanticLayer:
 
     def resolve(self, mentions: Optional[List[str]] = None,
                 context: Optional[str] = None) -> Dict[str, Any]:
-        mentions = [str(m).strip().lower() for m in (mentions or []) if str(m).strip()]
-        accepted = mentions[:_MAX_RESOLVE]
-        skipped = mentions[_MAX_RESOLVE:]
+        raw_mentions = [str(m).strip() for m in (mentions or []) if str(m).strip()]
+        accepted = raw_mentions[:_MAX_RESOLVE]
+        skipped = raw_mentions[_MAX_RESOLVE:]
 
         results = []
-        for mention in accepted:
+        for raw in accepted:
+            mention = raw.lower()
+            direct = self.store.get(raw) or self.store.get(mention)
+            if isinstance(direct, Term) and _is_active(direct):
+                results.append(self._build_resolve_result(
+                    mention, direct, f"semantic id lookup: '{direct.id}'",
+                    "resolved", query_type="semantic_id",
+                ))
+                continue
+
             candidates = self._match_mention(mention)
             if not candidates:
                 results.append({
@@ -236,16 +261,21 @@ class SemanticLayer:
                 item, rationale = candidates[0]
                 results.append(self._build_resolve_result(mention, item, rationale, "resolved"))
             else:
-                results.append({
-                    "query": mention,
-                    "query_type": "mention",
-                    "status": "ambiguous",
-                    "match_rationale": f"{len(candidates)} terms match '{mention}'",
-                    "candidates": [
-                        self._build_resolve_result(mention, item, rationale, "ambiguous")
-                        for item, rationale in candidates
-                    ],
-                })
+                disambiguated = self._disambiguate(mention, candidates, context)
+                if disambiguated is not None:
+                    item, rationale = disambiguated
+                    results.append(self._build_resolve_result(mention, item, rationale, "resolved"))
+                else:
+                    results.append({
+                        "query": mention,
+                        "query_type": "mention",
+                        "status": "ambiguous",
+                        "match_rationale": f"{len(candidates)} terms match '{mention}'",
+                        "candidates": [
+                            self._build_resolve_result(mention, item, rationale, "ambiguous")
+                            for item, rationale in candidates
+                        ],
+                    })
 
         for result in results:
             if result.get("status") == "unresolved":
@@ -260,7 +290,7 @@ class SemanticLayer:
         return {
             "status": "partial" if skipped else "ok",
             "results": results,
-            "requested_count": len(mentions),
+            "requested_count": len(raw_mentions),
             "processed_count": len(accepted),
             "skipped": [{"query_type": "mention", "query": value} for value in skipped],
             "version": self.version,
@@ -292,12 +322,51 @@ class SemanticLayer:
             return exact_alias
         return substring
 
+    def _disambiguate(self, mention: str, candidates: List[tuple],
+                      context: Optional[str]) -> Optional[tuple]:
+        """Break ambiguous mention ties using the analysis context."""
+        context_tokens = _tokens(context or "")
+        if not context_tokens:
+            return None
+
+        scored = []
+        for item, rationale in candidates:
+            search_text = " ".join([
+                getattr(item, "name", ""),
+                " ".join(getattr(item, "aliases", []) or []),
+                getattr(item, "definition", "") or "",
+                getattr(item, "scope", "") or "",
+            ])
+            score = len(context_tokens & _tokens(search_text))
+            scored.append((score, item, rationale))
+
+        scored.sort(key=lambda pair: (-pair[0], pair[1].id))
+        if not scored or scored[0][0] == 0:
+            return None
+        if len(scored) > 1 and scored[0][0] == scored[1][0]:
+            return None
+        return (scored[0][1], f"context-disambiguated match: '{mention}'")
+
+    def _evidence_view(self, evidence_id: str) -> Optional[Dict[str, Any]]:
+        """Return a compact, agent-readable view of one evidence record."""
+        evidence = self.store.evidence.get(evidence_id)
+        if not evidence:
+            return None
+        return {
+            "id": evidence.id,
+            "source": evidence.source,
+            "query": evidence.query,
+            "result": evidence.result,
+            "validation_method": evidence.validation_method,
+            "timestamp": evidence.timestamp,
+        }
+
     def _build_resolve_result(self, query: str, item: Any, rationale: str,
-                              status: str) -> dict:
+                              status: str, query_type: str = "mention") -> dict:
         term_id = item.id
         result: Dict[str, Any] = {
             "query": query,
-            "query_type": "mention",
+            "query_type": query_type,
             "status": status,
             "match_rationale": rationale,
             "term": {
@@ -355,6 +424,29 @@ class SemanticLayer:
         ]
         if constraints:
             result["constraints"] = constraints
+
+        evidence_ids: List[str] = list(getattr(item, "evidence_refs", []) or [])
+        for m in self.store.mappings.values():
+            if _is_active(m) and m.term_id == term_id:
+                evidence_ids.extend(m.evidence_refs)
+        for r in self.store.relations.values():
+            if _is_active(r) and (r.source == term_id or r.target == term_id):
+                evidence_ids.extend(r.evidence_refs)
+        for c in self.store.constraints.values():
+            if _is_active(c) and c.target == term_id:
+                evidence_ids.extend(c.evidence_refs)
+
+        evidence: List[Dict[str, Any]] = []
+        seen: set = set()
+        for evidence_id in evidence_ids:
+            if evidence_id in seen:
+                continue
+            seen.add(evidence_id)
+            view = self._evidence_view(evidence_id)
+            if view:
+                evidence.append(view)
+        if evidence:
+            result["evidence"] = evidence
 
         return result
 
