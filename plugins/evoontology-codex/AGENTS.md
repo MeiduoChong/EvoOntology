@@ -1,4 +1,4 @@
-﻿# EvoOntology — Codex Instructions
+# EvoOntology — Codex Instructions
 
 This project uses EvoOntology: a versioned, self-evolving ontology layer between
 natural-language questions and the underlying data. The deterministic core lives

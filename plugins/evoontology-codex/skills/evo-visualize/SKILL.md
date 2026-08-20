@@ -1,4 +1,4 @@
-﻿---
+---
 name: evo-visualize
 description: Visualize the current EvoOntology ontology state as an interactive local graph.
 ---

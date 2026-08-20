@@ -1,4 +1,4 @@
-﻿"""EvoOntology core — deterministic capabilities for the self-evolving ontology layer.
+"""EvoOntology core — deterministic capabilities for the self-evolving ontology layer.
 
 Layout follows the product design doc:
 

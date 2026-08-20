@@ -1,4 +1,4 @@
-﻿"""Focused tests for the read-only visualization module (Phase 1 plan §16)."""
+"""Focused tests for the read-only visualization module (Phase 1 plan §16)."""
 
 import json
 from pathlib import Path

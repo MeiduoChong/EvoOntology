@@ -1,4 +1,4 @@
-﻿"""Read-only ontology visualization: one ontology version -> one standalone HTML.
+"""Read-only ontology visualization: one ontology version -> one standalone HTML.
 
 Pipeline::
 
@@ -299,6 +299,50 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                 f"relation {relation.id}: unresolved term reference, edge skipped "
                 f"(source={relation.source!r}, target={relation.target!r})"
             )
+
+    # Implicit same-table Term links (visualization-level, derived from mapping
+    # grounding) so attribute Terms never float disconnected in the Term view.
+    explicit_pairs = {
+        frozenset((rel.source, rel.target))
+        for rel in store.relations.values()
+        if rel.source in store.terms and rel.target in store.terms
+    }
+    relation_degree: Dict[str, int] = {}
+    for rel in store.relations.values():
+        relation_degree[rel.source] = relation_degree.get(rel.source, 0) + 1
+        relation_degree[rel.target] = relation_degree.get(rel.target, 0) + 1
+    terms_by_table: Dict[str, List[str]] = {}
+    for term_id in store.terms:
+        tables: List[str] = []
+        for mid in mappings_by_term.get(term_id, []):
+            mapping = store.mappings.get(mid)
+            if mapping and mapping.table and mapping.table not in tables:
+                tables.append(mapping.table)
+        for table in tables:
+            terms_by_table.setdefault(table, []).append(term_id)
+    for table in sorted(terms_by_table):
+        members = sorted(terms_by_table[table])
+        if len(members) < 2:
+            continue
+        hub = members[0]
+        for tid in members[1:]:
+            if (relation_degree.get(tid, 0), len(mappings_by_term.get(tid, []))) > (
+                relation_degree.get(hub, 0), len(mappings_by_term.get(hub, []))
+            ):
+                hub = tid
+        for member in members:
+            if member == hub or frozenset((hub, member)) in explicit_pairs:
+                continue
+            _add_edge(f"ref:same_table:{table}:{hub}:{member}", "reference",
+                      _nid("term", hub), _nid("term", member), {
+                "kind": "same_table",
+                "label": table,
+                "detail": _pairs([
+                    ("Reference", "same_table"),
+                    ("Table", table),
+                    ("Terms", f"{term_names.get(hub, hub)} \u2194 {term_names.get(member, member)}"),
+                ]),
+            })
 
     # Structural Reference edges: induced by schema-defined object references.
     for mapping in store.mappings.values():

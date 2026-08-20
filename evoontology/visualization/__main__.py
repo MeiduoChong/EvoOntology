@@ -1,4 +1,4 @@
-﻿"""Module entry point so plugins can call ``python -m evoontology.visualization``.
+"""Module entry point so plugins can call ``python -m evoontology.visualization``.
 
 Mirrors the ``python -m evoontology.validate`` convention used by the Build
 and Evolve commands. Thin wrapper over :func:`evoontology.visualization.visualize`.
