@@ -1,16 +1,16 @@
 # EvoOntology 产品化使用指南
 
-本文档说明产品化完成后，如何实际使用 EvoOntology。产品化把散落在三个 benchmark 里的
-通用能力抽取为一个**核心包** `evoontology/`（确定性能力），并配两套 harness 适配：
+本文档说明如何实际使用 EvoOntology。产品化把散落在三个 benchmark 里的通用能力抽取为
+一个**核心包** `evoontology/`（确定性能力），并配两个自包含插件：
 
 - `evoontology/` —— 与 benchmark 无关的产品运行时：ontology store / runtime(MCP) /
-  trajectory / trigger / evaluation / validate 门禁。
-- `plugins/` —— Claude Code 插件（两命令 + 两 skill + MCP + reminder）
-  与 Codex 适配层。
+  trajectory / trigger / evaluation / evolution 生命周期 / validate 门禁。
+- `plugins/` —— Claude Code 插件（两命令 + 两 skill + MCP + Session Start 提醒）
+  与 Codex 插件（AGENTS.md 指令 + skills + MCP）。两者内置同一份 core 副本。
 
 产品最终形态 = 一个核心包（含 validate 门禁）+ 两个 skill 命令，无 CLI。智能分析全在
-skill，Python 只做「运行时 + 最小确定性校验」。默认**零配置**：不要求用户填写 workspace
-路径、Evaluation Mode、Judge 模型或 Trigger 参数。
+skill，Python 只做「运行时 + 最小确定性校验 + 进化生命周期状态机」。默认**零配置**：
+不要求用户填写 workspace 路径、Evaluation Mode、Judge 模型或 Trigger 参数。
 
 ---
 
@@ -37,7 +37,7 @@ codex plugin add evoontology-codex@evoontology
 codex plugin list
 ```
 
-Marketplace 添加成功但不等于插件已经安装；请以最后一条 `plugin list` 中显示 installed/enabled
+Marketplace 添加成功不等于插件已安装；请以最后一条 `plugin list` 显示 installed/enabled
 为准。安装或更新后新建会话，再运行 `/evo-build`。
 
 ---
@@ -52,7 +52,12 @@ workspace 默认是项目根的 `.evoontology/`，首次 `/evo-build` 时自动�
 ├── active.json          # {"active_version": "semantic_v0"}
 ├── versions/            # 所有版本（正式 semantic_vN + 候选 vN-cK），每版本 5 个 JSON
 ├── trajectories/        # 每个任务一条 JSON trajectory
-├── evolution/           # 每轮 context.json + result.json
+├── evolution/           # 每个进化 run 一个目录 run_N/
+│   └── run_N/
+│       ├── run.json                 # 状态 / Parent / 当前 Candidate / 轮次 / 冻结预算
+│       ├── trajectory-sources.json  # 用户确认的轨迹来源记录
+│       ├── rounds.jsonl             # 每轮一行摘要
+│       └── evaluations/             # 正式 Parent/Candidate 评估摘要
 └── state.json           # Trigger checkpoint 与阈值
 ```
 
@@ -81,7 +86,7 @@ mode 在 Step 0 确认后写入 `project.json`，后续 Build 和 Evolve 共用�
 | 指令 | 语义 | 执行者 |
 | --- | --- | --- |
 | `/evo-build` | 构建 semantic_v0：读数据、探索 schema、生成五类记录 | agent 按 build skill |
-| `/evo-evolve` | 触发进化：诊断→归因→补丁→Parent/Candidate gate→落地 | agent 按 evolve skill |
+| `/evo-evolve` | 触发进化：诊断→归因→补丁→Parent/Candidate gate→发布 | agent 按 evolve skill |
 
 两者都是**触发指令**，不是 Python 确定性操作；真正的构建 / 进化由 agent 按 skill 执行。
 版本命名与切换约定见 `plugins/claude-code/docs/versioning.md`（正式 `semantic_vN`、
@@ -89,20 +94,62 @@ mode 在 Step 0 确认后写入 `project.json`，后续 Build 和 Evolve 共用�
 
 ---
 
-## 4. 配置（零配置）
+## 4. 进化闭环：EvolutionSession
+
+每次 `/evo-evolve` 对应一个 Run，由核心包的 `EvolutionSession` 状态机托管。Skill 决定
+「改什么、为什么改」，Session 保证 run 不会以错误方式结束：
+
+```
+running ──Reject──▶ running（同一 run 内设计下一个 Candidate）
+running ──Accept──▶ accepted（发布新版本、推进 checkpoint）
+running ──预算耗尽/用户中断/数据缺失/评估不可靠──▶ incomplete
+```
+
+### 新 run 开始时
+
+1. **恢复优先**：若已有未结束的 run，resume 它而不是新开；
+2. **冻结数据**：fixed_split 复用已持久化的训练/验证子集；rolling_trajectory 从
+   checkpoint 之后收集合格轨迹、冻结批次并切分 Evolution Pool / Validation Reserve；
+3. **确认预算**：向用户说明本次计划使用的轮数（默认 8），确认后冻结进 `run.json`；
+   resume 同一 run 沿用已确认预算；预算耗尽后如需加轮数，必须再次确认；
+4. **确认轨迹来源**：来源或范围未定时，向用户说明每条来源的路径、内容范围、时间与
+   用途并确认，确认后写入 `run_N/trajectory-sources.json`。新 run 默认复用最近一次 run
+   的来源记录并验证路径仍有效，仅当来源新增、失效或范围变化时重新确认。找不到轨迹时，
+   先跑 Parent baseline，再据评测结果、错误和反例开始诊断。
+
+### 循环内
+
+- 诊断 → 归因 → 补丁：沿 **Content / Tool / Schema** 三个维度选择主要机制，一个
+  Candidate 验证一个主要假设；改动必须可溯源到目标维度、可回滚到 Parent；
+- 评估：Candidate 以自己的存储版本参评（`--semantic-version`），比较期间不修改
+  `active.json`；有 GT 走绝对评分，无 GT 走 LLM Judge 匿名 A/B；
+- **Reject 不是终点**：写 `rounds.jsonl` 摘要、更新归因与 problem map，然后设计下一个
+  Candidate；不推进 checkpoint、不结束 run；
+- **Accept 结束搜索**：进入收尾。
+
+### 收尾（Finalize）
+
+Accept 后：确定性校验 → 发布为 `semantic_vN+1`（不覆盖已有正式版本）→ 更新
+`active.json` → 推进一次 checkpoint → run 标记 `accepted`。
+Incomplete 不发布、不推进；同一批次在下次 run 重试。最终报告必须基于 session 终态与
+落盘记录，不依赖对话记忆。
+
+---
+
+## 5. 配置（零配置）
 
 产品默认零配置，无 `config.yaml`。用户需要调整时直接告诉 Claude / Codex（例如「以后每
 60 个任务提醒我一次」），由 agent 更新 `state.json` 内部状态，不改配置文件。
 
 - 进化触发默认：checkpoint 后新增 ≥ 30 个 task，或距 checkpoint ≥ 7 天。首次 checkpoint
-  是 `semantic_v0` 发布时间；完成正式 Gate 的 Accept/Reject 会推进 checkpoint，Incomplete
-  不推进。
+  是 `semantic_v0` 发布时间；**只有正式 Gate 的 Accept 推进 checkpoint**（Reject 在同一
+  run 内继续循环，Incomplete 不推进）。
 - 评估协议自动选择：benchmark 提供 Evaluator（Ground Truth）时走 GT；否则走 LLM Judge
   （见 `plugins/claude-code/docs/evaluation-protocol.md`）。
 
 ---
 
-## 5. MCP 接入
+## 6. MCP 接入
 
 插件通过 `.mcp.json` 以模块形式 spawn 服务，client 自动拉起、无需手动起服。默认
 workspace 为当前项目的 `.evoontology/`（零配置）：
@@ -128,10 +175,11 @@ python -m evoontology.runtime.mcp_server --store <workspace-root>
 
 ---
 
-## 6. validate 门禁（agent 自动）
+## 7. validate 门禁（agent 自动）
 
-`/evo-build`、`/evo-evolve` 发布新版本前，agent 会自动调用 `python -m evoontology.validate` 做确定性
-门禁（JSON 合法 / 引用完整 / 可加载），用户无需手动执行。仅手动诊断 workspace 时才直接运行：
+`/evo-build`、`/evo-evolve` 发布新版本前，agent 会自动调用 `python -m evoontology.validate`
+做确定性门禁（JSON 合法 / 引用完整 / 可加载），用户无需手动执行。仅手动诊断 workspace
+时才直接运行：
 
 ```bash
 python -m evoontology.validate --root <workspace-root>
@@ -146,7 +194,7 @@ validate 只做结构校验，不做数据库语义校验（表字段存在 / Ma
 
 ---
 
-## 7. 一个最小端到端流程
+## 8. 一个最小端到端流程
 
 ```bash
 # 1. 按第 1 节通过 Claude Code 或 Codex Marketplace 安装插件
@@ -157,14 +205,16 @@ validate 只做结构校验，不做数据库语义校验（表字段存在 / Ma
 # 3. Data Agent 通过 MCP 接入（.mcp.json 声明，client 自动 spawn，无需手动起服）
 
 # 4. 触发进化（或等待轨迹达到阈值后的提醒）
-/evo-evolve        # agent 诊断→补丁→gate；accept 后 agent 自行发布（改 active.json）
+/evo-evolve        # agent 在 EvolutionSession 内循环 Candidate；
+                   # Accept 时经 EvolutionSession.accept() 校验、发布、
+                   # 更新 active.json 并推进 checkpoint
 ```
 
 agent 发布前会自动调用 `python -m evoontology.validate` 做门禁。
 
 ---
 
-## 8. 边界（一期不做）
+## 9. 边界（一期不做）
 
 Web UI / SaaS / 多租户 / 消息队列 / 常驻 worker / 多 Candidate 并行 / 自动循环 / 高频改
 schema 均不在本版范围。无人值守全自动进化需要常驻后台 worker，一期只做「检测 + 提醒」，

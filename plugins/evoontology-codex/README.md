@@ -10,6 +10,7 @@
 | 全局指令 | `AGENTS.md` | 注册 `/evo-build`、`/evo-evolve` 流程与语义工具用法 |
 | MCP 接入 | `.mcp.json` | 自动启动语义 MCP server |
 | Skills | `skills/` | Builder / Evolver 方法 |
+| 确定性核心 | `evoontology/` | 内置 core 包（由仓库根经 `scripts/sync_plugin_core.py` 同步） |
 
 ## 安装
 
@@ -37,7 +38,9 @@ Core 统一解析该路径，并维护 `project.json`、`active.json`、`state.j
 
 - 说「构建语义层」或 `/evo-build` —— 按 `build-semantic-layer` skill 构建 `semantic_v0`；
 - 说「进化语义层」或 `/evo-evolve` —— 按 `evolve-semantic-layer` skill 执行
-  诊断 → 归因 → 补丁 → Parent/Candidate gate。
+  诊断 → 归因 → 补丁 → Parent/Candidate gate。进化由 `EvolutionSession` 驱动：
+  新 run 先确认轮数预算（默认 8）与轨迹来源，Reject 在同一 run 内继续下一轮，
+  直到 Accept 发布新版本并推进 checkpoint。
 
 实际构建 / 进化流程见本目录 `skills/` 下的两份 SKILL.md。
 

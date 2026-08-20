@@ -1,16 +1,52 @@
 # EvoOntology
 
-为 Data Agent 提供**自进化的语义层（Ontology Layer）**：在自然语言问题与数据库 schema
-之间加一层可版本化、可自我改进的语义映射。
+*为 Data Agent 提供可版本化、可评估、可自我进化的语义层——像训练模型一样训练 Ontology：有冻结预算、有验证集、有 Accept / Reject 门禁，但改的是语义记录而不是模型权重。*
 
-本仓库交付的是产品化形态：
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+
+> 📖 完整使用指南见 [`USAGE.md`](USAGE.md)；产品化设计权威文档见
+> [`docs/evolution-productization-design.md`](docs/evolution-productization-design.md)。
+
+---
+
+## 为什么需要 EvoOntology
+
+Data Agent 直接查库时，常因自然语言与数据库 schema 之间的 gap 答错：指标口径不清、
+实体指代不明、隐含约束缺失。人工编写的语义层能缓解这个问题，但**会过时**——业务在变、
+问题在变，而手工维护的语义层没有反馈回路。
+
+EvoOntology 的解法是把语义层变成**可训练的状态**：
+
+- **版本化的语义层**：五类记录（Term / Mapping / Relation / Constraint / Evidence）
+  构成 `semantic_vN`，每次修改都产生新版本，可对比、可回滚；
+- **有门禁的进化**：`/evo-evolve` 从历史任务轨迹诊断问题、归因、打补丁，Candidate 必须
+  在受控评估中**可复现地优于 Parent** 才能发布；Reject 不是终点，而是下一轮的输入；
+- **零配置接入**：一条 Marketplace 命令安装插件，语义 MCP 自动拉起，Agent 通过两个
+  有界工具 `browse_semantics` / `resolve_semantics` 查询语义层。
+
+语义层从此和代码一样有版本历史、有测试、有发布门禁，并且能沿着真实使用轨迹持续改进。
+
+## 架构总览
 
 ```text
-evoontology/   核心包（确定性能力：store / runtime / trajectory / trigger / evaluation）
-plugins/       Claude Code 插件 + Codex 适配层（/evo-build、/evo-evolve 两命令）
-benchmarks/    三个 benchmark 接入示例（bird / ddr_10k / insightbench）
-tests/         核心路径测试
+自然语言问题 ──▶ Data Agent（Claude Code / Codex / benchmark harness）
+                    │  MCP: browse_semantics / resolve_semantics
+                    ▼
+          EvoOntology 语义层  semantic_vN（Term/Mapping/Relation/Constraint/Evidence）
+                    ▲
+                    │ Accept：发布 semantic_vN+1、切换 active、推进 checkpoint
+                    │
+   /evo-evolve ─────┤  EvolutionSession：冻结预算与数据 → 诊断 → 归因 → 补丁 → 评估门禁
+                    │
+          trajectories/（Tool Call 级任务轨迹）+ 评估结果
 ```
+
+- **Build**：`/evo-build` 走 Workload-Guided Probing → Evidence-Grounded Commitment，
+  产出五类记录并发布 `semantic_v0`；
+- **Use**：Data Agent 会话中用语义 MCP  grounding 概念，再交给原生工具执行查询；
+- **Record**：任务轨迹以 Tool Call 粒度写入 `trajectories/`（不存思维链）；
+- **Evolve**：达到触发条件后提醒，`/evo-evolve` 在一个 EvolutionSession 内循环
+  Candidate，直到 Accept 或外部条件导致 Incomplete。
 
 ## 安装
 
@@ -42,33 +78,48 @@ codex plugin list
 ```
 
 两种客户端安装的是各自的插件包，功能一致：Build / Evolve 方法、语义 MCP、Workspace
-状态与版本管理。安装或更新后请新建一个会话，再执行 `/evo-build`。
+状态与版本管理。两个插件都内置同一份 `evoontology` 核心包（由
+`scripts/sync_plugin_core.py` 从仓库根同步），自包含、开箱即用。安装或更新后请新建
+一个会话，再执行 `/evo-build`。
 
-## 作用
+## 两个命令
 
-Data Agent 直接查库时，常因自然语言与 schema 之间的 gap 而答错。EvoOntology 插入一层
-语义层，Agent 在会话中用两个 MCP 工具查询：
+| 命令 | 语义 | 执行者 |
+| --- | --- | --- |
+| `/evo-build` | 构建 `semantic_v0`：读数据、探索 schema、生成五类记录 | agent 按 build skill |
+| `/evo-evolve` | 触发进化：诊断 → 归因 → 补丁 → Parent/Candidate gate → 发布 | agent 按 evolve skill |
 
-- `browse_semantics(query, kind, limit)` —— 发现与当前问题相关的概念；
-- `resolve_semantics(mentions, context)` —— 把选中概念解析为 grounding 的 Mapping，
-  并带回关联的 Relation / Constraint / Evidence。
+两者都是**触发指令**；真正的构建 / 进化由 agent 按 skill 执行，确定性状态（版本、预算、
+checkpoint、来源记录）由核心包保证。
 
-语义层会自进化：`/evo-build` 构建初始 `semantic_v0`；`/evo-evolve` 依据 Tool Call 级
-历史任务轨迹走「诊断 → 归因 → 补丁 → Parent/Candidate 评估 → 发布新版本」。
+## 进化闭环（EvolutionSession）
 
-## 目录
+每次 `/evo-evolve` 对应一个 Run，由 `evoontology.evolution.EvolutionSession` 状态机托管，
+落盘在 `<workspace>/evolution/run_<N>/`：
 
-| 目录 | 内容 |
-| --- | --- |
-| `evoontology/` | 核心包：`ontology/`（五类记录 + 版本化 store）、`runtime/`（browse/resolve/MCP）、`trajectory/`（Tool Call 级轨迹）、`trigger/`（进化提醒）、`evaluation/`（GT / LLM Judge 调度）、`validate`（发布门禁） |
-| `plugins/claude-code/` | Claude Code 插件：`.mcp.json`（零配置语义 MCP）、`commands/`、`skills/`、`hooks/`（Session Start 提醒）、`scripts/`（check-reminder） |
-| `plugins/evoontology-codex/` | 自包含 Codex 插件：manifest + skills + MCP + 安装脚本 |
-| `benchmarks/` | 三个 benchmark 接入示例（各含 Data Agent / Native Tools / Runner / Evaluator） |
-| `tests/` | 核心路径测试（store / runtime / trajectory / trigger / evaluation） |
+```text
+running ──Reject──▶ running（同一 run 内下一轮 Candidate）
+running ──Accept──▶ accepted（发布新版本、推进 checkpoint）
+running ──预算耗尽/外部阻断──▶ incomplete（不发布、不推进）
+```
 
-## EvoOntology Workspace
+关键规则：
 
-默认 Workspace 是 `<project-root>/.evoontology/`；benchmark 也可以显式指定独立 Workspace。
+- **预算先确认**：新 run 先向用户说明计划使用的轮数（默认 8），确认后冻结；resume
+  同一 run 不重复询问；
+- **轨迹来源先确认**：轨迹来源或范围未定时，向用户说明路径、内容范围、时间与用途并
+  确认，确认后持久化到 `run_<N>/trajectory-sources.json`；新 run 默认复用上次来源记录，
+  仅当来源新增、失效或范围变化时重新确认；
+- **三个进化维度**：Content / Tool / Schema，Candidate 改动必须可溯源到目标维度、
+  可回滚到 Parent；
+- **独立版本评估**：Candidate 以自己的存储版本参评（`--semantic-version` /
+  `version=`），比较期间不修改 `active.json`；
+- **只有 Accept 推进 checkpoint**：Reject 写结果后继续下一轮；Incomplete 保持 Parent
+  与 checkpoint 不变。
+
+## Workspace
+
+默认 Workspace 是 `<project-root>/.evoontology/`；benchmark 可显式指定独立 Workspace。
 一个 Workspace 对应一条独立的语义版本与进化历史：
 
 ```text
@@ -76,80 +127,93 @@ Data Agent 直接查库时，常因自然语言与 schema 之间的 gap 而答�
 ├── project.json       # mode、数据源、workload、Evaluator 与数据边界
 ├── active.json        # 当前正式语义版本
 ├── state.json         # reminder checkpoint 与阈值
-├── versions/          # semantic_vN 与 vN-cK
+├── versions/          # 正式 semantic_vN 与候选 vN-cK，各含五类 JSON
 ├── trajectories/      # 每个 Data Agent 任务一条 JSON trajectory
-└── evolution/         # 每轮 context.json + result.json
+└── evolution/         # 每个 run 一个目录 run_N/
+    └── run_N/
+        ├── run.json                 # 状态、Parent、当前 Candidate、轮次、冻结预算
+        ├── trajectory-sources.json  # 用户确认的轨迹来源记录
+        ├── rounds.jsonl             # 每轮一行摘要
+        └── evaluations/             # 正式 Parent/Candidate 评估摘要
 ```
 
-Core 通过 `resolve_workspace()` 统一解析路径，`ensure_workspace()` 幂等创建三个目录；
-`project.json` 在 Build Step 0 确认后写入，`active.json` 与 `state.json` 只在 `semantic_v0`
-保存并校验成功后生成，避免失败构建留下虚假的激活状态。
+Core 通过 `resolve_workspace()` 统一解析路径；`project.json` 在 Build Step 0 确认后写入，
+`active.json` 与 `state.json` 只在 `semantic_v0` 保存并校验成功后生成，避免失败构建留下
+虚假的激活状态。
 
 ### 两种项目模式
 
-Step 0 会根据项目是否有固定 benchmark 边界选择一种 mode，并写入 `project.json`：
+Build Step 0 会根据项目是否有固定 benchmark 边界选择一种 mode，写入 `project.json`：
 
 - **`fixed_split`**：适合 BIRD 等已有问题集、Ground Truth 和固定评测边界的 benchmark。
-  Build 只使用 Construction Pool（例如 Fold A）；Validation Reserve（例如 Fold B）只用于
-  Parent/Candidate 正式 Gate，不能回流到构建、诊断或补丁生成。
-- **`rolling_trajectory`**：适合没有固定测试集的真实业务或冷启动项目。初始 seed workload
-  用于构建 `semantic_v0`，上线后的 Data Agent task 持续写入 `trajectories/`；达到阈值后，
-  Evolver 从 checkpoint 之后的新轨迹中诊断问题，并使用独立抽样任务或 LLM Judge 完成 Gate。
+  Build 只使用 Construction Pool；Validation Reserve 只用于 Parent/Candidate 正式 Gate，
+  不能回流到构建、诊断或补丁生成。
+- **`rolling_trajectory`**：适合没有固定测试集的真实业务或冷启动项目。seed workload
+  用于构建 `semantic_v0`，上线后的 task 持续写入 `trajectories/`；达到阈值后从
+  checkpoint 之后的新轨迹中冻结批次，用独立抽样任务或 LLM Judge 完成 Gate。
 
 两种 mode 共用同一套 Workspace、版本和 checkpoint 机制；区别只在 workload 如何进入构建、
-进化与评估。已有稳定 benchmark 划分时不要重新随机切分；没有 GT 时也无需人为伪造 Fold A/B。
+进化与评估。
 
 ## 语义 MCP（零配置）
 
-`.mcp.json` 以模块形式 spawn 服务，client 自动拉起，无需手动起服、无需填写 workspace
-路径。默认 workspace 为当前项目的 `.evoontology/`：
+插件的 `.mcp.json` 以模块形式 spawn 服务，client 自动拉起，无需手动起服、无需填写
+workspace 路径。默认 workspace 为当前项目的 `.evoontology/`：
 
 ```bash
 python -m evoontology.runtime.mcp_server
 ```
 
-如需指向别的 workspace，追加 `--store <workspace-root>`。
+如需指向别的 workspace，追加 `--store <workspace-root>`。接入后 Data Agent 可见：
+
+- `browse_semantics(query, kind, limit)` —— 发现与当前问题相关的概念；
+- `resolve_semantics(mentions, context)` —— 把选中概念解析为 grounding 的 Mapping，
+  并带回关联的 Relation / Constraint / Evidence；
+- 资源 `evo-semantic://session-manifest` —— 会话开始时读取的简洁说明。
+
+这两个工具返回的是元数据与指引；数据库查询与代码执行仍由原生工具负责。
 
 ## 默认设置（可调整）
 
-产品默认零配置，以下参数有内置默认值，需要时可让 agent 调整（或直接改 workspace 的
-`state.json`）。
+产品默认零配置，以下参数有内置默认值，需要时直接告诉 agent（例如「以后每 60 个任务
+提醒我一次」），由 agent 更新 `state.json`。
 
 ### 进化触发阈值
 
-EvoOntology 使用两类互补信号判断语义层是否值得复盘，满足任一条件便会在 Session Start
-给出非阻塞提醒：
+满足任一条件即在 Session Start 给出**非阻塞提醒**（不会自动进化）：
 
-- **工作量信号**：自初始语义层发布或上次完成正式 Gate 后，新增 ≥ **30** 条 task trajectory
-  （`min_new_trajectories`）。一条 trajectory 对应 Data Agent 完成的一次任务，而不是数据库
-  记录数或工具调用次数；
-- **时间信号**：距初始语义层发布或上次完成正式 Gate ≥ **7** 天（`min_days`），避免低频项目的
-  语义层长期缺少复盘。
+- **工作量信号**：checkpoint 之后新增 ≥ **30** 条 task trajectory；
+- **时间信号**：距 checkpoint ≥ **7** 天。
 
-首次 `/evo-build` 会自动初始化计时状态；旧工作区若缺少状态，Session Start 钩子也会安全补建，
-且不会丢弃已经积累的 trajectory。提醒只提供决策信号，**不会自动执行进化**；成功完成
-`/evo-evolve` 的 Accept 或 Reject 完成落盘后，系统会推进本轮 trajectory 与时间 checkpoint；
-未完成可靠 Gate 时不会推进。
-
-阈值可以按项目节奏调整。例如告诉 Claude / Codex「以后每 60 个任务提醒我一次」，agent 会更新
-`<workspace>/state.json` 的 `thresholds` 字段。
+首次 `/evo-build` 自动初始化计时状态；只有正式 Gate 的 Accept 才推进 checkpoint。
 
 ### 评估协议（有 / 无 Ground Truth）
 
-系统自动选择，无需手动声明模式：
+系统自动选择，无需手动声明：
 
 - **有 GT**：benchmark 提供 `score_fn(answer, gt)` 绝对评分，Candidate 平均分严格高于
-  Parent 才 accept；
-- **无 GT**：走 LLM Judge——匿名 A/B 比较 Parent 与 Candidate，Candidate 零硬伤且胜出
-  任务严格多于 Parent 才 accept（门槛见 `plugins/claude-code/docs/evaluation-protocol.md`）。
+  Parent 才 Accept；
+- **无 GT**：LLM Judge 匿名 A/B 比较 Parent 与 Candidate，Candidate 零硬伤且胜出任务
+  严格多于 Parent 才 Accept（门槛见
+  `plugins/claude-code/docs/evaluation-protocol.md`）。无 GT 时需指定一个独立于
+  Evolver 的 judge 模型，凭据走环境变量。
 
-无 GT 时需指定一个**独立于 Evolver 的 judge 模型**（provider / model / api key，凭据用
-环境变量），直接告诉 agent 即可。
+## 仓库结构
 
-## 三个 benchmark 接入示例
+| 目录 | 内容 |
+| --- | --- |
+| `evoontology/` | 核心包 v1.1.0：`ontology/`（五类记录 + 版本化 store）、`runtime/`（browse/resolve/MCP）、`trajectory/`（Tool Call 级轨迹）、`trigger/`（进化提醒）、`evaluation/`（GT / LLM Judge 调度）、`evolution/`（EvolutionSession 状态机 + adapter 契约）、`validate`（发布门禁） |
+| `plugins/claude-code/` | Claude Code 插件：`/evo-build`、`/evo-evolve` 命令，builder / evolver skill，`.mcp.json`，Session Start 提醒 hook，内置 core 副本 |
+| `plugins/evoontology-codex/` | 自包含 Codex 插件：`AGENTS.md` 项目指令、skills、`.mcp.json`，内置 core 副本 |
+| `benchmarks/` | 三个 benchmark 接入示例（各含 Data Agent / Native Tools / Runner / Evaluator / EvolutionAdapter） |
+| `scripts/` | `sync_plugin_core.py`：把根 core 同步到两个插件副本（`--check` 用于 CI） |
+| `tests/` | 核心路径回归测试 |
+| `docs/` | 产品化设计文档（权威） |
 
-`benchmarks/` 下是三个 benchmark 的接入示例，各含 Agent 实现、语义运行时、MCP server
-与评估入口；其确定性能力统一由仓库根的 `evoontology` 包提供，不重复维护。
+## Benchmarks
+
+`benchmarks/` 下是三个接入示例，确定性能力统一由 `evoontology` 核心包提供，
+benchmark 侧只保留特有的 Agent、工具与评估实现：
 
 | 目录 | 基准 | 任务类型 |
 | --- | --- | --- |
@@ -157,14 +221,31 @@ EvoOntology 使用两类互补信号判断语义层是否值得复盘，满足�
 | `benchmarks/ddr_10k/` | DDR-10K | 自主数据分析 |
 | `benchmarks/insightbench/` | InsightBench | 迭代分析 / 代码生成 |
 
-运行 benchmark 仍需准备相应 benchmark 自身的 Python 依赖。模型凭据从环境变量读取，
-benchmark 数据需本地自备（见各 benchmark 目录的 README）。
+仓库不提供 benchmark 原始数据与预构建 ontology：准备官方数据后运行 `/evo-build` 构建
+`semantic_v0`，再跑 baseline / semantic 两个条件。运行 benchmark 需要各自的 Python
+依赖与模型凭据（见各目录 README）。
 
-## 测试
+## 开发者
 
-仓库回归测试使用 `python -m pytest tests/`。
+```bash
+# 回归测试（core + 插件同步校验）
+python -m pytest tests -q
+
+# 校验两个插件内置 core 副本与仓库根一致
+python scripts/sync_plugin_core.py --check
+```
+
+修改 `evoontology/` 后运行 `python scripts/sync_plugin_core.py` 同步到两个插件，
+再提交。发布门禁 `python -m evoontology.validate --root <workspace>` 只做结构校验
+（JSON 合法 / 引用完整 / 可加载），不做数据库语义校验。
 
 ## 文档
 
-`USAGE.md`（完整使用指南）· `plugins/claude-code/README.md`（插件组件）·
-`plugins/claude-code/docs/`（版本命名 / 评估协议 / 轨迹格式）。
+- [`USAGE.md`](USAGE.md) —— 产品化使用指南（安装、workspace、进化闭环、端到端流程）
+- [`docs/evolution-productization-design.md`](docs/evolution-productization-design.md) —— 设计权威文档
+- `plugins/claude-code/docs/` —— 版本命名 / 评估协议 / 轨迹格式
+- `plugins/claude-code/README.md` · `plugins/evoontology-codex/README.md` —— 插件组件说明
+
+## License
+
+MIT © Eric Chong

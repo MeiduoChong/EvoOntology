@@ -10,11 +10,13 @@ Build → Use → Record → Evolve → Evaluate 闭环。
 
 | 能力 | 模块 | 接入方式 |
 | --- | --- | --- |
-| Ontology 存储 / 版本管理 | `evoontology.ontology.store.SemanticStore` | `save_version` / `set_active` / `promote` |
+| Ontology 存储 / 版本管理 | `evoontology.ontology.store.SemanticStore` | `save_version` / `publish` / `promote` / `set_active` |
 | Semantic Runtime | `evoontology.runtime.runtime.SemanticLayer` | `browse` / `resolve` / `manifest` |
 | Semantic MCP | `evoontology.runtime.mcp_server` | `python -m evoontology.runtime.mcp_server --store <workspace>` |
 | Trajectory 记录 | `evoontology.trajectory.TrajectoryStore` | `append` 一条 task 轨迹 |
 | Evolution Trigger | `evoontology.trigger.EvolutionTrigger` | `check()` / `mark_evolved()` |
+| Evolution 生命周期 | `evoontology.evolution.EvolutionSession` | Run 状态机：预算冻结、轨迹来源确认、Accept 才推进 checkpoint |
+| Evolution 适配 | `evoontology.evolution.EvolutionAdapter` | 各 benchmark 实现 `evaluate()`，评测 Parent / Candidate |
 | Evaluation 调度 | `evoontology.evaluation.EvaluationGate` | `decide_gt` / `decide_judge` |
 
 每个 benchmark 目录下的 Data Agent、Native Tools、Runner、Evaluator 为该

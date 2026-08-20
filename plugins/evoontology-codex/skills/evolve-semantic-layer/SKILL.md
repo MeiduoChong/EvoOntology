@@ -82,9 +82,22 @@ validation data, and evaluation protocol.
 ### Step 1 — Diagnose Problems from Historical Trajectories
 
 Do not rely only on existing failure traces. Analyze both what the system has
-done and what it should have done but did not. When trajectory sources or
-their scope are not yet settled, confirm them with the user and persist the
-confirmed source references for this run.
+done and what it should have done but did not.
+
+Before diagnosing, actively locate the trajectories, evaluation results, and
+execution logs relevant to this run and confirm their applicable scope. When
+trajectory sources or their scope are not yet settled, confirm them with the
+user and persist the confirmed source references for this run:
+
+- Explain each source's path, content scope, time range, and intended use
+  before asking for confirmation.
+- For a new run, default to the previous run's confirmed source references
+  and verify the paths are still valid; re-confirm only when sources are
+  added, invalidated, or their scope changes. A resumed run reuses its
+  confirmed sources without asking again.
+- If no eligible trajectories exist yet, run the Parent on a baseline batch
+  first and start diagnosis from its evaluation results, errors, and
+  counterexamples.
 
 1. Compare successful, failed, improved, and regressed cases to understand the analysis paths actually taken by the Agent.
 2. Examine analysis coverage and identify important dimensions, metrics, concepts, relations, hypotheses, and analysis directions that were ignored, repeatedly missed, or never explored.

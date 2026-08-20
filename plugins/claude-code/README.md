@@ -13,9 +13,11 @@ builder / evolver 两个 skill、语义 MCP 运行时，以及 Session Start 进
 | Evolver skill | `skills/evolve-semantic-layer/` | 诊断 → 归因 → 补丁 → gate |
 | MCP 配置 | `.mcp.json` | 语义 MCP server 自动接入（零配置） |
 | 进化提醒 | `hooks/hooks.json` + `scripts/check-reminder.py` | Session Start 检查 evolution_due |
+| 确定性核心 | `evoontology/` | 内置 core 包（由仓库根经 `scripts/sync_plugin_core.py` 同步） |
 
-语义 MCP 与确定性能力（store / runtime / trajectory / trigger / evaluation）统一由
-仓库根的 `evoontology/` 包提供，本插件不重复维护运行时。
+语义 MCP 与确定性能力（store / runtime / trajectory / trigger / evaluation /
+evolution）由插件内置的 `evoontology/` 核心包提供，与仓库根保持一致（由
+`scripts/sync_plugin_core.py` 同步），插件自包含、开箱即用。
 
 ## 安装
 
@@ -35,7 +37,9 @@ claude plugin list
 安装后可用两个触发命令：
 
 - `/evo-build` —— 读数据、探索 schema、生成五类记录，发布 `semantic_v0`；
-- `/evo-evolve` —— 诊断 → 归因 → 补丁 → Parent/Candidate gate → 落地。
+- `/evo-evolve` —— 诊断 → 归因 → 补丁 → Parent/Candidate gate → 落地。进化由
+  `EvolutionSession` 驱动：新 run 先与用户确认轮数预算（默认 8）与轨迹来源，
+  Reject 后在同一 run 内继续下一轮，直到 Accept 发布新版本并推进 checkpoint。
 
 两者是触发指令，实际构建 / 进化由 agent 按对应 skill 执行。
 
@@ -62,7 +66,8 @@ mode 在 Build Step 0 确认并写入 `project.json`，Evolve 直接复用。
 是否执行 `/evo-evolve`。不自动启动进化。
 
 `state.json` 使用中性的 `checkpoint_time` / `checkpoint_trajectory`：首次基线是
-`semantic_v0` 发布时间，完成正式 Gate 的 Accept/Reject 才推进 checkpoint。
+`semantic_v0` 发布时间，只有正式 Gate 的 Accept 才推进 checkpoint（Reject 在
+同一 run 内继续循环，Incomplete 不推进）。
 
 ## 发布校验（agent 自动）
 
