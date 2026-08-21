@@ -1,12 +1,14 @@
 .env
 .venv/
 .evoontology/
+.agents/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 benchmarks/bird/data/mini_dev_data/
 benchmarks/bird/data/dev/
 benchmarks/bird/data/minidev/
+benchmarks/bird/data/split_data.py
 logs/
 outputs/
 results/
