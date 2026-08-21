@@ -18,10 +18,13 @@ read-only.
    `active.json`.
 3. Call the `evo-semantic` MCP tool `visualize_semantics` (the single rendering
    entry point), passing `workspace` (the absolute `.evoontology/` path) and
-   optionally `version`. Do not run `python -m evoontology.visualization`.
+   optionally `version` and `open_browser`. Do not run
+   `python -m evoontology.visualization`.
 
 4. Return the generated path `<workspace>/visualizations/<version>.html`.
-   The MCP tool writes the file without opening a browser.
+   The MCP tool writes the file and then opens it in the default browser
+   automatically (`open_browser` defaults to true). Pass `open_browser: false`
+   only when the user explicitly does not want the browser to open.
 
 ## Boundaries
 

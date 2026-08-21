@@ -8,7 +8,7 @@ version = "1.1.0"
 description = "EvoOntology core: versioned semantic-layer store, runtime/MCP, trajectory recording, evolution trigger, and evaluation gate."
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "Eric Chong" }]
+authors = [{ name = "Meiduo Chong" }]
 keywords = ["ontology", "semantic-layer", "data-agent", "self-evolution", "mcp"]
 requires-python = ">=3.10"
 dependencies = []

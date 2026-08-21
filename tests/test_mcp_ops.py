@@ -45,9 +45,23 @@ def test_validate_and_list_versions(tmp_path):
 def test_visualize_semantics_writes_html(tmp_path):
     ws = _ws(tmp_path)
     _save_active(ws)
-    result = ops.execute("visualize_semantics", {"workspace": ws})
+    result = ops.execute("visualize_semantics", {"workspace": ws, "open_browser": False})
     assert result["status"] == "ok"
+    assert result["opened_in_browser"] is False
     assert (tmp_path / ".evoontology" / "visualizations" / "semantic_v0.html").is_file()
+
+
+def test_visualize_semantics_opens_browser_by_default(tmp_path, monkeypatch):
+    import evoontology.visualization.renderer as renderer
+
+    opened = []
+    monkeypatch.setattr(renderer.webbrowser, "open", lambda url: opened.append(url))
+    ws = _ws(tmp_path)
+    _save_active(ws)
+    result = ops.execute("visualize_semantics", {"workspace": ws})
+    assert result["opened_in_browser"] is True
+    assert len(opened) == 1
+    assert opened[0].endswith("semantic_v0.html")
 
 
 def test_evolution_accept_flow(tmp_path):

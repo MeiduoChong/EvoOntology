@@ -80,7 +80,8 @@ OPERATIONS = [
         "name": "visualize_semantics",
         "description": (
             "Render one ontology version to a standalone offline HTML file "
-            "under <workspace>/visualizations/ (read-only)."
+            "under <workspace>/visualizations/ (read-only) and open it in the "
+            "default browser automatically unless open_browser is false."
         ),
         "inputSchema": {
             "type": "object",
@@ -89,6 +90,13 @@ OPERATIONS = [
                 "version": {
                     "type": "string",
                     "description": "Version to render; omit for the active version.",
+                },
+                "open_browser": {
+                    "type": "boolean",
+                    "description": (
+                        "Open the rendered HTML in the default browser after "
+                        "writing it. Defaults to true."
+                    ),
                 },
             },
             "required": ["workspace"],

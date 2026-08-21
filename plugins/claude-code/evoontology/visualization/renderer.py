@@ -19,6 +19,7 @@ import dataclasses
 import json
 import re
 import webbrowser
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -100,6 +101,7 @@ def visualize(
             "active": selected == active_version,
             "counts": store.counts(),
             "warnings": content["warnings"],
+            "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         },
         "content": {"nodes": content["nodes"], "edges": content["edges"]},
         "schema": build_schema_view(),

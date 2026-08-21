@@ -3,7 +3,7 @@
   "version": "1.0.2+codex.20260821213000",
   "description": "Build, query, record, and evolve a versioned semantic layer for data agents.",
   "author": {
-    "name": "Eric Chong"
+    "name": "Meiduo Chong"
   },
   "homepage": "https://github.com/MeiduoChong/EvoOntology",
   "repository": "https://github.com/MeiduoChong/EvoOntology",
@@ -19,7 +19,7 @@
     "displayName": "EvoOntology",
     "shortDescription": "A self-evolving semantic layer for data agents.",
     "longDescription": "Build an evidence-grounded semantic layer, use it through bounded MCP tools, record task trajectories, and evolve it behind an evaluation gate.",
-    "developerName": "Eric Chong",
+    "developerName": "Meiduo Chong",
     "category": "Productivity",
     "capabilities": [
       "Interactive",

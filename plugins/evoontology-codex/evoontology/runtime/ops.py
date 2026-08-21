@@ -39,12 +39,13 @@ def validate_semantics(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
 def visualize_semantics(arguments: Dict[str, Any]) -> Dict[str, Any]:
     workspace = _workspace(arguments)
+    open_browser = bool(arguments.get("open_browser", True))
     path = _visualize(
         workspace=str(workspace),
         version=_version(arguments) or "active",
-        open_browser=False,
+        open_browser=open_browser,
     )
-    return {"status": "ok", "html_path": str(path)}
+    return {"status": "ok", "html_path": str(path), "opened_in_browser": open_browser}
 
 
 def evolution_status(arguments: Dict[str, Any]) -> Dict[str, Any]:

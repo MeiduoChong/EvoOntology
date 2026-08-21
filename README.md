@@ -93,4 +93,4 @@ codex plugin list
 
 ## License
 
-MIT © Eric Chong
+MIT © Meiduo Chong
