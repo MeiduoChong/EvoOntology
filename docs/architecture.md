@@ -24,8 +24,8 @@ Accept/Reject 门控约束每一次改动。SkillOpt 训练的是 skill 文档�
 | 目录 | 职责 |
 | --- | --- |
 | `evoontology/` | 确定性核心包：ontology store、runtime/MCP、trajectory、trigger、evaluation、evolution 状态机、validate 门禁 |
-| `plugins/claude-code/` | Claude Code 插件：`/evo-build`、`/evo-evolve` 命令、builder/evolver skill、`.mcp.json`、Session Start 提醒 hook |
-| `plugins/evoontology-codex/` | Codex 插件：`AGENTS.md`、builder/evolver/evo-visualize skill、`.mcp.json` |
+| `plugins/claude-code/` | Claude Code 插件：`/evo-build`、`/evo-evolve`、`/evo-visualize` 命令、builder/evolver skill、`.mcp.json`、Session Start 提醒 hook |
+| `plugins/evoontology-codex/` | Codex 插件：`AGENTS.md`、`evo-build`/`evo-evolve`/`evo-visualize` skill、`.mcp.json` |
 | `benchmarks/` | 三个 benchmark 环境（bird / ddr_10k / insightbench），每个环境实现一个 `EvolutionAdapter` |
 | `scripts/` | `sync_plugin_core.py`（把根 core 同步到两个插件） |
 | `docs/` | 架构与接入文档 |
@@ -70,7 +70,7 @@ running ──预算耗尽/外部阻断──▶ incomplete（不发布、不推
 - `run_agent.py` / `run_evaluation.py`：rollout + 评分（对应 SkillOpt 的 `rollout.py`）；
 - `data/`（或场景加载器）：dataloader（对应 SkillOpt 的 `dataloader.py`）；
 - `configs/*.yaml`：baseline / semantic 两条实验条件；
-- seed skill：插件里的 `build-semantic-layer`（对应 SkillOpt 的 `skills/initial.md`）。
+- seed skill：插件里的 `evo-build`（对应 SkillOpt 的 `skills/initial.md`）。
 
 统一发现入口：`benchmarks/registry.py` + `python -m benchmarks`（对应 SkillOpt 的 `_ENV_REGISTRY`）。
 接入细节见 [接入一个新的 Benchmark](guide/new-benchmark.md)。

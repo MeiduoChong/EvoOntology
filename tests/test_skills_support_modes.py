@@ -15,22 +15,22 @@ def _read(path: Path) -> str:
 
 def test_build_skill_documents_both_modes():
     for root in SKILL_ROOTS:
-        skill = _read(root / "build-semantic-layer" / "SKILL.md")
+        skill = _read(root / "evo-build" / "SKILL.md")
         boundary = _read(
-            root / "build-semantic-layer" / "references" / "semantic-layer-data-boundary.md"
+            root / "evo-build" / "references" / "semantic-layer-data-boundary.md"
         )
         assert "Fixed-Split Mode" in skill
         assert "Rolling-Trajectory Mode" in skill
         assert "fixed_split" in boundary
         assert "rolling_trajectory" in boundary
-        assert (root / "build-semantic-layer" / "references" / "project-context.md").is_file()
+        assert (root / "evo-build" / "references" / "project-context.md").is_file()
 
 
 def test_evolve_skill_documents_both_modes():
     for root in SKILL_ROOTS:
-        skill = _read(root / "evolve-semantic-layer" / "SKILL.md")
+        skill = _read(root / "evo-evolve" / "SKILL.md")
         boundary = _read(
-            root / "evolve-semantic-layer" / "references" / "semantic-layer-data-boundary.md"
+            root / "evo-evolve" / "references" / "semantic-layer-data-boundary.md"
         )
         assert "Fixed-Split Mode" in skill
         assert "Rolling-Trajectory Mode" in skill

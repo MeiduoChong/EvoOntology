@@ -1,7 +1,7 @@
 # EvoOntology — Claude Code Plugin
 
-把 EvoOntology 打包成 Claude Code 插件：提供 `/evo-build`、`/evo-evolve` 两个命令、
-builder / evolver 两个 skill、语义 MCP 运行时，以及 Session Start 进化提醒。
+把 EvoOntology 打包成 Claude Code 插件：提供 `/evo-build`、`/evo-evolve`、`/evo-visualize`
+三个命令、builder / evolver 两个 skill、语义 MCP 运行时，以及 Session Start 进化提醒。
 
 ## 组件
 
@@ -9,8 +9,9 @@ builder / evolver 两个 skill、语义 MCP 运行时，以及 Session Start 进
 | --- | --- | --- |
 | Build 命令 | `commands/evo-build.md` | `/evo-build` 构建 `semantic_v0` |
 | Evolve 命令 | `commands/evo-evolve.md` | `/evo-evolve` 触发进化 |
-| Builder skill | `skills/build-semantic-layer/` | 构建初始语义层 |
-| Evolver skill | `skills/evolve-semantic-layer/` | 诊断 → 归因 → 补丁 → gate |
+| Visualize 命令 | `commands/evo-visualize.md` | `/evo-visualize` 生成离线交互图 |
+| Builder skill | `skills/evo-build/` | 构建初始语义层 |
+| Evolver skill | `skills/evo-evolve/` | 诊断 → 归因 → 补丁 → gate |
 | MCP 配置 | `.mcp.json` | 语义 MCP server 自动接入（零配置） |
 | 进化提醒 | `hooks/hooks.json` + `scripts/check-reminder.py` | Session Start 检查 evolution_due |
 | 确定性核心 | `evoontology/` | 内置 core 包（由仓库根经 `scripts/sync_plugin_core.py` 同步） |
@@ -29,19 +30,21 @@ claude plugin list
 ```
 
 无需 clone 仓库、创建虚拟环境或单独执行 `pip install`。`marketplace list` 用于确认 Marketplace 已添加，
-`plugin install` 才会下载插件，`plugin list` 用于确认最终安装状态。安装完成后 build / evolve
-命令、两个 skill、语义 MCP 与进化提醒自动就位。
+`plugin install` 才会下载插件，`plugin list` 用于确认最终安装状态。安装完成后 build / evolve /
+visualize 命令、两个 skill、语义 MCP 与进化提醒自动就位。
 
 ## 使用
 
-安装后可用两个触发命令：
+安装后可用三个命令：
 
 - `/evo-build` —— 读数据、探索 schema、生成五类记录，发布 `semantic_v0`；
 - `/evo-evolve` —— 诊断 → 归因 → 补丁 → Parent/Candidate gate → 落地。进化由
   `EvolutionSession` 驱动：新 run 先与用户确认轮数预算（默认 8）与轨迹来源，
   Reject 后在同一 run 内继续下一轮，直到 Accept 发布新版本并推进 checkpoint。
+- `/evo-visualize` —— 调用 Core `visualize()` 生成离线交互图，只读不改状态。
 
-两者是触发指令，实际构建 / 进化由 agent 按对应 skill 执行。
+`/evo-build` 与 `/evo-evolve` 是触发指令，实际构建 / 进化由 agent 按对应 skill 执行；
+`/evo-visualize` 直接调用 Core 渲染，不经过 skill。
 
 ### 两种 mode
 

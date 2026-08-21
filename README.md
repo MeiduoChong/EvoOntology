@@ -19,38 +19,8 @@ EvoOntology 把语义层变成**可训练的状态**：
 - **版本化语义层**：五类记录构成 `semantic_vN`，每次修改都产生新版本，可对比、可回滚；
 - **有门控的进化**：`/evo-evolve` 从历史任务轨迹诊断问题、归因、打补丁，Candidate 必须在受控评估中
   **可复现地优于 Parent** 才能发布；Reject 不是终点，而是下一轮的输入；
-- **零配置接入**：一条 Marketplace 命令安装插件，语义 MCP 自动拉起，Agent 通过两个有界工具
-  `browse_semantics` / `resolve_semantics` 查询语义层。
-
-## 深度学习类比
-
-SkillOpt 的核心理念在这里同样成立——语义层就是 Agent 的可训练状态：
-
-| 深度学习 | EvoOntology |
-| --- | --- |
-| 模型权重 | 语义层 `semantic_vN`（Markdown/JSON 记录） |
-| Forward pass | Data Agent 在 benchmark 上执行任务 |
-| Loss / gradient | 历史轨迹诊断 + 因果归因 |
-| Gradient clipping | Candidate 局部补丁（Content / Tool / Schema） |
-| SGD step | 把补丁落成新版本 |
-| 验证集 | `fixed_split` 的 Validation Reserve / `rolling_trajectory` 的 Validation Reserve |
-| LR schedule | `EvolutionSession` 的轮次预算（默认 8 轮） |
-
-## 架构总览
-
-```text
-自然语言问题 ──▶ Data Agent（Claude Code / Codex / benchmark harness）
-                    │ MCP: browse_semantics / resolve_semantics
-                    ▼
-              EvoOntology 语义层 semantic_vN
-                    │
-                    │ /evo-evolve
-                    ▼
-        EvolutionSession：冻结预算与数据 → 诊断 → 归因 → 补丁 → 评估门控
-                    │
-                    ▼
-        Accept 发布 semantic_vN+1 / Reject 下一轮 / Incomplete 保持 Parent
-```
+- **零配置接入**：通过 Marketplace 安装插件，语义层自动接入，Agent 通过
+  `browse_semantics` / `resolve_semantics` 发现并解析分析概念。
 
 ## 支持的 Benchmark
 
@@ -85,7 +55,7 @@ codex plugin add evoontology-codex@evoontology
 codex plugin list
 ```
 
-安装后新建会话再运行 `/evo-build`（Claude Code）或让 Codex 按 `build-semantic-layer` skill 构建。
+安装后新建会话再运行 `/evo-build`（Claude Code）或让 Codex 按 `$evo-build` skill 构建。
 
 ## 快速开始
 
@@ -102,36 +72,18 @@ codex plugin list
 python -m evoontology.visualization --root .evoontology --no-browser
 ```
 
-## 两种 mode
+## 两种使用场景
 
-Build Step 0 确定并写入 `.evoontology/project.json` 的 `mode`：
+- **`fixed_split`**：适合有固定问题集、Ground Truth 和评测边界的 benchmark。
+- **`rolling_trajectory`**：适合没有固定测试集的真实业务或冷启动。
 
-- **`fixed_split`**：有固定问题集、Ground Truth 和评测边界的 benchmark。Construction Pool 用于
-  Build/诊断，Validation Reserve 只用于最终 Gate。
-- **`rolling_trajectory`**：没有固定测试集的真实业务 / 冷启动。seed workload 初始化 `semantic_v0`，
-  后续按 checkpoint 收集新任务轨迹，用独立抽样任务或 LLM Judge 完成 Gate。
+两者的数据边界、进化触发与评估流程详见 [`USAGE.md`](USAGE.md)。
 
-两种 mode 共用同一套 workspace、版本与 checkpoint 机制，区别只在 workload 如何进入构建、进化与评估。
+## 语义层怎么接入
 
-## 语义 MCP（零配置）
-
-插件 `.mcp.json` 自动拉起服务，默认 workspace 为当前项目的 `.evoontology/`：
-
-- `browse_semantics(query, kind, limit)` —— 发现与当前问题相关的概念；
-- `resolve_semantics(mentions, context)` —— 把选中概念解析为 grounded 的 Mapping，并带回关联的
-  Relation / Constraint / Evidence；
-- 资源 `evo-semantic://session-manifest` —— 会话开始时可读的简洁说明。
-
-## 仓库结构
-
-| 目录 | 内容 |
-| --- | --- |
-| `evoontology/` | 核心包：ontology store / runtime(MCP) / trajectory / trigger / evaluation / evolution / validate |
-| `plugins/` | Claude Code 插件与 Codex 插件（各内置一份 core 副本） |
-| `benchmarks/` | 三个 benchmark 环境 + 统一 adapter 注册表 |
-| `scripts/` | `sync_plugin_core.py`：把根 core 同步到两个插件 |
-| `tests/` | 核心路径回归测试 |
-| `docs/` | 架构与接入文档 |
+插件安装后自动接入语义 MCP，默认 workspace 为当前项目的 `.evoontology/`。Agent 可用
+`browse_semantics` / `resolve_semantics` 发现并解析分析概念，无需额外配置。详见
+[`USAGE.md`](USAGE.md)。
 
 ## 开发
 
@@ -149,7 +101,7 @@ python -m benchmarks list
 - [`USAGE.md`](USAGE.md) —— 产品化使用指南（安装、workspace、进化闭环、端到端流程）；
 - [`docs/architecture.md`](docs/architecture.md) —— 架构总览与 SkillOpt 对照；
 - [`docs/guide/new-benchmark.md`](docs/guide/new-benchmark.md) —— 接入新 benchmark；
-- `plugins/claude-code/README.md` · `plugins/evoontology-codex/README.md` —— 插件组件说明。
+- `plugins/claude-code/README.md` · `plugins/evoontology-codex/README.md` —— 插件安装与使用说明。
 
 ## License
 

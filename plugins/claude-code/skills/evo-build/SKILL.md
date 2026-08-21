@@ -1,5 +1,5 @@
 ---
-name: build-semantic-layer
+name: evo-build
 description: Build an initial ontology-inspired semantic layer by analyzing workload requirements, exploring data-environment evidence, and generating schema-conformant semantic objects.
 ---
 

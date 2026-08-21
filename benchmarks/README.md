@@ -21,7 +21,7 @@
 | `rollout.py` | `run_agent.py` + `run_evaluation.py` | 运行 Agent、逐条评分、落盘结果 |
 | `adapter.py`（`EnvAdapter`） | `evolution_adapter.py`（`EvolutionAdapter`） | 把 loader + rollout 接入进化生命周期 |
 | `configs/<name>/default.yaml` | `configs/baseline.yaml` + `configs/semantic.yaml` | 模型、MCP、语义开关、评测参数 |
-| `skills/initial.md` | 插件 `build-semantic-layer` skill | 初始语义层构建方法 |
+| `skills/initial.md` | 插件 `evo-build` skill | 初始语义层构建方法 |
 
 核心契约只有一条：adapter 实现
 `evaluate(subject, cases=None, output_hint=None) -> {"metrics", "cases", "artifact_paths"}`。

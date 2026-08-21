@@ -8,15 +8,15 @@ skills bundled in this plugin's `skills/` directory.
 ## Entry points
 
 - **Build** — when the user asks to "build the ontology" or runs `/evo-build`,
-  execute the `build-semantic-layer` skill (see
-  `skills/build-semantic-layer/SKILL.md`). Default workspace
+  execute the `evo-build` skill (see
+  `skills/evo-build/SKILL.md`). Default workspace
   is `<project-root>/.evoontology`, resolved and initialized through EvoOntology
   Core. Save `semantic_v0`, validate it with `python -m evoontology.validate
   --root <workspace> --version semantic_v0`, then activate it and initialize
   the trigger checkpoint.
 - **Evolve** — when the user asks to "evolve the ontology" or runs `/evo-evolve`,
-  execute the `evolve-semantic-layer` skill (see
-  `skills/evolve-semantic-layer/SKILL.md`) following
+  execute the `evo-evolve` skill (see
+  `skills/evo-evolve/SKILL.md`) following
   Diagnose → Attribute → Patch → Evaluate/Gate. Drive the loop through an
   `EvolutionSession` from the shared core: resume an existing session when one
   is running, confirm the round budget with the user only when creating a new
@@ -26,10 +26,14 @@ skills bundled in this plugin's `skills/` directory.
   Incomplete run changes neither.
 
 - **Visualize** — when the user asks to "visualize the ontology" or runs
-  `$evo-visualize`, execute the `evo-visualize` skill (see
+  `/evo-visualize` (or `$evo-visualize`), execute the `evo-visualize` skill (see
   `skills/evo-visualize/SKILL.md`). It calls Core `visualize()` to render the
   active (or an explicitly requested) version as a standalone offline HTML
   under `<workspace>/visualizations/`, read-only.
+
+For Codex, the slash-style phrases above are aliases that route to the matching
+skills. The native Codex skill invocations are `$evo-build`, `$evo-evolve`, and
+`$evo-visualize`.
 
 ## Semantic MCP tools
 

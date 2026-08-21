@@ -19,7 +19,7 @@ description: 构建 semantic_v0——读数据、探索 schema、生成 5 类记
 
 ## 执行
 
-执行 `build-semantic-layer` skill（`skills/build-semantic-layer/`），构建初始语义层。
+执行 `evo-build` skill（`skills/evo-build/`），构建初始语义层。
 
 按 skill 的 Builder Workflow 执行：Workload-Guided Probing → Evidence-Grounded
 Commitment，产出 Term / Mapping / Relation / Constraint / Evidence 五类记录，发布为

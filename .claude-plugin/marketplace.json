@@ -5,7 +5,7 @@
     {
       "name": "evoontology",
       "source": { "source": "git-subdir", "url": "https://github.com/Cmd210/EvoOntology.git", "path": "plugins/claude-code" },
-      "description": "Self-evolving ontology layer for data agents: /evo-build and /evo-evolve."
+      "description": "Self-evolving ontology layer for data agents: /evo-build, /evo-evolve, and /evo-visualize."
     }
   ]
 }

@@ -5,8 +5,9 @@
 
 - `evoontology/` —— 与 benchmark 无关的产品运行时：ontology store / runtime(MCP) /
   trajectory / trigger / evaluation / evolution 生命周期 / validate 门禁。
-- `plugins/` —— Claude Code 插件（两命令 + 两 skill + MCP + Session Start 提醒）
-  与 Codex 插件（AGENTS.md 指令 + skills + MCP）。两者内置同一份 core 副本。
+- `plugins/` —— Claude Code 插件（`/evo-build`、`/evo-evolve`、`/evo-visualize` 命令 +
+  对应 skills + MCP + Session Start 提醒）与 Codex 插件（`evo-build` / `evo-evolve` /
+  `evo-visualize` skills + `AGENTS.md` + MCP）。两者内置同一份 core 副本。
 
 产品最终形态 = 一个核心包（含 validate 门禁）+ 两个 skill 命令，无 CLI。智能分析全在
 skill，Python 只做「运行时 + 最小确定性校验 + 进化生命周期状态机」。默认**零配置**：

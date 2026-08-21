@@ -21,7 +21,7 @@ Incomplete 结束。
 
 ## 执行
 
-执行 `evolve-semantic-layer` skill（`skills/evolve-semantic-layer/`），启动进化循环。
+执行 `evo-evolve` skill（`skills/evo-evolve/`），启动进化循环。
 
 按 skill 的 Evolution Loop 执行：Diagnose → Attribute → Patch → Evaluate/Gate。评估协议见
 `docs/evaluation-protocol.md`（有 GT 绝对评分 / 无 GT LLM Judge 相对比较）。

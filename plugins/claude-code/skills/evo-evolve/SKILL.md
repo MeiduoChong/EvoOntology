@@ -1,5 +1,5 @@
 ---
-name: evolve-semantic-layer
+name: evo-evolve
 description: This skill is triggered when the user requests to "self-evolve the current semantic layer system". Autonomously evolve a semantic-layer system through a four-step loop of diagnosis, attribution, patching, and Parent/Candidate evaluation until a reproducibly better version is obtained, or external conditions prevent trustworthy continuation.
 ---
 
