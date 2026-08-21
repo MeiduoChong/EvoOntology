@@ -153,11 +153,7 @@ Incomplete 不发布、不推进；同一批次在下次 run 重试。最终报�
 ## 6. MCP 接入
 
 插件通过 `.mcp.json` 以模块形式 spawn 服务，client 自动拉起、无需手动起服。默认
-workspace 为当前项目的 `.evoontology/`（零配置）：
-
-```bash
-python -m evoontology.runtime.mcp_server
-```
+workspace 为当前项目的 `.evoontology/`（零配置）。
 
 接入后 Data Agent 可见：
 
@@ -169,12 +165,6 @@ python -m evoontology.runtime.mcp_server
 同一个 `evo-semantic` 服务还向 Build / Evolve / Visualize 暴露确定性操作
 （`validate_semantics`、`visualize_semantics`、`evolution_status`、版本辅助与进化会话
 工具），因此插件-only 安装无需在用户项目里运行 `python -m evoontology...`。
-
-手动起服（验证用）：
-
-```bash
-python -m evoontology.runtime.mcp_server --store <workspace-root>
-```
 
 这两个工具返回的是元数据与指引，数据库查询与 Python 执行仍由 benchmark 原生工具负责。
 
