@@ -63,10 +63,9 @@ for evolution.
      Validation Reserve according to
      `references/semantic-layer-data-boundary.md`.
 
-3. Fix the Evaluator and acceptance criteria. Freeze the round budget at the
-   default of 8 rounds and proceed without blocking on user confirmation; ask
-   the user only if they explicitly want a different budget or a later
-   extension. A resumed run reuses the frozen budget without asking again.
+3. Fix the Evaluator and acceptance criteria. For a new run, confirm the
+   round budget with the user first (default: 8 rounds); the budget is frozen
+   for the run and a resumed run reuses it without asking again.
 
 4. Persist the frozen run context through the MCP tool `start_evolution_run`
    (it writes `evolution/run_N/run.json` with the Parent, adapter, frozen
