@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 
 from ..ontology.models import Term
 from ..ontology.store import SemanticStore
-from ..workspace import resolve_workspace
 
 _ACTIVE_STATES = {"validated", "active"}
 _DEFAULT_TOOLS = ["browse_semantics", "resolve_semantics"]
@@ -72,12 +71,8 @@ class SemanticLayer:
         if self.store.version == "uninitialized":
             return (
                 "Semantic layer: uninitialized.\n\n"
-                "No ontology has been built for the default workspace yet. Run "
-                "/evo-build to create the initial semantic version.\n\n"
-                "Deterministic operations are also available with an explicit "
-                "`workspace` argument (the absolute path to the .evoontology/ "
-                "directory): visualize_semantics, validate_semantics, "
-                "evolution_status, list_versions, and the evolution-session tools."
+                "No ontology has been built for this workspace yet. Run "
+                "/evo-build to create the initial semantic version."
             )
         counts = self.store.counts()
         active_constraints = [
@@ -126,19 +121,6 @@ class SemanticLayer:
             "available.",
             "- Resolved mappings are guidance, not final answers — always validate "
             "against the actual data with your native query tools.",
-            "",
-            "## Deterministic operations",
-            "The same server also exposes build/evolve/visualize operations. Call "
-            "them with an explicit `workspace` argument (the absolute path to the "
-            ".evoontology/ directory):",
-            "- **visualize_semantics**(workspace, version?) — render a version to HTML",
-            "- **validate_semantics**(workspace, version?) — validate a version",
-            "- **evolution_status**(workspace) — check whether evolution is due",
-            "- **list_versions**(workspace) — list stored versions",
-            "- **save_version** / **set_active_version** — write and activate a version",
-            "- **start_evolution_run** / **begin_evolution_round** / **record_evolution_round** / "
-            "**record_evolution_evaluation** / **accept_evolution** / "
-            "**mark_evolution_incomplete** — drive the evolution loop",
         ]
         return "\n".join(lines)
 
@@ -471,18 +453,14 @@ class SemanticLayer:
     # ---- dispatch ----------------------------------------------------------
 
     def execute(self, name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        layer = self
-        workspace = str(arguments.get("workspace") or "").strip()
-        if workspace:
-            layer = SemanticLayer.load(str(resolve_workspace(workspace)))
         if name == "browse_semantics":
-            return layer.browse(
+            return self.browse(
                 query=arguments.get("query", ""),
                 kind=arguments.get("kind", "term"),
                 limit=arguments.get("limit", _MAX_BROWSE_ITEMS),
             )
         if name == "resolve_semantics":
-            return layer.resolve(
+            return self.resolve(
                 mentions=arguments.get("mentions"),
                 context=arguments.get("context"),
             )
