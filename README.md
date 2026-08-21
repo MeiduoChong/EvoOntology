@@ -46,7 +46,7 @@ EvoOntology 把语义层变成**可训练的状态**：
 ### Claude Code
 
 ```bash
-claude plugin marketplace add Cmd210/EvoOntology
+claude plugin marketplace add MeiduoChong/EvoOntology
 claude plugin install evoontology@evoontology
 claude plugin list
 ```
@@ -54,7 +54,7 @@ claude plugin list
 ### Codex
 
 ```bash
-codex plugin marketplace add Cmd210/EvoOntology
+codex plugin marketplace add MeiduoChong/EvoOntology
 codex plugin add evoontology-codex@evoontology
 codex plugin list
 ```

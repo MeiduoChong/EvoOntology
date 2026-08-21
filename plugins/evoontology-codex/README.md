@@ -15,7 +15,7 @@
 ## 安装
 
 ```bash
-codex plugin marketplace add Cmd210/EvoOntology
+codex plugin marketplace add MeiduoChong/EvoOntology
 codex plugin marketplace list
 codex plugin add evoontology-codex@evoontology
 codex plugin list
