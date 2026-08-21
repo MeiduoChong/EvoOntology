@@ -41,7 +41,7 @@ regressions before expensive experiments.
 
 Do not rely only on current conversation context. Reuse persisted project and
 evolution state whenever available. If a previous evolution run is still
-open, resume that EvolutionSession instead of starting a new one.
+open, resume it via `resume_evolution_run` instead of starting a new one.
 
 **Stage Output:** A fixed optimization objective and the prior knowledge needed
 for evolution.
@@ -67,9 +67,9 @@ for evolution.
    round budget with the user first (default: 8 rounds); the budget is frozen
    for the run and a resumed run reuses it without asking again.
 
-4. Persist the frozen run context through EvolutionSession: `start_run`
-   writes `evolution/run_N/run.json` with the Parent, adapter, frozen
-   budget, and acceptance criteria. Keep the batch's input IDs, validation
+4. Persist the frozen run context through the MCP tool `start_evolution_run`
+   (it writes `evolution/run_N/run.json` with the Parent, adapter, frozen
+   budget, and acceptance criteria). Keep the batch's input IDs, validation
    IDs, and Evaluator reference with the run's evaluation setup.
 
 Record IDs only; do not duplicate trajectory files.
@@ -223,8 +223,8 @@ After the decision:
 2. Mark solved problems, remaining limitations, newly discovered issues, and disproven explanations.
 3. Preserve the main validated mechanisms, rejected hypotheses, and unresolved uncertainty needed for later rounds.
 4. **Accept** — mark the Candidate as accepted and end Candidate search. Proceed to Finalize Evolution Run.
-5. **Reject** — record the round through EvolutionSession (`record_round`
-   appends the summary to `evolution/run_N/rounds.jsonl`), update the
+5. **Reject** — record the round through the MCP tool `record_evolution_round`
+   (it appends the summary to `evolution/run_N/rounds.jsonl`), update the
    attribution and problem map, then design a new Candidate targeting the
    next most valuable mechanism and repeat Step 1–4. Do not advance the
    checkpoint and do not end the run.
@@ -268,10 +268,9 @@ and the summaries under `evaluations/`.
 
 If a Candidate was accepted:
 
-1. run deterministic validation;
-2. save it as the next semantic version;
-3. update `active.json`;
-4. advance the evolution checkpoint once.
+1. run `validate_semantics` on the candidate version;
+2. `accept_evolution` to publish it as the next `semantic_vN`, switch
+   `active.json`, and advance the evolution checkpoint once.
 
 If the run ended Incomplete, do not advance the checkpoint and do not switch
 `active.json`; the same batch is retried on the next run.

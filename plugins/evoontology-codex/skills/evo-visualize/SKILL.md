@@ -16,15 +16,12 @@ read-only.
 2. Resolve the requested version: default `active` (the version referenced by
    `active.json`). An explicit `semantic_vN` is rendered without changing
    `active.json`.
-3. Call Core `visualize()` — the single rendering entry point:
-
-   ```bash
-   python -m evoontology.visualization --root <workspace> [--version semantic_vN]
-   ```
+3. Call the `evo-semantic` MCP tool `visualize_semantics` (the single rendering
+   entry point), passing `workspace` (the absolute `.evoontology/` path) and
+   optionally `version`. Do not run `python -m evoontology.visualization`.
 
 4. Return the generated path `<workspace>/visualizations/<version>.html`.
-   The HTML opens in the browser when supported (add `--no-browser` in
-   headless environments).
+   The MCP tool writes the file without opening a browser.
 
 ## Boundaries
 

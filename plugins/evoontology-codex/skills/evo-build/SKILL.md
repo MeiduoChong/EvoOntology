@@ -233,12 +233,14 @@ Publish the initial semantic-layer version with:
 - split identifier when using Fixed-Split Mode;
 - seed-workload source when using Rolling-Trajectory Mode.
 
-Complete publication through EvoOntology Core in this order:
+Complete publication through the `evo-semantic` MCP tools (pass the absolute
+`.evoontology/` path as `workspace`; do not run `python -m evoontology...`) in
+this order:
 
-1. run deterministic validation required for persistence and runtime loading;
-2. save the initial version as `versions/semantic_v0/`;
-3. set `active.json` to `semantic_v0`;
-4. initialize the evolution trigger state in `state.json`.
+1. `save_version` — write `semantic_v0`'s five record files;
+2. `validate_semantics` — run deterministic validation before activation;
+3. `set_active_version` — point `active.json` at `semantic_v0`;
+4. `evolution_status` — initialize the evolution trigger state in `state.json`.
 
 Initial build is not an evolution run. Evolution-history fields such as
 `last_evolution_trajectory` and `last_evolution_time` must remain unset until

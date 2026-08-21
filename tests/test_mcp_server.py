@@ -46,7 +46,7 @@ def test_stdio_mcp_initialize_and_list_tools(tmp_path):
 
     responses = [json.loads(line) for line in completed.stdout.splitlines()]
     assert responses[0]["result"]["protocolVersion"] == "2025-06-18"
-    assert [tool["name"] for tool in responses[1]["result"]["tools"]] == [
-        "browse_semantics",
-        "resolve_semantics",
-    ]
+    tool_names = [tool["name"] for tool in responses[1]["result"]["tools"]]
+    assert tool_names[:2] == ["browse_semantics", "resolve_semantics"]
+    assert "validate_semantics" in tool_names
+    assert "accept_evolution" in tool_names

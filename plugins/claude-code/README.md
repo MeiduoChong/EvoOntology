@@ -39,12 +39,12 @@ visualize 命令、两个 skill、语义 MCP 与进化提醒自动就位。
 
 - `/evo-build` —— 读数据、探索 schema、生成五类记录，发布 `semantic_v0`；
 - `/evo-evolve` —— 诊断 → 归因 → 补丁 → Parent/Candidate gate → 落地。进化由
-  `EvolutionSession` 驱动：新 run 先与用户确认轮数预算（默认 8）与轨迹来源，
+  语义 MCP 的进化工具（`start_evolution_run` / `accept_evolution` 等）驱动：新 run 先与用户确认轮数预算（默认 8）与轨迹来源，
   Reject 后在同一 run 内继续下一轮，直到 Accept 发布新版本并推进 checkpoint。
-- `/evo-visualize` —— 调用 Core `visualize()` 生成离线交互图，只读不改状态。
+- `/evo-visualize` —— 调用语义 MCP 的 `visualize_semantics` 生成离线交互图，只读不改状态。
 
 `/evo-build` 与 `/evo-evolve` 是触发指令，实际构建 / 进化由 agent 按对应 skill 执行；
-`/evo-visualize` 直接调用 Core 渲染，不经过 skill。
+确定性发布与渲染统一走语义 MCP 工具。
 
 ### 两种 mode
 
@@ -60,7 +60,9 @@ mode 在 Build Step 0 确认并写入 `project.json`，Evolve 直接复用。
 `.mcp.json` 以模块形式 spawn 语义服务，client 自动拉起。默认 workspace 为当前项目的
 `.evoontology/`（零配置）；如需指向别的 workspace，在 `.mcp.json` 的 args 里追加
 `"--store", "<workspace-root>"`。Data Agent 可见 `browse_semantics`、`resolve_semantics`
-两个工具与 `evo-semantic://session-manifest` 资源。
+两个导航工具与 `evo-semantic://session-manifest` 资源；Build / Evolve / Visualize 通过
+`validate_semantics`、`visualize_semantics`、`evolution_status` 与进化会话工具完成，
+无需在用户项目中运行 `python -m evoontology...`。
 
 ### 进化提醒
 
@@ -74,14 +76,6 @@ mode 在 Build Step 0 确认并写入 `project.json`，Evolve 直接复用。
 
 ## 发布校验（agent 自动）
 
-`/evo-build`、`/evo-evolve` 发布新版本前，agent 会自动调用 `python -m evoontology.validate` 做确定性
-门禁（JSON 合法 / 引用完整 / 可加载），用户无需手动执行。仅手动诊断 workspace 时才直接运行：
-
-```bash
-python -m evoontology.validate --root <workspace-root>
-
-# 校验尚未激活的初始版本或 Candidate
-python -m evoontology.validate --root <workspace-root> --version <version>
-```
-
+`/evo-build`、`/evo-evolve` 发布新版本前，agent 会自动调用语义 MCP 的
+`validate_semantics` 工具做确定性门禁（JSON 合法 / 引用完整 / 可加载），用户无需手动执行。
 只做结构校验，不做数据库语义校验。

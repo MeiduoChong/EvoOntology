@@ -17,6 +17,9 @@ results/
 
 # demo artifact (kept out of the published repository)
 demo_evoontology/
+demo_evoontology_recording/
 
 # local-only artifacts (not part of the package)
 /图片-final_0820.pptx
+/~$图片-final_0820.pptx
+/新建 Microsoft PowerPoint 演示文稿.pptx

@@ -67,7 +67,7 @@ Evidence。轨迹由 Data Agent 运行时（benchmark adapter 侧）在每次任
 `trajectories/`。
 
 Workspace 分阶段初始化：Step 0 确认后写 `project.json`；初始版本保存并通过
-`python -m evoontology.validate --version semantic_v0` 后，才写 `active.json` 和
+语义 MCP 的 `validate_semantics`（`version` 传 `semantic_v0`）后，才写 `active.json` 和
 `state.json`。Core 默认解析 `<project-root>/.evoontology/`，benchmark 可显式传入其他路径。
 
 ### 选择 mode
@@ -166,6 +166,10 @@ python -m evoontology.runtime.mcp_server
   关联的 relation / constraint / evidence；
 - 资源 `evo-semantic://session-manifest` —— 会话开始时读取的简洁说明。
 
+同一个 `evo-semantic` 服务还向 Build / Evolve / Visualize 暴露确定性操作
+（`validate_semantics`、`visualize_semantics`、`evolution_status`、版本辅助与进化会话
+工具），因此插件-only 安装无需在用户项目里运行 `python -m evoontology...`。
+
 手动起服（验证用）：
 
 ```bash
@@ -178,18 +182,8 @@ python -m evoontology.runtime.mcp_server --store <workspace-root>
 
 ## 7. validate 门禁（agent 自动）
 
-`/evo-build`、`/evo-evolve` 发布新版本前，agent 会自动调用 `python -m evoontology.validate`
-做确定性门禁（JSON 合法 / 引用完整 / 可加载），用户无需手动执行。仅手动诊断 workspace
-时才直接运行：
-
-```bash
-python -m evoontology.validate --root <workspace-root>
-
-# 发布前校验尚未激活的初始版本或 Candidate
-python -m evoontology.validate --root <workspace-root> --version <version>
-# → {"passed": true, "root": "...", "version": "semantic_v0", "errors": []}
-```
-
+`/evo-build`、`/evo-evolve` 发布新版本前，agent 会自动调用语义 MCP 的
+`validate_semantics` 工具做确定性门禁（JSON 合法 / 引用完整 / 可加载），用户无需手动执行。
 validate 只做结构校验，不做数据库语义校验（表字段存在 / Mapping 可执行 / Evidence 可复现
 是 Builder 探索阶段已做的事）。
 
@@ -206,12 +200,12 @@ validate 只做结构校验，不做数据库语义校验（表字段存在 / Ma
 # 3. Data Agent 通过 MCP 接入（.mcp.json 声明，client 自动 spawn，无需手动起服）
 
 # 4. 触发进化（或等待轨迹达到阈值后的提醒）
-/evo-evolve        # agent 在 EvolutionSession 内循环 Candidate；
-                   # Accept 时经 EvolutionSession.accept() 校验、发布、
+/evo-evolve        # agent 用语义 MCP 的进化工具循环 Candidate；
+                   # Accept 时经 accept_evolution 校验、发布、
                    # 更新 active.json 并推进 checkpoint
 ```
 
-agent 发布前会自动调用 `python -m evoontology.validate` 做门禁。
+agent 发布前会自动调用 `validate_semantics` 做门禁。
 
 ---
 

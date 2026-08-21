@@ -32,13 +32,17 @@ Core 统一解析该路径，并维护 `project.json`、`active.json`、`state.j
 `trajectories/` 与 `evolution/`；`state.json` 使用 `checkpoint_time` 和
 `checkpoint_trajectory`。
 
+确定性构建 / 进化 / 可视化操作也通过该 MCP 的 `validate_semantics`、
+`visualize_semantics`、`evolution_status` 与进化会话工具完成，无需在用户项目中运行
+`python -m evoontology...`。
+
 ## 使用
 
 安装后，在 Codex 会话中：
 
 - 说「构建语义层」或 `/evo-build` —— 按 `evo-build` skill 构建 `semantic_v0`；
 - 说「进化语义层」或 `/evo-evolve` —— 按 `evo-evolve` skill 执行
-  诊断 → 归因 → 补丁 → Parent/Candidate gate。进化由 `EvolutionSession` 驱动：
+  诊断 → 归因 → 补丁 → Parent/Candidate gate。进化由语义 MCP 的进化工具驱动：
   新 run 先确认轮数预算（默认 8）与轨迹来源，Reject 在同一 run 内继续下一轮，
   直到 Accept 发布新版本并推进 checkpoint。
 - 说「可视化语义层」或 `/evo-visualize` —— 按 `evo-visualize` skill 生成离线交互图。

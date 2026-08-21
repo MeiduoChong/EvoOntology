@@ -10,7 +10,7 @@
 accept 映射：`vN-cK` → `semantic_vN+1`。
 
 Candidate 在正式 Gate 前保存到 `versions/vN-cK/`，但不得修改 `active.json`。先用
-`python -m evoontology.validate --root <workspace> --version vN-cK` 校验该未激活版本。
+语义 MCP 的 `validate_semantics` 工具（`version` 传 `vN-cK`）校验该未激活版本。
 
 ## 切换
 
@@ -18,7 +18,7 @@ Candidate 在正式 Gate 前保存到 `versions/vN-cK/`，但不得修改 `activ
 运行时 `store.py` 与命名约定无关：只读 version 字段并加载 `versions/<name>/`，
 不校验命名格式。
 
-- Accept：`EvolutionSession.accept()` 把 Candidate 发布为下一个 `semantic_vN+1`
+- Accept：`accept_evolution` 把 Candidate 发布为下一个 `semantic_vN+1`
   （不覆盖已有正式版本），切换 `active.json`，并推进 checkpoint；
 - Reject：保留 Parent 为 Active，Candidate 与 `run_N` 轮次记录留作审计，在同一 run
   内继续下一轮，不推进 checkpoint；

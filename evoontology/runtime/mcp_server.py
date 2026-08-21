@@ -11,11 +11,13 @@ from typing import Any, Dict
 if __package__:
     from ..workspace import resolve_workspace
     from .runtime import SemanticLayer
-    from .tools import TOOLS
+    from . import ops
+    from .tools import OPERATIONS, TOOLS
 else:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from evoontology.runtime.runtime import SemanticLayer
-    from evoontology.runtime.tools import TOOLS
+    from evoontology.runtime import ops
+    from evoontology.runtime.tools import OPERATIONS, TOOLS
     from evoontology.workspace import resolve_workspace
 
 _RESOURCE_URI = "evo-semantic://session-manifest"
@@ -37,20 +39,27 @@ class SemanticMCPServer:
         if method == "ping":
             return {}
         if method == "tools/list":
-            return {"tools": TOOLS}
+            return {"tools": TOOLS + OPERATIONS}
         if method == "tools/call":
             name = str(params.get("name", ""))
             arguments = params.get("arguments", {})
-            if name not in {"browse_semantics", "resolve_semantics"}:
-                result = {"status": "error", "message": f"Unknown tool: {name}"}
-                is_error = True
-            else:
+            if name in {"browse_semantics", "resolve_semantics"}:
                 try:
                     result = self.layer.execute(name, arguments)
                     is_error = False
                 except Exception as exc:
                     result = {"status": "error", "message": str(exc)}
                     is_error = True
+            elif name in ops._HANDLERS:
+                try:
+                    result = ops.execute(name, arguments)
+                    is_error = False
+                except Exception as exc:
+                    result = {"status": "error", "message": str(exc)}
+                    is_error = True
+            else:
+                result = {"status": "error", "message": f"Unknown tool: {name}"}
+                is_error = True
             return {
                 "content": [
                     {
