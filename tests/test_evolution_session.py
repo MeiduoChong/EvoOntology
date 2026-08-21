@@ -209,11 +209,73 @@ def test_mark_incomplete_validates_reason(tmp_path):
     session.start_run("semantic_v0")
     with pytest.raises(ValueError):
         session.mark_incomplete("poor_metrics")
+    # Immediate external reasons do not require rejected candidates.
+    session.mark_incomplete("user_interrupted")
+    assert session.status == "incomplete"
+    assert session.finalize()["end_reason"] == "user_interrupted"
+    assert SemanticStore.active_version(str(ws)) == "semantic_v0"
+    assert not (ws / "state.json").exists()
+
+
+def test_mark_incomplete_judgment_reasons_require_rejected_rounds(tmp_path):
+    ws = _setup(tmp_path)
+    session = EvolutionSession(str(ws))
+    session.start_run("semantic_v0", max_rounds=4)
+    for reason in ("missing_data", "unreliable_evaluation", "external_block"):
+        with pytest.raises(EvolutionError):
+            session.mark_incomplete(reason)
+    session.begin_round("h1", "v0-c1")
+    session.record_round(decision="reject")
+    with pytest.raises(EvolutionError):
+        session.mark_incomplete("missing_data")
+    session.begin_round("h2", "v0-c2")
+    session.record_round(decision="reject")
     session.mark_incomplete("missing_data")
     assert session.status == "incomplete"
     assert session.finalize()["end_reason"] == "missing_data"
-    assert SemanticStore.active_version(str(ws)) == "semantic_v0"
-    assert not (ws / "state.json").exists()
+
+
+def test_min_rejects_before_incomplete_configurable(tmp_path):
+    ws = _setup(tmp_path)
+    project = {
+        "schema_version": 1,
+        "mode": "fixed_split",
+        "data_source": "x",
+        "workload_source": "y",
+        "evaluation": {"benchmark": "bird"},
+        "boundary": {"scope": "n"},
+        "evolution": {"min_rejects_before_incomplete": 1},
+    }
+    (ws / "project.json").write_text(json.dumps(project), encoding="utf-8")
+    session = EvolutionSession(str(ws))
+    run = session.start_run("semantic_v0", max_rounds=4)
+    assert run["min_rejects_before_incomplete"] == 1
+    with pytest.raises(EvolutionError):
+        session.mark_incomplete("missing_data")
+    session.begin_round("h1", "v0-c1")
+    session.record_round(decision="reject")
+    session.mark_incomplete("missing_data")
+    assert session.status == "incomplete"
+
+
+def test_mark_incomplete_budget_exhausted_requires_spent_budget(tmp_path):
+    ws = _setup(tmp_path)
+    session = EvolutionSession(str(ws))
+    session.start_run("semantic_v0", max_rounds=2)
+    with pytest.raises(EvolutionError):
+        session.mark_incomplete("budget_exhausted")
+
+
+def test_rejected_count_and_must_continue(tmp_path):
+    ws = _setup(tmp_path)
+    session = EvolutionSession(str(ws))
+    session.start_run("semantic_v0", max_rounds=4)
+    assert session.must_continue() is True
+    assert session.rejected_count() == 0
+    session.begin_round("h1", "v0-c1")
+    session.record_round(decision="reject")
+    assert session.rejected_count() == 1
+    assert session.must_continue() is True
 
 
 def test_trajectory_sources_persist_and_reuse(tmp_path):

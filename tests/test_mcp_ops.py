@@ -83,7 +83,7 @@ def test_mark_incomplete_does_not_publish(tmp_path):
     ws = _ws(tmp_path)
     _save_active(ws)
     ops.execute("start_evolution_run", {"workspace": ws, "parent_version": "semantic_v0"})
-    ops.execute("mark_evolution_incomplete", {"workspace": ws, "reason": "missing_data"})
+    ops.execute("mark_evolution_incomplete", {"workspace": ws, "reason": "user_interrupted"})
     assert ops.execute("evolution_run_status", {"workspace": ws})["run"]["status"] == "incomplete"
     assert SemanticStore.active_version(ws) == "semantic_v0"
     assert not (tmp_path / ".evoontology" / "state.json").exists()

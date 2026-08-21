@@ -111,8 +111,9 @@ running ──预算耗尽/用户中断/数据缺失/评估不可靠──▶ in
 1. **恢复优先**：若已有未结束的 run，resume 它而不是新开；
 2. **冻结数据**：fixed_split 复用已持久化的训练/验证子集；rolling_trajectory 从
    checkpoint 之后收集合格轨迹、冻结批次并切分 Evolution Pool / Validation Reserve；
-3. **确认预算**：向用户说明本次计划使用的轮数（默认 8），确认后冻结进 `run.json`；
-   resume 同一 run 沿用已确认预算；预算耗尽后如需加轮数，必须再次确认；
+3. **冻结预算**：默认 8 轮直接冻结进 `run.json` 并继续，不阻塞等待用户确认；仅当用户
+   明确要求不同轮数或后续扩展时才询问。resume 同一 run 沿用已冻结预算；预算耗尽后如需
+   加轮数，必须再次确认；
 4. **确认轨迹来源**：来源或范围未定时，向用户说明每条来源的路径、内容范围、时间与
    用途并确认，确认后写入 `run_N/trajectory-sources.json`。新 run 默认复用最近一次 run
    的来源记录并验证路径仍有效，仅当来源新增、失效或范围变化时重新确认。找不到轨迹时，
@@ -132,8 +133,10 @@ running ──预算耗尽/用户中断/数据缺失/评估不可靠──▶ in
 
 Accept 后：确定性校验 → 发布为 `semantic_vN+1`（不覆盖已有正式版本）→ 更新
 `active.json` → 推进一次 checkpoint → run 标记 `accepted`。
-Incomplete 不发布、不推进；同一批次在下次 run 重试。最终报告必须基于 session 终态与
-落盘记录，不依赖对话记忆。
+Incomplete 不发布、不推进；同一批次在下次 run 重试。`missing_data` /
+`unreliable_evaluation` / `external_block` 这类判断性停止，需先在同一 run 内正式 Reject
+至少 `min_rejects_before_incomplete`（默认 2）个候选；`user_interrupted` 与
+`missing_permissions` 才立即停止。最终报告必须基于 session 终态与落盘记录，不依赖对话记忆。
 
 ---
 

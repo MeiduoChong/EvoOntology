@@ -37,6 +37,7 @@ INCOMPLETE = "incomplete"
 
 TERMINAL_STATES = frozenset({ACCEPTED, INCOMPLETE})
 DEFAULT_MAX_ROUNDS = 8
+DEFAULT_MIN_REJECTS_BEFORE_INCOMPLETE = 2
 RUN_SCHEMA_VERSION = 1
 
 #: Legitimate external-stop reasons for an ``incomplete`` run.
@@ -125,6 +126,7 @@ class EvolutionSession:
             "adapter": str(adapter or ""),
             "acceptance": acceptance or {},
             "budget": self._resolve_budget(max_rounds),
+            "min_rejects_before_incomplete": self._resolve_min_rejects(),
             "round": 0,
             "current_hypothesis": "",
             "current_candidate": "",
@@ -204,6 +206,27 @@ class EvolutionSession:
         run["current_candidate"] = str(candidate_version or "")
         self._save_run()
         return int(run["round"])
+
+    def rejected_count(self) -> int:
+        """Number of formally rejected candidates in this run so far."""
+        path = self.run_dir / "rounds.jsonl"
+        if not path.is_file():
+            return 0
+        rejected = 0
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if entry.get("decision") == "reject":
+                rejected += 1
+        return rejected
+
+    def must_continue(self) -> bool:
+        """True while the run is still running and needs another Candidate."""
+        return self._require_run().get("status") == RUNNING
 
     def record_round(
         self,
@@ -393,6 +416,26 @@ class EvolutionSession:
             raise ValueError(
                 f"incomplete reason must be one of {sorted(INCOMPLETE_REASONS)}"
             )
+        if normalized_reason in {"missing_data", "unreliable_evaluation", "external_block"}:
+            required = int(
+                run.get("min_rejects_before_incomplete", DEFAULT_MIN_REJECTS_BEFORE_INCOMPLETE)
+            )
+            if self.rejected_count() < required:
+                raise EvolutionError(
+                    f"Cannot stop for {normalized_reason!r}: the run is still running "
+                    f"and has {self.rejected_count()} rejected candidate(s); at least "
+                    f"{required} rejected candidates are required before this external "
+                    "stop is allowed. Design and evaluate the next Candidate in this "
+                    "run instead."
+                )
+        if normalized_reason == "budget_exhausted" and run["round"] < int(
+            run["budget"]["max_rounds"]
+        ):
+            raise EvolutionError(
+                "Cannot stop for budget_exhausted: the round budget has not been spent "
+                "yet. Continue the loop; begin_round raises EvolutionBudgetExhausted "
+                "automatically when the budget is spent."
+            )
         run["status"] = INCOMPLETE
         run["end_reason"] = normalized_reason
         self._save_run()
@@ -481,6 +524,22 @@ class EvolutionSession:
         if value <= 0:
             raise ValueError("max_rounds must be a positive integer")
         return {"max_rounds": value}
+
+    def _resolve_min_rejects(self) -> int:
+        """Resolve the minimum rejected rounds before a judgment-based stop."""
+        value = 0
+        try:
+            project = load_project(self.workspace)
+            settings = project.get("evolution")
+            if isinstance(settings, dict) and settings.get(
+                "min_rejects_before_incomplete"
+            ) is not None:
+                value = int(settings["min_rejects_before_incomplete"])
+        except (FileNotFoundError, ValueError, TypeError):
+            value = 0
+        if value <= 0:
+            value = DEFAULT_MIN_REJECTS_BEFORE_INCOMPLETE
+        return value
 
     def _next_official_version(self) -> str:
         highest = 0

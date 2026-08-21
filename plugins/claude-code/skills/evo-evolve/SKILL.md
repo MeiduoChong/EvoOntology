@@ -63,9 +63,10 @@ for evolution.
      Validation Reserve according to
      `references/semantic-layer-data-boundary.md`.
 
-3. Fix the Evaluator and acceptance criteria. For a new run, confirm the
-   round budget with the user first (default: 8 rounds); the budget is frozen
-   for the run and a resumed run reuses it without asking again.
+3. Fix the Evaluator and acceptance criteria. Freeze the round budget at the
+   default of 8 rounds and proceed without blocking on user confirmation; ask
+   the user only if they explicitly want a different budget or a later
+   extension. A resumed run reuses the frozen budget without asking again.
 
 4. Persist the frozen run context through the MCP tool `start_evolution_run`
    (it writes `evolution/run_N/run.json` with the Parent, adapter, frozen
@@ -213,9 +214,12 @@ version must not be modified during comparison.
 
    * **Incomplete:** formal evaluation cannot be completed reliably.
 
-Do not accept a Candidate only because a final metric improves. Evaluation
-should also deepen understanding of semantic-layer limitations and guide
-future optimization.
+Do not accept a Candidate only because a final metric improves. Run the
+configured EvaluationGate (GT absolute score or LLM Judge) and Accept only
+when it returns accept AND the Candidate shows no unacceptable regression.
+When the validation set is small, re-run the evaluation to confirm the
+improvement is not single-trial luck. Evaluation should also deepen
+understanding of semantic-layer limitations and guide future optimization.
 
 After the decision:
 
@@ -228,7 +232,15 @@ After the decision:
    attribution and problem map, then design a new Candidate targeting the
    next most valuable mechanism and repeat Step 1–4. Do not advance the
    checkpoint and do not end the run.
-6. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
+6. **A single Reject never ends the run.** After `record_evolution_round` the
+   run remains `running`; you MUST design and evaluate the next Candidate in
+   the same run before deciding again. The core refuses `mark_evolution_incomplete`
+   for `missing_data`, `unreliable_evaluation`, or `external_block` until at
+   least `min_rejects_before_incomplete` (default 2) candidates have been
+   rejected. Only `user_interrupted` and `missing_permissions` stop
+   immediately; budget exhaustion is raised automatically by
+   `begin_evolution_round`.
+7. If progress stagnates or similar patches repeat, read `references/exploration-guide.md`, broaden the problem search, and reconsider the current explanation.
 
 Candidate failure, unknown attribution, no-op results, or temporary lack of
 effective hypotheses do not indicate completion. They provide information for
@@ -288,8 +300,11 @@ Only declare success when the final version satisfies:
 - no unacceptable regression exists;
 - the accepted version can be activated and rerun.
 
-If execution stops due to user interruption, exhausted budget, missing data
-or permissions, or unreliable evaluation, mark status as `incomplete`.
+If execution stops due to user interruption or missing permissions, mark
+status as `incomplete` immediately. Budget exhaustion is raised by the
+session when the budget is spent. For `missing_data` or
+`unreliable_evaluation`, the session refuses the stop until at least
+`min_rejects_before_incomplete` (default 2) candidates have been rejected.
 
 Preserve the best current version, unresolved causal issues, remaining
 hypotheses, and accurate recovery steps.

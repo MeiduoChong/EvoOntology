@@ -1,6 +1,6 @@
 {
   "name": "evoontology-codex",
-  "version": "1.0.1+codex.20260821051452",
+  "version": "1.0.2+codex.20260821170112",
   "description": "Build, query, record, and evolve a versioned semantic layer for data agents.",
   "author": {
     "name": "Eric Chong"
