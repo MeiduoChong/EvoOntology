@@ -81,6 +81,31 @@ def test_execute_dispatch(tmp_path):
     assert result["matched_total"] == 1
 
 
+def test_execute_dispatch_with_workspace_override(tmp_path):
+    _init(tmp_path)
+    other = tmp_path / "other"
+    ensure_workspace(str(other))
+    SemanticStore.save_version(
+        str(other),
+        "semantic_v0",
+        {
+            "terms": [{"id": "t_other", "name": "other_metric", "type": "metric"}],
+            "mappings": [],
+            "relations": [],
+            "constraints": [],
+            "evidence": [],
+        },
+    )
+    SemanticStore.set_active(str(other), "semantic_v0")
+
+    layer = SemanticLayer.load(str(tmp_path))
+    result = layer.execute(
+        "browse_semantics", {"query": "other_metric", "workspace": str(other)}
+    )
+    assert result["matched_total"] == 1
+    assert result["items"][0]["name"] == "other_metric"
+
+
 def test_resolve_by_semantic_id(tmp_path):
     _init(tmp_path)
     layer = SemanticLayer.load(str(tmp_path))
