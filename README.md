@@ -11,7 +11,8 @@ Accept/Reject 门控，但改的是语义记录（Term / Mapping / Relation / Co
 ## 为什么需要 EvoOntology
 
 Data Agent 直接查库时，常因自然语言与数据库 schema 之间的 gap 答错：指标口径不清、实体指代不明、
-隐含约束缺失。手写的语义层能缓解这个问题，但**会过时**——业务在变、问题在变，而手工维护的语义层没有
+隐含约束缺失。手写语义层能缓解这个问题，但**成本高、且会过时**——它通常需要人工预定义和持续维护，
+不仅人力成本高，也很难适应新的数据源、任务和 Agent；业务在变、问题在变，而手工维护的语义层又没有
 反馈回路。
 
 EvoOntology 把语义层变成**可训练的状态**：
@@ -59,18 +60,13 @@ codex plugin list
 
 ## 快速开始
 
-```bash
-# 1) 在目标项目里构建初始语义层（Step 0 会确认 fixed_split / rolling_trajectory）
-/evo-build
+| 步骤 | Claude Code | Codex |
+| --- | --- | --- |
+| 构建初始语义层 | `/evo-build` | `$evo-build` |
+| 触发语义层进化 | `/evo-evolve` | `$evo-evolve` |
+| 查看语义层可视化 | `/evo-visualize` | `$evo-visualize` |
 
-# 2) Data Agent 通过语义 MCP grounding 概念后执行任务，轨迹写入 .evoontology/trajectories/
-
-# 3) 达到触发条件后进化（默认 8 轮预算；只有 Accept 才推进 checkpoint）
-/evo-evolve
-
-# 4) 查看当前语义层（只读离线 HTML）
-python -m evoontology.visualization --root .evoontology --no-browser
-```
+构建后，Data Agent 会自动通过语义层执行任务并记录轨迹；达到触发条件时会提醒你进行进化。
 
 ## 两种使用场景
 
@@ -84,17 +80,6 @@ python -m evoontology.visualization --root .evoontology --no-browser
 插件安装后自动接入语义 MCP，默认 workspace 为当前项目的 `.evoontology/`。Agent 可用
 `browse_semantics` / `resolve_semantics` 发现并解析分析概念，无需额外配置。详见
 [`USAGE.md`](USAGE.md)。
-
-## 开发
-
-```bash
-python -m pytest tests -q
-python scripts/sync_plugin_core.py --check
-python -m benchmarks list
-```
-
-修改 `evoontology/` 后运行 `python scripts/sync_plugin_core.py` 同步到两个插件再提交。发布门禁
-`python -m evoontology.validate --root <workspace>` 只做结构校验（JSON 合法 / 引用完整 / 可加载）。
 
 ## 文档
 
