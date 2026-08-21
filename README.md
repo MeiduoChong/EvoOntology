@@ -1,7 +1,10 @@
 # EvoOntology
 
-*给 Data Agent 一个「像训练神经网络一样训练语义层」的机制：有轮次预算、有验证集、有
-Accept/Reject 门控，但改的是语义记录（Term / Mapping / Relation / Constraint / Evidence），而不是模型权重。*
+*面向异构数据（表、文件、数据库）的 Data Agent 常困于「agent–data gap」：数据在 Agent
+之外，通用工具只露出列名与文件路径，数据的结构和内容一开始是未知的，Agent 只能反复盲目
+试探。EvoOntology 是一个自进化的 ontology layer——Builder 从扎根于原始数据的探测查询中
+构建初始语义，进化循环再以「诊断 → 归因 → 补丁 → 配对评估门控」持续精化，让 Agent 在
+运行时主动查询语义层，把盲目探索变成有依据的数据理解。*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
