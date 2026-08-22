@@ -38,6 +38,10 @@
     transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
   }
   button:hover { border-color: var(--accent); color: var(--accent); }
+  button:disabled, button:disabled:hover {
+    color: #9aa4b2; border-color: var(--border-strong); background: #f2f4f7;
+    cursor: not-allowed; opacity: .72;
+  }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
   button.primary:hover { background: var(--accent-strong); color: #fff; }
   button.linklike { border: none; background: none; color: var(--accent); padding: 0 2px; font-weight: 600; flex: none; }
@@ -531,10 +535,10 @@
         <div class="glass" id="legend"><div class="glass-title" data-i18n="legend.title">图例</div></div>
         <div class="glass" id="graph-actions">
           <button id="btn-fit" type="button" data-i18n="action.fit" data-i18n-title="action.fit.title" title="缩放并居中显示所有可见元素">适配视图</button>
-          <button id="btn-layout" type="button" data-i18n="action.layout" data-i18n-title="action.layout.title" title="保留当前筛选状态并重新计算节点布局">重新布局</button>
+          <button id="btn-layout" type="button" data-i18n="action.layout" data-i18n-title="action.layout.title" title="保留当前交互状态，只整理节点位置" disabled>整理当前</button>
           <button id="btn-expand-all" type="button" data-i18n="action.expandAll" data-i18n-title="action.expandAll.title" title="展开所有 Term 的关联对象">展开全部</button>
           <button id="btn-collapse-all" type="button" data-i18n="action.collapseAll" data-i18n-title="action.collapseAll.title" title="收起所有关联对象，仅保留 Term 与语义关系">收起全部</button>
-          <button id="btn-reset" type="button" data-i18n="action.reset" data-i18n-title="action.reset.title" title="重置过滤、搜索与布局">重置</button>
+          <button id="btn-reset" type="button" data-i18n="action.reset" data-i18n-title="action.reset.title" title="清空交互状态并恢复首次打开的视图">恢复初始</button>
         </div>
         <div class="glass" id="filters">
           <div class="glass-title" data-i18n="filters.title">显示内容</div>
@@ -674,14 +678,15 @@ window.EVO_DATA = __DATA_JSON__;
       'family.reference': '结构引用',
       'action.fit': '适配视图',
       'action.fit.title': '缩放并居中显示所有可见元素',
-      'action.layout': '重新布局',
-      'action.layout.title': '保留当前筛选状态并重新计算节点布局',
+      'action.layout': '整理当前',
+      'action.layout.title': '保留搜索、筛选、展开与标签状态，只整理节点位置',
+      'action.layout.clean.title': '当前布局已整理',
       'action.expandAll': '展开全部',
       'action.expandAll.title': '展开所有 Term 的关联对象',
       'action.collapseAll': '收起全部',
       'action.collapseAll.title': '收起所有关联对象，仅保留 Term 与语义关系',
-      'action.reset': '重置',
-      'action.reset.title': '重置筛选、搜索与布局',
+      'action.reset': '恢复初始',
+      'action.reset.title': '清空交互状态并恢复首次打开的视图',
       'filters.title': '显示内容',
       'filters.relations': '语义关系',
       'filters.refs': '结构引用',
@@ -786,14 +791,15 @@ window.EVO_DATA = __DATA_JSON__;
       'family.reference': 'Structural Reference',
       'action.fit': 'Fit view',
       'action.fit.title': 'Zoom to fit all visible elements',
-      'action.layout': 'Re-layout',
-      'action.layout.title': 'Keep the current filters and recompute the node layout',
+      'action.layout': 'Tidy current',
+      'action.layout.title': 'Keep search, filters, expansion and labels; only tidy node positions',
+      'action.layout.clean.title': 'The current layout is already tidy',
       'action.expandAll': 'Expand all',
       'action.expandAll.title': 'Expand related objects of every Term',
       'action.collapseAll': 'Collapse all',
       'action.collapseAll.title': 'Collapse all related objects, keeping only Terms and semantic relations',
-      'action.reset': 'Reset',
-      'action.reset.title': 'Reset filters, search and layout',
+      'action.reset': 'Restore initial',
+      'action.reset.title': 'Clear interaction state and restore the initial view',
       'filters.title': 'Display filters',
       'filters.relations': 'Semantic relations',
       'filters.refs': 'Structural references',
@@ -1007,6 +1013,7 @@ window.EVO_DATA = __DATA_JSON__;
       button.classList.toggle('active', button.getAttribute('data-lang') === LANG);
     });
     $('#intro-text').textContent = t('intro.text', { version: meta.version || '' });
+    updateLayoutAction();
   }
 
   /* ================= header ================= */
@@ -1212,6 +1219,20 @@ window.EVO_DATA = __DATA_JSON__;
   var relationsVisible = true;
   var refsVisible = true;
   var labelToggleOn = false;
+  var layoutDirty = false;
+  var termLayout = { coreId: null, sectors: {}, coreSlots: [], termRadius: 0 };
+
+  function updateLayoutAction() {
+    var button = $('#btn-layout');
+    if (!button) return;
+    button.disabled = !layoutDirty;
+    button.title = t(layoutDirty ? 'action.layout.title' : 'action.layout.clean.title');
+  }
+
+  function setLayoutDirty(dirty) {
+    layoutDirty = !!dirty;
+    updateLayoutAction();
+  }
 
   function addOwner(satelliteId, termId) {
     if (!owners[satelliteId]) owners[satelliteId] = new Set();
@@ -1352,6 +1373,8 @@ window.EVO_DATA = __DATA_JSON__;
     recordIndex = {};
     expanded = new Set();
     expandAllFlag = false;
+    termLayout = { coreId: null, sectors: {}, coreSlots: [], termRadius: 0 };
+    setLayoutDirty(false);
     emptyState = null;
     $('#empty-hint').style.display = 'none';
   }
@@ -1519,40 +1542,82 @@ window.EVO_DATA = __DATA_JSON__;
     })[0];
   }
 
-  function orderedPeripheralTerms(core, termNodes) {
-    var remaining = new Set(stableNodes(termNodes).map(function (node) { return node.id(); }));
-    remaining.delete(core.id());
-    var ordered = [];
-    var frontier = [core.id()];
-    while (frontier.length) {
-      var next = [];
-      frontier.forEach(function (termId) {
-        var term = cy.getElementById(termId);
-        stableNodes(term.neighborhood('node[family="term"]')).forEach(function (neighbor) {
-          if (!remaining.has(neighbor.id())) return;
-          remaining.delete(neighbor.id());
-          ordered.push(neighbor);
-          next.push(neighbor.id());
-        });
-      });
-      frontier = next;
+  function termPairKey(a, b) {
+    return a < b ? a + '\u0000' + b : b + '\u0000' + a;
+  }
+
+  function buildTermAffinities(termNodes) {
+    var termIds = new Set(stableNodes(termNodes).map(function (node) { return node.id(); }));
+    var weights = {};
+    function add(a, b, weight) {
+      if (a === b || !termIds.has(a) || !termIds.has(b)) return;
+      var key = termPairKey(a, b);
+      weights[key] = (weights[key] || 0) + weight;
     }
-    while (remaining.size) {
-      var seedId = Array.from(remaining).sort()[0];
-      var componentQueue = [seedId];
-      remaining.delete(seedId);
-      while (componentQueue.length) {
-        var currentId = componentQueue.shift();
-        var current = cy.getElementById(currentId);
-        ordered.push(current);
-        stableNodes(current.neighborhood('node[family="term"]')).forEach(function (neighbor) {
-          if (!remaining.has(neighbor.id())) return;
-          remaining.delete(neighbor.id());
-          componentQueue.push(neighbor.id());
-        });
+    cy.edges('[family="relation"]').forEach(function (edge) {
+      add(edge.source().id(), edge.target().id(), 8);
+    });
+    Object.keys(owners).sort().forEach(function (nodeId) {
+      var node = cy.getElementById(nodeId);
+      if (!node.length || !node.visible()) return;
+      var termList = Array.from(owners[nodeId]).filter(function (id) {
+        return termIds.has(id);
+      }).sort();
+      if (termList.length < 2) return;
+      var sharedWeight = 3 / Math.max(1, termList.length - 1);
+      for (var a = 0; a < termList.length; a++) {
+        for (var b = a + 1; b < termList.length; b++) add(termList[a], termList[b], sharedWeight);
       }
+    });
+    return weights;
+  }
+
+  function orderedPeripheralTerms(core, termNodes) {
+    var remaining = stableNodes(termNodes).filter(function (node) { return node.id() !== core.id(); });
+    if (remaining.length < 2) return remaining;
+    var affinity = buildTermAffinities(termNodes);
+    function between(a, b) { return affinity[termPairKey(a.id(), b.id())] || 0; }
+    function total(node) {
+      return remaining.reduce(function (sum, other) {
+        return sum + (other.id() === node.id() ? 0 : between(node, other));
+      }, 0);
     }
-    return ordered;
+    remaining.sort(function (a, b) {
+      return total(b) - total(a)
+        || ownedObjectCount(b.id()) - ownedObjectCount(a.id())
+        || a.id().localeCompare(b.id());
+    });
+    var cycle = [remaining.shift()];
+    while (remaining.length) {
+      var best = null;
+      remaining.forEach(function (node) {
+        for (var gap = 0; gap < cycle.length; gap++) {
+          var left = cycle[gap];
+          var right = cycle[(gap + 1) % cycle.length];
+          var gain = cycle.length === 1
+            ? between(left, node)
+            : between(left, node) + between(node, right) - between(left, right);
+          var candidate = {
+            node: node, gap: gap, gain: gain, total: total(node), owned: ownedObjectCount(node.id())
+          };
+          if (!best || candidate.gain > best.gain
+              || (candidate.gain === best.gain && candidate.total > best.total)
+              || (candidate.gain === best.gain && candidate.total === best.total && candidate.owned > best.owned)
+              || (candidate.gain === best.gain && candidate.total === best.total
+                  && candidate.owned === best.owned && candidate.node.id() < best.node.id())) best = candidate;
+        }
+      });
+      cycle.splice(best.gap + 1, 0, best.node);
+      remaining = remaining.filter(function (node) { return node.id() !== best.node.id(); });
+    }
+    return cycle;
+  }
+
+  function visibleOwnedObjectCount(termId) {
+    return Object.keys(owners).reduce(function (count, nodeId) {
+      var node = cy.getElementById(nodeId);
+      return count + (node.length && node.visible() && owners[nodeId].has(termId) ? 1 : 0);
+    }, 0);
   }
 
   function layoutTermHierarchy() {
@@ -1561,22 +1626,32 @@ window.EVO_DATA = __DATA_JSON__;
     var core = chooseCoreTerm(termNodes);
     core.position({ x: 0, y: 0 });
     var peripheral = orderedPeripheralTerms(core, termNodes);
+    termLayout = { coreId: core.id(), sectors: {}, coreSlots: [], termRadius: 0 };
     if (!peripheral.length) return true;
-    var maxWidth = 0;
-    peripheral.forEach(function (node) {
-      maxWidth = Math.max(maxWidth, node.boundingBox({
-        includeLabels: true, includeOverlays: false
-      }).w);
-    });
     var perRing = 10;
     for (var start = 0; start < peripheral.length; start += perRing) {
       var ring = peripheral.slice(start, start + perRing);
       var ringIndex = Math.floor(start / perRing);
-      var radius = Math.max(430 + ringIndex * 420, ring.length * (maxWidth + 105) / (2 * Math.PI));
-      var angleStep = 2 * Math.PI / ring.length;
-      var angleStart = -Math.PI / 2 + (ringIndex % 2 ? angleStep / 2 : 0);
+      var weights = ring.map(function (node) {
+        return 1 + Math.min(3, Math.sqrt(visibleOwnedObjectCount(node.id())) * 0.72);
+      });
+      var totalWeight = weights.reduce(function (sum, weight) { return sum + weight; }, 0);
+      var angleStart = -Math.PI / 2 + (ringIndex % 2 ? Math.PI / ring.length : 0);
+      var cursor = angleStart;
+      var radius = 320 + ringIndex * 390;
       ring.forEach(function (node, index) {
-        var angle = angleStart + index * angleStep;
+        var span = 2 * Math.PI * weights[index] / totalWeight;
+        var usableSpan = Math.max(0.22, span - Math.min(0.12, 0.72 / ring.length));
+        var box = node.boundingBox({ includeLabels: true, includeOverlays: false });
+        radius = Math.max(radius, (box.w + 90) / usableSpan);
+        termLayout.sectors[node.id()] = { angle: cursor + span / 2, span: usableSpan, ring: ringIndex };
+        if (ringIndex === 0) termLayout.coreSlots.push(cursor);
+        cursor += span;
+      });
+      ring.forEach(function (node) {
+        var angle = termLayout.sectors[node.id()].angle;
+        termLayout.sectors[node.id()].radius = radius;
+        termLayout.termRadius = Math.max(termLayout.termRadius, radius);
         node.position({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
       });
     }
@@ -1590,15 +1665,67 @@ window.EVO_DATA = __DATA_JSON__;
       : 255;
   }
 
+  function satelliteLayerRadius(family) {
+    var termRadius = termLayout.termRadius || 320;
+    return family === 'mapping' ? termRadius + 140
+      : family === 'constraint' ? termRadius + 260
+      : family === 'evidence' ? termRadius + 390
+      : termRadius + 260;
+  }
+
+  function setLayeredPosition(node, radius, angle) {
+    node.scratch('_layoutRadius', radius);
+    node.position({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
+  }
+
+  function positionOnAssignedLayer(node, x, y) {
+    var radius = node.scratch('_layoutRadius');
+    if (!radius) return { x: x, y: y };
+    var length = Math.hypot(x, y);
+    var angle = length > 1 ? Math.atan2(y, x) : -Math.PI / 2;
+    return { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+  }
+
+  function satelliteBranchKey(node, termId, seen) {
+    if (node.data('family') === 'mapping') return node.id();
+    seen = seen || new Set();
+    if (seen.has(node.id())) return node.id();
+    seen.add(node.id());
+    var sources = node.incomers('edge[family="reference"]').toArray().map(function (edge) {
+      return edge.source();
+    }).filter(function (source) {
+      var family = source.data('family');
+      return family === 'term' || family === 'mapping' || family === 'constraint';
+    }).sort(function (a, b) {
+      var priority = { mapping: 0, constraint: 1, term: 2 };
+      return priority[a.data('family')] - priority[b.data('family')] || a.id().localeCompare(b.id());
+    });
+    for (var index = 0; index < sources.length; index++) {
+      var source = sources[index];
+      if (source.data('family') === 'term') {
+        if (source.id() === termId) return node.id();
+        continue;
+      }
+      if (owners[source.id()] && owners[source.id()].has(termId)) {
+        return satelliteBranchKey(source, termId, seen);
+      }
+    }
+    return node.id();
+  }
+
   function layoutSatellites() {
     if (!cy) return;
     var byOwner = {};
-    var shared = [];
-    cy.nodes().forEach(function (n) {
+    var sharedGroups = {};
+    cy.nodes(':visible').forEach(function (n) {
       if (n.data().family === 'term' || n.data().family === 'anchor') return;
       var set = owners[n.id()];
       if (!set || !set.size) return;
-      if (set.size > 1) { shared.push(n); return; }
+      if (set.size > 1) {
+        var signature = Array.from(set).sort().join('\u0000');
+        (sharedGroups[signature] = sharedGroups[signature] || []).push(n);
+        return;
+      }
       var primary = Array.from(set)[0];
       (byOwner[primary] = byOwner[primary] || []).push(n);
     });
@@ -1609,55 +1736,81 @@ window.EVO_DATA = __DATA_JSON__;
         var tp = term.position();
         var sats = byOwner[termId].sort(function (a, b) { return a.id() < b.id() ? -1 : 1; });
         var distanceFromCore = Math.hypot(tp.x, tp.y);
-        var base = distanceFromCore > 1 ? Math.atan2(tp.y, tp.x) : -Math.PI / 4;
-        var tb = term.boundingBox({ includeLabels: true, includeOverlays: false });
-        var termR = Math.hypot(tb.w, tb.h) / 2;
-        var families = { mapping: [], constraint: [], evidence: [], other: [] };
+        var sector = termLayout.sectors[termId];
+        var base = sector ? sector.angle : (distanceFromCore > 1 ? Math.atan2(tp.y, tp.x) : -Math.PI / 2);
+        var branches = {};
+        sats.forEach(function (node) {
+          var key = satelliteBranchKey(node, termId);
+          (branches[key] = branches[key] || []).push(node);
+        });
+        var branchKeys = Object.keys(branches).sort();
+        var isCore = termId === termLayout.coreId;
+        var maxSpan = isCore ? 2 * Math.PI : Math.min(1.28, sector ? sector.span * 0.72 : Math.PI * 0.55);
+        var familyStats = {};
         sats.forEach(function (node) {
           var family = node.data('family');
-          (families[family] || families.other).push(node);
+          var stats = familyStats[family] || { count: 0, maxWidth: 0 };
+          stats.count++;
+          stats.maxWidth = Math.max(stats.maxWidth, node.boundingBox({
+            includeLabels: true, includeOverlays: false
+          }).w);
+          familyStats[family] = stats;
         });
-        ['mapping', 'constraint', 'evidence', 'other'].forEach(function (family) {
-          var nodes = families[family];
-          if (!nodes.length) return;
-          var maxWidth = 0;
-          nodes.forEach(function (node) {
-            maxWidth = Math.max(maxWidth, node.boundingBox({
-              includeLabels: true, includeOverlays: false
-            }).w);
-          });
-          var offset = familyRingOffset(family === 'other' ? '' : family);
-          var radius = Math.max(termR + 72, offset * (distanceFromCore < 1 ? 0.78 : 1));
-          var span = Math.min(Math.PI * 0.7, Math.max(0, (nodes.length - 1) * 0.28));
-          if (nodes.length > 1) {
-            var needed = (nodes.length - 1) * (maxWidth + 38) / Math.max(radius, 1);
-            if (needed > span) span = Math.min(Math.PI * 0.7, needed);
-            if (needed > Math.PI * 0.7) radius = (nodes.length - 1) * (maxWidth + 38) / (Math.PI * 0.7);
-          }
-          nodes.forEach(function (node, index) {
-            var angle = nodes.length === 1
+        branchKeys.forEach(function (key, branchIndex) {
+          var angle;
+          if (isCore && termLayout.coreSlots.length && branchKeys.length <= termLayout.coreSlots.length) {
+            angle = termLayout.coreSlots[Math.floor(branchIndex * termLayout.coreSlots.length / branchKeys.length)];
+          } else {
+            angle = branchKeys.length === 1
               ? base
-              : base - span / 2 + index * span / (nodes.length - 1);
-            node.position({ x: tp.x + radius * Math.cos(angle), y: tp.y + radius * Math.sin(angle) });
+              : base - maxSpan / 2 + branchIndex * maxSpan / (branchKeys.length - 1);
+          }
+          var sameFamilyIndex = {};
+          var sameFamilyCount = {};
+          branches[key].forEach(function (node) {
+            var family = node.data('family');
+            sameFamilyCount[family] = (sameFamilyCount[family] || 0) + 1;
+          });
+          branches[key].sort(function (a, b) {
+            return familyRingOffset(a.data('family')) - familyRingOffset(b.data('family'))
+              || a.id().localeCompare(b.id());
+          }).forEach(function (node) {
+            var family = node.data('family');
+            var index = sameFamilyIndex[family] || 0;
+            sameFamilyIndex[family] = index + 1;
+            var stats = familyStats[family];
+            var neededRadius = stats.count > 1
+              ? (stats.count - 1) * (stats.maxWidth + 38) / Math.max(maxSpan, 0.2)
+              : 0;
+            var radius = Math.max(satelliteLayerRadius(family), neededRadius);
+            var nudge = (index - (sameFamilyCount[family] - 1) / 2) * Math.min(0.18, (stats.maxWidth + 30) / radius);
+            setLayeredPosition(node, radius, angle + nudge);
           });
         });
       });
-      shared.sort(function (a, b) { return a.id() < b.id() ? -1 : 1; });
-      shared.forEach(function (node, index) {
-        var termIds = Array.from(owners[node.id()]);
-        var positions = termIds.map(function (id) { return cy.getElementById(id).position(); });
-        var center = positions.reduce(function (acc, p) {
-          acc.x += p.x; acc.y += p.y; return acc;
+      Object.keys(sharedGroups).sort().forEach(function (signature, groupIndex) {
+        var nodes = sharedGroups[signature].sort(function (a, b) { return a.id() < b.id() ? -1 : 1; });
+        var termIds = signature.split('\u0000');
+        var direction = termIds.reduce(function (acc, id) {
+          var position = cy.getElementById(id).position();
+          var length = Math.hypot(position.x, position.y);
+          if (length > 1) { acc.x += position.x / length; acc.y += position.y / length; }
+          return acc;
         }, { x: 0, y: 0 });
-        center.x /= positions.length; center.y /= positions.length;
-        var length = Math.hypot(center.x, center.y);
-        var angle = length > 1
-          ? Math.atan2(center.y, center.x)
-          : -Math.PI / 2 + index * 2.39996;
-        var offset = familyRingOffset(node.data('family')) * 0.62 + (index % 3) * 36;
-        node.position({
-          x: center.x + Math.cos(angle) * offset,
-          y: center.y + Math.sin(angle) * offset
+        var directionLength = Math.hypot(direction.x, direction.y);
+        var angle = directionLength > 0.2
+          ? Math.atan2(direction.y, direction.x)
+          : -Math.PI / 2 + groupIndex * 2.39996;
+        var maxWidth = 0;
+        nodes.forEach(function (node) {
+          maxWidth = Math.max(maxWidth, node.boundingBox({
+            includeLabels: true, includeOverlays: false
+          }).w);
+        });
+        nodes.forEach(function (node, index) {
+          var radius = satelliteLayerRadius(node.data('family'));
+          var nudge = (index - (nodes.length - 1) / 2) * (maxWidth + 38) / radius;
+          setLayeredPosition(node, radius, angle + nudge);
         });
       });
     });
@@ -1675,14 +1828,11 @@ window.EVO_DATA = __DATA_JSON__;
       var p = term.position();
       outerRadius = Math.max(outerRadius, Math.hypot(p.x, p.y));
     });
-    outerRadius += 470;
+    outerRadius = Math.max(outerRadius + 470, satelliteLayerRadius('evidence') + 180);
     var ordered = stableNodes(orphans);
     ordered.forEach(function (node, index) {
       var angle = -Math.PI / 2 + index * 2 * Math.PI / ordered.length;
-      node.position({
-        x: Math.cos(angle) * outerRadius,
-        y: Math.sin(angle) * outerRadius
-      });
+      setLayeredPosition(node, outerRadius, angle);
     });
   }
 
@@ -1711,12 +1861,12 @@ window.EVO_DATA = __DATA_JSON__;
           var shareB = canB ? (canA ? 0.5 : 1) : 0;
           if (ox < oy) {
             var sgnX = cax >= cbx ? 1 : -1;
-            if (shareA) nodes[a].position({ x: cax + sgnX * ox * shareA, y: cay });
-            if (shareB) nodes[b].position({ x: cbx - sgnX * ox * shareB, y: cby });
+            if (shareA) nodes[a].position(positionOnAssignedLayer(nodes[a], cax + sgnX * ox * shareA, cay));
+            if (shareB) nodes[b].position(positionOnAssignedLayer(nodes[b], cbx - sgnX * ox * shareB, cby));
           } else {
             var sgnY = cay >= cby ? 1 : -1;
-            if (shareA) nodes[a].position({ x: cax, y: cay + sgnY * oy * shareA });
-            if (shareB) nodes[b].position({ x: cbx, y: cby - sgnY * oy * shareB });
+            if (shareA) nodes[a].position(positionOnAssignedLayer(nodes[a], cax, cay + sgnY * oy * shareA));
+            if (shareB) nodes[b].position(positionOnAssignedLayer(nodes[b], cbx, cby - sgnY * oy * shareB));
           }
           if (shareA) boxes[a] = nodes[a].boundingBox({ includeLabels: true, includeOverlays: false });
           if (shareB) boxes[b] = nodes[b].boundingBox({ includeLabels: true, includeOverlays: false });
@@ -1781,7 +1931,7 @@ window.EVO_DATA = __DATA_JSON__;
       if (!moved) break;
       graph.batch(function () {
         adjustments.forEach(function (item) {
-          item.node.position({ x: item.x, y: item.y });
+          item.node.position(positionOnAssignedLayer(item.node, item.x, item.y));
         });
       });
     }
@@ -1836,6 +1986,7 @@ window.EVO_DATA = __DATA_JSON__;
     layoutUnownedSatellites();
     settleGraphGeometry();
     if (fitAfter !== false) fitGraphToCenter(cy, 64);
+    setLayoutDirty(false);
   }
 
   function syncFilterBoxes() {
@@ -1868,23 +2019,28 @@ window.EVO_DATA = __DATA_JSON__;
     applyVisibility();
     layoutSatellites();
     settleGraphGeometry();
+    setLayoutDirty(true);
   }
 
   function expandEverything() {
     if (!cy) return;
+    var changed = !expandAllFlag || expanded.size !== cy.nodes('[family="term"]').length;
     expandAllFlag = true;
     cy.nodes('[family="term"]').forEach(function (n) { expanded.add(n.id()); });
     applyVisibility();
     layoutSatellites();
     settleGraphGeometry();
     fitGraphToCenter(cy, 60);
+    if (changed) setLayoutDirty(true);
   }
 
   function collapseEverything() {
+    var changed = expandAllFlag || expanded.size > 0;
     expandAllFlag = false;
     expanded.clear();
     applyVisibility();
     settleGraphGeometry();
+    if (changed) setLayoutDirty(true);
   }
 
   function resetView() {
@@ -1901,6 +2057,7 @@ window.EVO_DATA = __DATA_JSON__;
     syncFilterBoxes();
     cy.elements('.label-on').removeClass('label-on');
     cy.elements('.dim').removeClass('dim');
+    cy.elements(':selected').unselect();
     var input = $('#search-input');
     input.value = '';
     $('#search-status').textContent = '';
@@ -2026,6 +2183,7 @@ window.EVO_DATA = __DATA_JSON__;
     cy.on('mouseout', 'edge', function (event) {
       if (!labelToggleOn && !event.target.selected()) event.target.removeClass('label-on');
     });
+    cy.on('dragfree', 'node:not([family="anchor"])', function () { setLayoutDirty(true); });
     cy.on('position', 'node', scheduleAnchorSync);
   }
 
@@ -2039,15 +2197,18 @@ window.EVO_DATA = __DATA_JSON__;
       box.addEventListener('change', function () {
         familyVisible[box.getAttribute('data-family')] = box.checked;
         applyVisibility();
+        setLayoutDirty(true);
       });
     });
     $('#chk-relations').addEventListener('change', function () {
       relationsVisible = this.checked;
       applyVisibility();
+      setLayoutDirty(true);
     });
     $('#chk-refs').addEventListener('change', function () {
       refsVisible = this.checked;
       applyVisibility();
+      setLayoutDirty(true);
     });
     $('#chk-labels').addEventListener('change', function () {
       labelToggleOn = this.checked;

@@ -407,6 +407,14 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert "function fitGraphToCenter(" in html
     assert "runLayout(true);" in html
     assert "function chooseCoreTerm(" in html
+    assert "function buildTermAffinities(" in html
+    assert "function visibleOwnedObjectCount(" in html
+    assert "function satelliteBranchKey(" in html
+    assert "function satelliteLayerRadius(" in html
+    assert "function positionOnAssignedLayer(" in html
+    assert "setLayeredPosition(node, radius, angle + nudge);" in html
+    assert "termLayout.sectors[node.id()]" in html
+    assert "var sharedGroups = {};" in html
     assert "function familyRingOffset(" in html
     assert "randomize: true" not in html
     assert "if (!layoutTermHierarchy())" in html
@@ -463,13 +471,23 @@ def test_bilingual_controls_use_stable_responsive_layout(workspace):
 
 def test_relayout_and_reset_keep_distinct_responsibilities(workspace):
     html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
-    assert 'id="btn-layout"' in html
+    assert 'id="btn-layout"' in html and 'disabled>整理当前</button>' in html
     assert "$('#btn-layout').addEventListener('click', function () { runLayout(true); });" in html
+    assert "'action.layout': '整理当前'" in html
+    assert "'action.layout': 'Tidy current'" in html
+    assert "'action.layout.clean.title': '当前布局已整理'" in html
+    assert "cy.on('dragfree', 'node:not([family=\"anchor\"])'" in html
+    assert "setLayoutDirty(false);" in html
+    assert "setLayoutDirty(true);" in html
     reset_body = html.split("function resetView()", 1)[1].split(
         "/* ================= graph: interactions", 1
     )[0]
     assert "familyVisible = { mapping: true, constraint: true, evidence: true };" in reset_body
     assert "input.value = '';" in reset_body
+    assert "cy.elements(':selected').unselect();" in reset_body
+    assert "runLayout(true);" in reset_body
+    assert "'action.reset': '恢复初始'" in html
+    assert "'action.reset': 'Restore initial'" in html
 
 
 # ---- 6. generated HTML is offline and self-contained ------------------------
