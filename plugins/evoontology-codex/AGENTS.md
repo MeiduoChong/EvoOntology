@@ -35,7 +35,9 @@ project — the core is not installed there in a plugin-only setup.
   `/evo-visualize` (or `$evo-visualize`), execute the `evo-visualize` skill (see
   `skills/evo-visualize/SKILL.md`) and call the MCP tool `visualize_semantics`
   to render the active (or an explicitly requested) version as a standalone
-  offline multi-version HTML at `<workspace>/visualizations/index.html`, read-only.
+  offline multi-version HTML at `<resolved-workspace>/visualizations/index.html`,
+  read-only. For this tool, a project root or `.evoontology` container may resolve
+  to one nested database workspace; ambiguous candidates require an exact path.
 
 For Codex, the slash-style phrases above are aliases that route to the matching
 skills. The native Codex skill invocations are `$evo-build`, `$evo-evolve`, and

@@ -31,7 +31,13 @@ from .runtime.runtime import SemanticLayer
 from .trajectory.trajectory import TrajectoryStore, from_message_trace, truncate_result
 from .trigger.trigger import EvolutionTrigger
 from .visualization import visualize
-from .workspace import ensure_workspace, load_project, resolve_workspace, save_project
+from .workspace import (
+    ensure_workspace,
+    load_project,
+    resolve_workspace,
+    resolve_workspace_for_version,
+    save_project,
+)
 
 __version__ = "1.1.0"
 
@@ -52,6 +58,7 @@ __all__ = [
     "EvolutionTrigger",
     "EvaluationGate",
     "resolve_workspace",
+    "resolve_workspace_for_version",
     "ensure_workspace",
     "load_project",
     "save_project",

@@ -17,6 +17,16 @@ _WORKSPACE = {
     ),
 }
 
+_VISUALIZE_WORKSPACE = {
+    "type": "string",
+    "description": (
+        "Absolute path to an exact EvoOntology workspace, a .evoontology "
+        "container, or a project root containing .evoontology. A unique nested "
+        "workspace matching the requested version is discovered read-only; pass "
+        "the exact workspace when multiple databases match."
+    ),
+}
+
 
 TOOLS = [
     {
@@ -86,7 +96,7 @@ OPERATIONS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "workspace": _WORKSPACE,
+                "workspace": _VISUALIZE_WORKSPACE,
                 "version": {
                     "type": "string",
                     "description": (

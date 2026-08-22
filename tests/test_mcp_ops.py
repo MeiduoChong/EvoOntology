@@ -51,6 +51,21 @@ def test_visualize_semantics_writes_html(tmp_path):
     assert (tmp_path / ".evoontology" / "visualizations" / "index.html").is_file()
 
 
+def test_visualize_semantics_reports_discovered_nested_workspace(tmp_path):
+    container = tmp_path / ".evoontology"
+    nested = container / "database_a" / "workspace_a"
+    _save_active(str(nested))
+
+    result = ops.execute(
+        "visualize_semantics", {"workspace": str(container), "open_browser": False}
+    )
+
+    assert result["workspace"] == str(nested.resolve())
+    assert result["html_path"] == str(
+        nested.resolve() / "visualizations" / "index.html"
+    )
+
+
 def test_visualize_semantics_opens_browser_by_default(tmp_path, monkeypatch):
     import evoontology.visualization.renderer as renderer
 

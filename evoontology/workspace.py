@@ -29,6 +29,73 @@ def resolve_workspace(
     return (root.expanduser().resolve() / WORKSPACE_DIRNAME)
 
 
+def resolve_workspace_for_version(
+    workspace: Optional[PathLike] = None,
+    *,
+    project_root: Optional[PathLike] = None,
+    version: str = "active",
+) -> Path:
+    """Find one existing workspace that can serve a read-only version request.
+
+    ``workspace`` may name the final workspace, a ``.evoontology`` container
+    holding database-specific workspaces, or a project root containing such a
+    container. Direct matches win. A unique nested match is discovered at any
+    depth; ambiguous matches raise instead of selecting an arbitrary database.
+
+    This resolver never creates or modifies workspace state. Write operations
+    must continue to use :func:`resolve_workspace` with an exact destination.
+    """
+    requested = str(version or "active").strip() or "active"
+    root = resolve_workspace(workspace, project_root=project_root)
+    if _workspace_has_version(root, requested):
+        return root
+
+    nested_container = root / WORKSPACE_DIRNAME
+    search_root = nested_container if nested_container.is_dir() else root
+    if not search_root.is_dir():
+        return search_root
+
+    if requested == "active":
+        possible = {path.parent for path in search_root.rglob("active.json")}
+    else:
+        possible = {path.parent for path in search_root.rglob("versions")}
+    candidates = sorted(
+        {
+            candidate.resolve()
+            for candidate in possible
+            if _workspace_has_version(candidate, requested)
+        },
+        key=lambda path: str(path).casefold(),
+    )
+    if len(candidates) == 1:
+        return candidates[0]
+    if len(candidates) > 1:
+        listed = "\n".join(f"- {path}" for path in candidates)
+        raise ValueError(
+            f"Multiple EvoOntology workspaces match version {requested!r} under "
+            f"{search_root}:\n{listed}\nPass the exact workspace path."
+        )
+    return search_root
+
+
+def _workspace_has_version(root: Path, version: str) -> bool:
+    if version != "active":
+        return (root / "versions" / version).is_dir()
+    active_file = root / "active.json"
+    if not active_file.is_file():
+        return False
+    try:
+        active = json.loads(active_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(active, dict):
+        return False
+    active_version = str(
+        active.get("active_version") or active.get("version") or ""
+    ).strip()
+    return bool(active_version) and (root / "versions" / active_version).is_dir()
+
+
 def ensure_workspace(
     workspace: Optional[PathLike] = None,
     *,

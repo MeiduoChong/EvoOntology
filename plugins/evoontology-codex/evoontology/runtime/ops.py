@@ -45,7 +45,12 @@ def visualize_semantics(arguments: Dict[str, Any]) -> Dict[str, Any]:
         version=_version(arguments) or "active",
         open_browser=open_browser,
     )
-    return {"status": "ok", "html_path": str(path), "opened_in_browser": open_browser}
+    return {
+        "status": "ok",
+        "workspace": str(path.parent.parent),
+        "html_path": str(path),
+        "opened_in_browser": open_browser,
+    }
 
 
 def evolution_status(arguments: Dict[str, Any]) -> Dict[str, Any]:

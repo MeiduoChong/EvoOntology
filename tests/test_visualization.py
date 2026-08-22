@@ -288,6 +288,77 @@ def test_active_version_resolves_active_json(workspace):
     assert output.is_file()
 
 
+def test_visualize_discovers_one_workspace_at_arbitrary_nested_depth(tmp_path):
+    container = tmp_path / ".evoontology"
+    nested = container / "database_a" / "team_workspace"
+    SemanticStore.save_version(nested, "semantic_v0", _records())
+    SemanticStore.set_active(nested, "semantic_v0")
+
+    output = visualize(workspace=container, open_browser=False)
+
+    assert output == nested / "visualizations" / "index.html"
+    assert output.is_file()
+    assert not (container / "visualizations").exists()
+
+
+def test_visualize_accepts_project_root_containing_nested_workspace(tmp_path):
+    project_root = tmp_path / "project"
+    nested = project_root / ".evoontology" / "database_a" / "workspace_a"
+    SemanticStore.save_version(nested, "semantic_v0", _records())
+    SemanticStore.set_active(nested, "semantic_v0")
+
+    output = visualize(workspace=project_root, open_browser=False)
+
+    assert output == nested / "visualizations" / "index.html"
+
+
+def test_visualize_uses_explicit_version_to_disambiguate_nested_workspaces(tmp_path):
+    container = tmp_path / ".evoontology"
+    first = container / "database_a"
+    second = container / "database_b" / "workspace_b"
+    SemanticStore.save_version(first, "semantic_v0", _records())
+    SemanticStore.set_active(first, "semantic_v0")
+    SemanticStore.save_version(second, "semantic_v1", _records())
+    SemanticStore.set_active(second, "semantic_v1")
+
+    output = visualize(
+        workspace=container, version="semantic_v1", open_browser=False
+    )
+
+    assert output == second / "visualizations" / "index.html"
+
+
+def test_visualize_rejects_ambiguous_nested_workspaces(tmp_path):
+    container = tmp_path / ".evoontology"
+    candidates = [container / "database_a", container / "database_b" / "workspace_b"]
+    for candidate in candidates:
+        SemanticStore.save_version(candidate, "semantic_v0", _records())
+        SemanticStore.set_active(candidate, "semantic_v0")
+
+    with pytest.raises(ValueError) as exc_info:
+        visualize(workspace=container, open_browser=False)
+
+    message = str(exc_info.value)
+    assert "Multiple EvoOntology workspaces" in message
+    assert all(str(candidate) in message for candidate in candidates)
+    assert "Pass the exact workspace path" in message
+
+
+def test_visualize_ignores_nested_active_pointer_without_target_version(tmp_path):
+    container = tmp_path / ".evoontology"
+    broken = ensure_workspace(container / "broken")
+    (broken / "active.json").write_text(
+        json.dumps({"active_version": "missing_version"}), encoding="utf-8"
+    )
+    valid = container / "database_a" / "workspace_a"
+    SemanticStore.save_version(valid, "semantic_v0", _records())
+    SemanticStore.set_active(valid, "semantic_v0")
+
+    output = visualize(workspace=container, open_browser=False)
+
+    assert output == valid / "visualizations" / "index.html"
+
+
 def test_explicit_version_renders_without_changing_active(workspace):
     SemanticStore.save_version(workspace, "semantic_v1", _records())
     active_before = json.loads((workspace / "active.json").read_text(encoding="utf-8"))

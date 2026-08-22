@@ -25,7 +25,7 @@ from ..ontology.models import Constraint, Evidence, Mapping, Relation, Term
 from ..ontology.store import SemanticStore
 from ..runtime.tools import TOOLS
 from ..runtime.runtime import SemanticLayer
-from ..workspace import PathLike, resolve_workspace
+from ..workspace import PathLike, resolve_workspace_for_version
 
 ACTIVE = "active"
 VISUALIZATIONS_DIRNAME = "visualizations"
@@ -83,9 +83,11 @@ def visualize(
     ``version="active"`` follows ``active.json``; an explicit version selects
     the initially visible version without touching ``active.json``. Every
     version under ``versions/`` is embedded so the page can switch and compare
-    versions offline. The stable output is ``<workspace>/visualizations/index.html``.
+    versions offline. Containers and project roots resolve to one matching nested
+    workspace. The stable output is
+    ``<resolved-workspace>/visualizations/index.html``.
     """
-    root = resolve_workspace(workspace)
+    root = resolve_workspace_for_version(workspace, version=version)
     if not root.is_dir():
         raise FileNotFoundError("EvoOntology workspace not initialized.")
     selected = resolve_version(root, version)

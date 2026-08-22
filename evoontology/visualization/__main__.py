@@ -18,7 +18,10 @@ def main() -> None:
     parser.add_argument(
         "--root",
         default=None,
-        help="Workspace root containing active.json (default: <cwd>/.evoontology)",
+        help=(
+            "Exact workspace, .evoontology container, or project root "
+            "(default: <cwd>/.evoontology)"
+        ),
     )
     parser.add_argument(
         "--version",

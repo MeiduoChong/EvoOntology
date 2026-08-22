@@ -13,17 +13,22 @@ read-only.
 
 ## Workflow
 
-1. Resolve the workspace: default is the current project's `.evoontology/`
-   (Core `resolve_workspace()`); use an explicit path when the user provides one.
+1. Resolve the workspace input: default is the current project's
+   `.evoontology/`; use an explicit path when the user provides one. The Core
+   accepts an exact workspace, a `.evoontology` container, or a project root.
+   It uses the requested version to discover one matching nested workspace at
+   any depth. If multiple workspaces match, report the candidates and ask for
+   the exact path instead of guessing.
 2. Resolve the initially shown version: default `active` (the version referenced
    by `active.json`). An explicit `semantic_vN` changes only the initial page
    selection and never changes `active.json`; every available version is embedded.
 3. Call the `evo-semantic` MCP tool `visualize_semantics` (the single rendering
-   entry point), passing `workspace` (the absolute `.evoontology/` path) and
-   optionally `version` and `open_browser`. Do not run
+   entry point), passing the absolute workspace input and optionally `version`
+   and `open_browser`. Do not run
    `python -m evoontology.visualization`.
 
-4. Return the generated path `<workspace>/visualizations/index.html`.
+4. Return the generated path `<resolved-workspace>/visualizations/index.html`
+   and the resolved workspace reported by the tool.
    The MCP tool writes the file and then opens it in the default browser
    exactly once (`open_browser` defaults to true). Pass `open_browser: false`
    only when the user explicitly does not want the browser to open. Never open
@@ -37,9 +42,9 @@ read-only.
   EvoOntology Core (`evoontology.visualization`).
 - Never modify Build, Evolve, Runtime, `active.json`, `versions/`, or any
   other ontology/evolution state.
-- Errors stay explicit: workspace not initialized, no active version, or the
-  requested version does not exist. Broken references only produce warnings;
-  graph objects are never fabricated.
+- Errors stay explicit: workspace not initialized, no active version, the
+  requested version does not exist, or multiple nested workspaces match.
+  Broken references only produce warnings; graph objects are never fabricated.
 - Content edges follow the semantic model: solid Semantic Relations connect
   Terms, while dotted Structural References attach Mapping, Constraint, and
   Evidence records according to schema reference rules.
