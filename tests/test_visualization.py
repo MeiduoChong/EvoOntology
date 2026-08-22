@@ -403,12 +403,14 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert "'width': 1.8, 'line-style': 'dotted', 'line-color': '#8f9bad'" in html
     assert "isList ? 'value-chip' : 'kv-text'" in html
     assert html.count('"schema":{"object_types"') == 2
-    assert "function layoutBackbone(" in html
+    assert "function layoutTermHierarchy(" in html
     assert "function fitGraphToCenter(" in html
     assert "runLayout(true);" in html
-    assert "nodeRepulsion: 11500" in html
-    assert "idealEdgeLength: 215" in html
-    assert "function spreadTermClusters(" in html
+    assert "function chooseCoreTerm(" in html
+    assert "function familyRingOffset(" in html
+    assert "randomize: true" not in html
+    assert "if (!layoutTermHierarchy())" in html
+    assert "family === 'evidence' ? 375" in html
     assert "function avoidEdgeNodeCrossings(" in html
     assert "function settleGraphGeometry(" in html
     assert "'target-arrow-shape': 'triangle'" not in html
@@ -439,6 +441,24 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert "'tool.manifest': '语义层清单（Layer Manifest）'" in html
     assert "#version-select { width: 220px; max-width: 220px; font-size: 13px; }" in html
     assert "#compare-version-select { width: 210px; max-width: 210px; font-size: 13px; }" in html
+
+
+def test_bilingual_controls_use_stable_responsive_layout(workspace):
+    html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
+
+    assert 'class="header-context"' in html
+    assert 'class="header-tools"' in html
+    assert "grid-template-columns: minmax(0, 1fr) max-content;" in html
+    assert "@media (max-width: 1360px)" in html
+    assert "#intro-text { flex: 1; min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }" in html
+    assert "'search.placeholder': '搜索语义对象'" in html
+    assert "'search.placeholder': 'Search semantic objects'" in html
+    assert "#search-status:empty { display: none; }" in html
+    assert ".kv-row { display: grid;" in html
+    assert "grid-template-columns: minmax(96px, .38fr) minmax(0, 1fr);" in html
+    assert ".detail-actions { display: flex; gap: 8px; flex-wrap: wrap;" in html
+    assert ".welcome-list li { display: grid; grid-template-columns: 7px minmax(0, 1fr);" in html
+    assert "#btn-compare-close { justify-self: end;" in html
 
 
 def test_relayout_and_reset_keep_distinct_responsibilities(workspace):

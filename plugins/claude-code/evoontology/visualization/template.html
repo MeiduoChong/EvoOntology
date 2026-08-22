@@ -46,10 +46,14 @@
 
   /* ---- header ---- */
   header {
-    display: flex; align-items: center; gap: 12px; padding: 12px 20px; flex: none;
+    display: grid; grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: center; gap: 14px; padding: 12px 20px; flex: none; min-width: 0;
     background: var(--panel);
     border-bottom: 1px solid var(--border); z-index: 30;
   }
+  .header-context, .header-tools { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .header-context { overflow: hidden; }
+  .header-tools { justify-content: flex-end; }
   .brand { display: flex; align-items: center; gap: 9px; font-size: 17.5px; font-weight: 700; white-space: nowrap; letter-spacing: .01em; }
   .brand-mark {
     width: 28px; height: 28px; border-radius: 8px; flex: none;
@@ -79,23 +83,23 @@
   }
   #btn-compare.active { color: var(--accent); border-color: #c7cdf2; background: var(--accent-soft); }
   .compare-icon { width: 18px; height: 18px; flex: none; stroke-width: 1.55; }
-  #status-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
+  #status-chips { display: flex; gap: 6px; flex: 1; align-items: center; min-width: 0; overflow: hidden; }
   .chip {
     border: 1px solid var(--border-strong); background: var(--panel); color: var(--muted);
     border-radius: 999px; padding: 3px 11px; font-size: 13.5px; white-space: nowrap;
-    max-width: 360px; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   }
   .chip.ok { color: #1e6b45; border-color: #bfe0cd; background: #e9f6ef; }
   .chip.warn { color: #8a5a1e; border-color: #ecd3ae; background: #faf2e4; cursor: pointer; }
   .chip.warn:hover { border-color: #d9a94f; }
-  .spacer { flex: 1; }
-  .search-box { position: relative; display: flex; align-items: center; gap: 8px; }
+  .search-box { position: relative; display: flex; align-items: center; gap: 8px; min-width: 0; }
   .search-box input {
     font: inherit; font-size: 14px; padding: 7px 12px; border: 1px solid var(--border-strong); border-radius: 9px;
     width: 272px; color: var(--text); background: var(--panel); outline: none;
   }
   .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(85, 99, 217, .16); }
-  #search-status { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  #search-status { min-width: 52px; color: var(--muted); font-size: 13px; text-align: right; white-space: nowrap; }
+  #search-status:empty { display: none; }
   #search-results {
     position: absolute; top: calc(100% + 6px); right: 0; width: 352px; max-height: 380px;
     overflow: auto; background: var(--panel); border: 1px solid var(--border);
@@ -111,7 +115,7 @@
   .lang-switch { display: flex; border: 1px solid var(--border-strong); border-radius: 999px; overflow: hidden; flex: none; background: var(--panel); }
   .lang-switch button {
     border: none; border-radius: 0; background: transparent; color: var(--muted);
-    padding: 5px 13px; font-size: 13.5px; font-weight: 600;
+    min-width: 46px; padding: 5px 11px; font-size: 13.5px; font-weight: 600;
   }
   .lang-switch button.active { background: var(--accent); color: #fff; }
   .lang-switch button + button { border-left: 1px solid var(--border-strong); }
@@ -128,7 +132,7 @@
     border-bottom: 1px solid var(--border); color: #46586e; font-size: 14px; z-index: 20;
   }
   #intro-strip svg { flex: none; }
-  #intro-text { flex: 1; min-width: 0; line-height: 1.5; }
+  #intro-text { flex: 1; min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
 
   /* ---- tabs ---- */
   nav {
@@ -137,7 +141,8 @@
   }
   nav .tab {
     border: 1px solid transparent; border-bottom: none; border-radius: 10px 10px 0 0;
-    background: transparent; color: var(--muted); padding: 8px 20px; font-weight: 550; font-size: 15px;
+    min-width: 136px; background: transparent; color: var(--muted); padding: 8px 18px;
+    font-weight: 550; font-size: 15px; text-align: center; white-space: nowrap;
   }
   nav .tab:hover { color: var(--accent); }
   nav .tab.active { background: var(--bg); border-color: var(--border); color: var(--text); font-weight: 650; }
@@ -150,15 +155,18 @@
   /* ---- content view ---- */
   #view-content { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
   #compare-bar {
-    display: flex; align-items: center; gap: 10px; min-width: 0; flex: none; flex-wrap: wrap;
+    display: grid; grid-template-columns: max-content minmax(250px, 1fr) max-content max-content;
+    grid-template-areas: "title versions toggle close" "summary summary summary summary";
+    align-items: center; gap: 8px 12px; min-width: 0; flex: none;
     margin: 12px 14px 0; padding: 8px 10px; background: rgba(255,255,255,.96);
     border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm);
   }
-  .compare-title { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+  .compare-title { grid-area: title; display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
   .compare-title svg { color: var(--accent); }
   .compare-vs { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
   #compare-version-select { width: 210px; max-width: 210px; font-size: 13px; }
-  #diff-summary { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
+  .compare-versions { grid-area: versions; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  #diff-summary { grid-area: summary; display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
   .diff-chip {
     display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 10px;
     font-size: 12.5px; font-weight: 650; white-space: nowrap; box-shadow: none;
@@ -168,9 +176,9 @@
   .diff-chip.removed { color: #8a473b; background: #fbefed; border: 1px solid #edc6bf; }
   .diff-chip.changed { color: #805c20; background: #faf3e5; border: 1px solid #e9d09f; }
   .diff-chip.same { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
-  #btn-compare-close { margin-left: auto; padding: 4px 10px; color: var(--muted); }
+  #btn-compare-close { justify-self: end; grid-area: close; padding: 4px 10px; color: var(--muted); white-space: nowrap; }
   .diff-toggle {
-    display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12.5px;
+    grid-area: toggle; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12.5px;
     white-space: nowrap; cursor: pointer; user-select: none; padding-left: 4px;
   }
   .diff-toggle input { width: 15px; height: 15px; accent-color: var(--accent); }
@@ -209,7 +217,7 @@
     box-shadow: var(--shadow); padding: 11px 13px;
   }
   .glass-title { font-size: 12.5px; font-weight: 700; color: var(--muted); letter-spacing: .06em; margin-bottom: 7px; }
-  #legend { top: 16px; left: 16px; min-width: 176px; }
+  #legend { top: 16px; left: 16px; width: 220px; }
   .lg-item { display: flex; align-items: center; gap: 9px; padding: 3px 0; font-size: 14px; }
   .lg-count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; padding-left: 14px; }
   .swatch { width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid; flex: none; display: inline-block; }
@@ -221,8 +229,12 @@
   .swatch.relation { width: 17px; height: 0; border: none; border-top: 2px solid #98a4bd; border-radius: 0; }
   .swatch.reference { width: 19px; height: 0; border: none; border-top: 2.5px dotted #8f9bad; border-radius: 0; }
   #graph-actions { top: 16px; right: 16px; display: flex; gap: 7px; padding: 9px; }
-  #graph-actions button { padding: 5px 12px; font-size: 13px; border-radius: 8px; background: rgba(255, 255, 255, .8); }
-  #filters { bottom: 16px; left: 16px; display: flex; flex-direction: column; gap: 7px; }
+  #graph-actions button { padding: 5px 10px; font-size: 13px; border-radius: 8px; background: rgba(255, 255, 255, .8); white-space: nowrap; }
+  #btn-fit { min-width: 78px; }
+  #btn-layout { min-width: 86px; }
+  #btn-expand-all, #btn-collapse-all { min-width: 96px; }
+  #btn-reset { min-width: 62px; }
+  #filters { bottom: 16px; left: 16px; width: 220px; display: flex; flex-direction: column; gap: 7px; }
   #filters label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; }
   #filters label.subtle { color: var(--muted); border-top: 1px dashed var(--border-strong); padding-top: 7px; margin-top: 3px; }
   #filters input { width: 15px; height: 15px; accent-color: var(--accent); }
@@ -256,10 +268,12 @@
                 margin-bottom: 12px; word-break: break-all; }
   .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .kv { border-top: 1px solid var(--border); padding-top: 8px; }
-  .kv-row { display: flex; gap: 12px; padding: 9px 12px; margin: 0 0 8px;
+  .kv-row { display: grid; grid-template-columns: minmax(96px, .38fr) minmax(0, 1fr);
+            gap: 12px; padding: 9px 12px; margin: 0 0 8px;
             border: 1px solid var(--border); border-radius: 11px; background: #f8f9fb; }
   .kv-row:nth-child(even) { background: #f2f4f8; }
-  .kv-key { flex: none; width: 116px; color: #4d6076; font-size: 13.5px; font-weight: 650; padding-top: 1px; }
+  .kv-key { min-width: 0; color: #4d6076; font-size: 13.5px; font-weight: 650;
+            padding-top: 1px; overflow-wrap: anywhere; }
   .kv-val { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
   .kv-text { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; line-height: 1.6; font-size: 15px; }
   .link-chip {
@@ -346,11 +360,22 @@
   main.diff-highlights-off .diff-tag { display: none; }
 
   main.compare-active { grid-template-columns: minmax(0, 1fr) 330px; }
+  @media (max-width: 1360px) {
+    header { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px 16px; }
+    .header-context, .header-tools { width: 100%; }
+    .header-tools { padding-top: 8px; border-top: 1px solid var(--border); }
+    .header-tools .search-box { flex: 1; }
+    .header-tools .search-box input { width: 100%; }
+    #intro-strip { min-height: 62px; }
+  }
   @media (max-width: 1180px) {
-    header { gap: 8px; padding-inline: 14px; }
-    .search-box input { width: 210px; }
     .brand .sub, .version-picker label { display: none; }
-    main { grid-template-columns: minmax(0, 1fr) 320px; }
+    main, main.compare-active { grid-template-columns: minmax(0, 1fr) 320px; }
+    #compare-bar {
+      grid-template-columns: minmax(0, 1fr) max-content;
+      grid-template-areas: "title close" "versions versions" "summary toggle";
+    }
+    .compare-versions { flex-wrap: wrap; }
   }
 
   /* ---- welcome overlay ---- */
@@ -381,10 +406,13 @@
   #welcome-body h3:first-child { margin-top: 4px; }
   #welcome-body p { margin: 0; color: #46586e; font-size: 15px; line-height: 1.75; }
   .welcome-list { margin: 0; padding: 0; list-style: none; }
-  .welcome-list li { display: flex; gap: 10px; align-items: baseline; padding: 5.5px 0;
+  .welcome-list li { display: grid; grid-template-columns: 7px minmax(0, 1fr);
+                     gap: 10px; align-items: baseline; padding: 5.5px 0;
                      color: #46586e; font-size: 15px; line-height: 1.6; }
   .welcome-list li::before { content: ""; width: 7px; height: 7px; border-radius: 50%;
                              background: var(--accent); flex: none; transform: translateY(-1px); }
+  .welcome-list li > span { min-width: 0; }
+  .welcome-view { display: grid; grid-template-columns: minmax(112px, max-content) minmax(0, 1fr); gap: 10px; }
   .w-tag { font-weight: 650; color: var(--text); flex: none; }
   #welcome-foot {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -413,6 +441,7 @@
 </head>
 <body>
 <header>
+  <div class="header-context">
   <div class="brand">
     <span class="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
@@ -437,10 +466,11 @@
     <span data-i18n="compare.open">对比</span>
   </button>
   <div id="status-chips"></div>
-  <div class="spacer"></div>
+  </div>
+  <div class="header-tools">
   <div class="search-box">
     <input id="search-input" type="text" autocomplete="off" spellcheck="false"
-           data-i18n-placeholder="search.placeholder" placeholder="搜索 Term / Mapping / Constraint / Evidence">
+           data-i18n-placeholder="search.placeholder" placeholder="搜索语义对象">
     <span id="search-status"></span>
     <div id="search-results" hidden></div>
   </div>
@@ -449,6 +479,7 @@
     <button type="button" data-lang="en">EN</button>
   </div>
   <button id="btn-help" type="button" data-i18n-title="help.title" title="查看使用指南">?</button>
+  </div>
 </header>
 <div id="intro-strip">
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -474,9 +505,11 @@
         </svg>
         <span data-i18n="compare.title">版本对比</span>
       </div>
-      <span id="compare-left-label" class="badge version"></span>
-      <span class="compare-vs">VS</span>
-      <select id="compare-version-select" data-i18n-title="compare.select.title" title="选择右侧对比版本"></select>
+      <div class="compare-versions">
+        <span id="compare-left-label" class="badge version"></span>
+        <span class="compare-vs">VS</span>
+        <select id="compare-version-select" data-i18n-title="compare.select.title" title="选择右侧对比版本"></select>
+      </div>
       <div id="diff-summary"></div>
       <label class="diff-toggle">
         <input id="chk-highlight-diff" type="checkbox" checked>
@@ -551,16 +584,16 @@
       <p data-i18n="welcome.what.body">本页面由 EvoOntology 语义层自动渲染（只读快照，不修改任何语义层状态）。它把当前本体版本可视化为一张图谱：业务概念（Term）如何落地到数据库表列（Mapping）、受哪些使用约束（Constraint）、由哪些证据（Evidence）支撑，以及概念之间的语义关系（Relation）。</p>
       <h3 data-i18n="welcome.views.title">三个视图</h3>
       <ul class="welcome-list">
-        <li><span class="w-tag" data-i18n="tab.content">本体内容</span><span data-i18n="welcome.views.content.desc">— 交互式语义图谱，支持搜索、过滤、展开 / 收起</span></li>
-        <li><span class="w-tag" data-i18n="tab.schema">Schema 层</span><span data-i18n="welcome.views.schema.desc">— 对象类型、受控关系取值与结构引用规则</span></li>
-        <li><span class="w-tag" data-i18n="tab.tool">Tool 层</span><span data-i18n="welcome.views.tool.desc">— 智能体查询语义层时使用的 MCP 工具</span></li>
+        <li><span class="welcome-view"><span class="w-tag" data-i18n="tab.content">本体内容</span><span data-i18n="welcome.views.content.desc">— 交互式语义图谱，支持搜索、过滤、展开 / 收起</span></span></li>
+        <li><span class="welcome-view"><span class="w-tag" data-i18n="tab.schema">Schema 层</span><span data-i18n="welcome.views.schema.desc">— 对象类型、受控关系取值与结构引用规则</span></span></li>
+        <li><span class="welcome-view"><span class="w-tag" data-i18n="tab.tool">Tool 层</span><span data-i18n="welcome.views.tool.desc">— 智能体查询语义层时使用的 MCP 工具</span></span></li>
       </ul>
       <h3 data-i18n="welcome.tips.title">快速上手</h3>
       <ul class="welcome-list">
-        <li data-i18n="welcome.tips.1">点击图中的节点或连线，在右侧面板查看详情</li>
-        <li data-i18n="welcome.tips.2">双击 Term 卡片，展开或收起它的 Mapping / Constraint / Evidence</li>
-        <li data-i18n="welcome.tips.3">顶栏可搜索任意对象；左上角图例查看统计，左下角过滤器控制显示内容</li>
-        <li data-i18n="welcome.tips.4">可在右上角或本指南中切换中文和英文</li>
+        <li><span data-i18n="welcome.tips.1">点击图中的节点或连线，在右侧面板查看详情</span></li>
+        <li><span data-i18n="welcome.tips.2">双击 Term 卡片，展开或收起它的 Mapping / Constraint / Evidence</span></li>
+        <li><span data-i18n="welcome.tips.3">顶栏可搜索任意对象；左上角图例查看统计，左下角过滤器控制显示内容</span></li>
+        <li><span data-i18n="welcome.tips.4">可在右上角或本指南中切换中文和英文</span></li>
       </ul>
     </div>
     <div id="welcome-foot">
@@ -624,7 +657,7 @@ window.EVO_DATA = __DATA_JSON__;
       'diff.added': '新增',
       'diff.removed': '删除',
       'diff.changed': '修改',
-      'search.placeholder': '搜索 Term / Mapping / Constraint / Evidence',
+      'search.placeholder': '搜索语义对象',
       'search.matches': '找到 {n} 项',
       'search.none': '未找到匹配项',
       'help.title': '查看使用指南',
@@ -736,7 +769,7 @@ window.EVO_DATA = __DATA_JSON__;
       'diff.added': 'Added',
       'diff.removed': 'Removed',
       'diff.changed': 'Changed',
-      'search.placeholder': 'Search Term / Mapping / Constraint / Evidence',
+      'search.placeholder': 'Search semantic objects',
       'search.matches': '{n} matches',
       'search.none': 'No matches',
       'help.title': 'Open the guide',
@@ -1462,15 +1495,99 @@ window.EVO_DATA = __DATA_JSON__;
     });
   }
 
-  function awayAngle(term, position) {
-    var neighbors = term.neighborhood('node[family="term"]');
-    if (!neighbors.length) return -Math.PI / 2;
-    var cx = 0, cySum = 0;
-    neighbors.forEach(function (m) { cx += m.position().x; cySum += m.position().y; });
-    cx /= neighbors.length;
-    cySum /= neighbors.length;
-    var angle = Math.atan2(position.y - cySum, position.x - cx);
-    return isNaN(angle) ? -Math.PI / 2 : angle;
+  function stableNodes(collection) {
+    return collection.toArray().sort(function (a, b) {
+      return a.id().localeCompare(b.id());
+    });
+  }
+
+  function ownedObjectCount(termId) {
+    return Object.keys(owners).reduce(function (count, nodeId) {
+      return count + (owners[nodeId] && owners[nodeId].has(termId) ? 1 : 0);
+    }, 0);
+  }
+
+  function chooseCoreTerm(termNodes) {
+    return stableNodes(termNodes).sort(function (a, b) {
+      var degreeA = a.connectedEdges('[family="relation"]').length;
+      var degreeB = b.connectedEdges('[family="relation"]').length;
+      if (degreeA !== degreeB) return degreeB - degreeA;
+      var ownedA = ownedObjectCount(a.id());
+      var ownedB = ownedObjectCount(b.id());
+      if (ownedA !== ownedB) return ownedB - ownedA;
+      return a.id().localeCompare(b.id());
+    })[0];
+  }
+
+  function orderedPeripheralTerms(core, termNodes) {
+    var remaining = new Set(stableNodes(termNodes).map(function (node) { return node.id(); }));
+    remaining.delete(core.id());
+    var ordered = [];
+    var frontier = [core.id()];
+    while (frontier.length) {
+      var next = [];
+      frontier.forEach(function (termId) {
+        var term = cy.getElementById(termId);
+        stableNodes(term.neighborhood('node[family="term"]')).forEach(function (neighbor) {
+          if (!remaining.has(neighbor.id())) return;
+          remaining.delete(neighbor.id());
+          ordered.push(neighbor);
+          next.push(neighbor.id());
+        });
+      });
+      frontier = next;
+    }
+    while (remaining.size) {
+      var seedId = Array.from(remaining).sort()[0];
+      var componentQueue = [seedId];
+      remaining.delete(seedId);
+      while (componentQueue.length) {
+        var currentId = componentQueue.shift();
+        var current = cy.getElementById(currentId);
+        ordered.push(current);
+        stableNodes(current.neighborhood('node[family="term"]')).forEach(function (neighbor) {
+          if (!remaining.has(neighbor.id())) return;
+          remaining.delete(neighbor.id());
+          componentQueue.push(neighbor.id());
+        });
+      }
+    }
+    return ordered;
+  }
+
+  function layoutTermHierarchy() {
+    var termNodes = cy.nodes('[family="term"]:visible');
+    if (!termNodes.length) return false;
+    var core = chooseCoreTerm(termNodes);
+    core.position({ x: 0, y: 0 });
+    var peripheral = orderedPeripheralTerms(core, termNodes);
+    if (!peripheral.length) return true;
+    var maxWidth = 0;
+    peripheral.forEach(function (node) {
+      maxWidth = Math.max(maxWidth, node.boundingBox({
+        includeLabels: true, includeOverlays: false
+      }).w);
+    });
+    var perRing = 10;
+    for (var start = 0; start < peripheral.length; start += perRing) {
+      var ring = peripheral.slice(start, start + perRing);
+      var ringIndex = Math.floor(start / perRing);
+      var radius = Math.max(430 + ringIndex * 420, ring.length * (maxWidth + 105) / (2 * Math.PI));
+      var angleStep = 2 * Math.PI / ring.length;
+      var angleStart = -Math.PI / 2 + (ringIndex % 2 ? angleStep / 2 : 0);
+      ring.forEach(function (node, index) {
+        var angle = angleStart + index * angleStep;
+        node.position({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
+      });
+    }
+    return true;
+  }
+
+  function familyRingOffset(family) {
+    return family === 'mapping' ? 150
+      : family === 'constraint' ? 255
+      : family === 'evidence' ? 375
+      : 255;
   }
 
   function layoutSatellites() {
@@ -1491,27 +1608,38 @@ window.EVO_DATA = __DATA_JSON__;
         if (!term.length) return;
         var tp = term.position();
         var sats = byOwner[termId].sort(function (a, b) { return a.id() < b.id() ? -1 : 1; });
-        var base = awayAngle(term, tp);
+        var distanceFromCore = Math.hypot(tp.x, tp.y);
+        var base = distanceFromCore > 1 ? Math.atan2(tp.y, tp.x) : -Math.PI / 4;
         var tb = term.boundingBox({ includeLabels: true, includeOverlays: false });
         var termR = Math.hypot(tb.w, tb.h) / 2;
-        var satMaxR = 0, satMaxW = 0;
-        sats.forEach(function (n) {
-          var sb = n.boundingBox({ includeLabels: true, includeOverlays: false });
-          satMaxR = Math.max(satMaxR, Math.hypot(sb.w, sb.h) / 2);
-          satMaxW = Math.max(satMaxW, sb.w);
+        var families = { mapping: [], constraint: [], evidence: [], other: [] };
+        sats.forEach(function (node) {
+          var family = node.data('family');
+          (families[family] || families.other).push(node);
         });
-        var radius = Math.max(175 + sats.length * 16, termR + satMaxR + 60);
-        var span = Math.min(2 * Math.PI, Math.PI * (0.7 + 0.25 * sats.length));
-        if (sats.length > 1) {
-          var needSpan = (sats.length - 1) * (satMaxW + 34) / radius;
-          if (needSpan <= 2 * Math.PI) { span = Math.max(span, needSpan); }
-          else { radius = (sats.length - 1) * (satMaxW + 34) / (2 * Math.PI); span = 2 * Math.PI; }
-        }
-        sats.forEach(function (n, i) {
-          var angle = sats.length === 1
-            ? base
-            : base - span / 2 + (i * span) / (sats.length - 1);
-          n.position({ x: tp.x + radius * Math.cos(angle), y: tp.y + radius * Math.sin(angle) });
+        ['mapping', 'constraint', 'evidence', 'other'].forEach(function (family) {
+          var nodes = families[family];
+          if (!nodes.length) return;
+          var maxWidth = 0;
+          nodes.forEach(function (node) {
+            maxWidth = Math.max(maxWidth, node.boundingBox({
+              includeLabels: true, includeOverlays: false
+            }).w);
+          });
+          var offset = familyRingOffset(family === 'other' ? '' : family);
+          var radius = Math.max(termR + 72, offset * (distanceFromCore < 1 ? 0.78 : 1));
+          var span = Math.min(Math.PI * 0.7, Math.max(0, (nodes.length - 1) * 0.28));
+          if (nodes.length > 1) {
+            var needed = (nodes.length - 1) * (maxWidth + 38) / Math.max(radius, 1);
+            if (needed > span) span = Math.min(Math.PI * 0.7, needed);
+            if (needed > Math.PI * 0.7) radius = (nodes.length - 1) * (maxWidth + 38) / (Math.PI * 0.7);
+          }
+          nodes.forEach(function (node, index) {
+            var angle = nodes.length === 1
+              ? base
+              : base - span / 2 + index * span / (nodes.length - 1);
+            node.position({ x: tp.x + radius * Math.cos(angle), y: tp.y + radius * Math.sin(angle) });
+          });
         });
       });
       shared.sort(function (a, b) { return a.id() < b.id() ? -1 : 1; });
@@ -1522,53 +1650,17 @@ window.EVO_DATA = __DATA_JSON__;
           acc.x += p.x; acc.y += p.y; return acc;
         }, { x: 0, y: 0 });
         center.x /= positions.length; center.y /= positions.length;
-        var dx = positions.length > 1 ? positions[1].x - positions[0].x : 1;
-        var dy = positions.length > 1 ? positions[1].y - positions[0].y : 0;
-        var length = Math.max(Math.hypot(dx, dy), 1);
-        var offset = 138 + (index % 3) * 48;
-        var side = index % 2 ? -1 : 1;
+        var length = Math.hypot(center.x, center.y);
+        var angle = length > 1
+          ? Math.atan2(center.y, center.x)
+          : -Math.PI / 2 + index * 2.39996;
+        var offset = familyRingOffset(node.data('family')) * 0.62 + (index % 3) * 36;
         node.position({
-          x: center.x - dy / length * offset * side,
-          y: center.y + dx / length * offset * side
+          x: center.x + Math.cos(angle) * offset,
+          y: center.y + Math.sin(angle) * offset
         });
       });
     });
-  }
-
-  function spreadTermClusters() {
-    if (!cy) return;
-    var terms = cy.nodes('[family="term"]:visible');
-    if (terms.length < 2) return;
-    var halos = [];
-    terms.forEach(function (term) {
-      var ownedCount = 0;
-      Object.keys(owners).forEach(function (nodeId) {
-        if (owners[nodeId] && owners[nodeId].has(term.id())) ownedCount++;
-      });
-      halos.push(Math.min(330, 165 + Math.sqrt(ownedCount) * 56));
-    });
-    for (var iter = 0; iter < 120; iter++) {
-      var moved = false;
-      for (var a = 0; a < terms.length; a++) {
-        for (var b = a + 1; b < terms.length; b++) {
-          var pa = terms[a].position(), pb = terms[b].position();
-          var dx = pa.x - pb.x, dy = pa.y - pb.y;
-          var distance = Math.hypot(dx, dy);
-          var minimum = halos[a] + halos[b] + 64;
-          if (distance >= minimum) continue;
-          if (distance < 0.5) {
-            var angle = (a * 1.618 + b * 2.39996) % (2 * Math.PI);
-            dx = Math.cos(angle); dy = Math.sin(angle); distance = 1;
-          }
-          var shift = Math.min((minimum - distance) / 2, 42);
-          var ux = dx / distance, uy = dy / distance;
-          terms[a].position({ x: pa.x + ux * shift, y: pa.y + uy * shift });
-          terms[b].position({ x: pb.x - ux * shift, y: pb.y - uy * shift });
-          moved = true;
-        }
-      }
-      if (!moved) break;
-    }
   }
 
   function layoutUnownedSatellites() {
@@ -1577,14 +1669,19 @@ window.EVO_DATA = __DATA_JSON__;
       return family !== 'term' && family !== 'anchor' && !owners[n.id()];
     });
     if (!orphans.length) return;
-    var termBox = cy.nodes('[family="term"]:visible').boundingBox();
-    var columns = Math.max(1, Math.ceil(Math.sqrt(orphans.length)));
-    var startX = termBox.x1 || 0;
-    var startY = (termBox.y2 || 0) + 220;
-    orphans.forEach(function (node, index) {
+    var termNodes = cy.nodes('[family="term"]:visible');
+    var outerRadius = 0;
+    termNodes.forEach(function (term) {
+      var p = term.position();
+      outerRadius = Math.max(outerRadius, Math.hypot(p.x, p.y));
+    });
+    outerRadius += 470;
+    var ordered = stableNodes(orphans);
+    ordered.forEach(function (node, index) {
+      var angle = -Math.PI / 2 + index * 2 * Math.PI / ordered.length;
       node.position({
-        x: startX + (index % columns) * 240,
-        y: startY + Math.floor(index / columns) * 135
+        x: Math.cos(angle) * outerRadius,
+        y: Math.sin(angle) * outerRadius
       });
     });
   }
@@ -1665,7 +1762,8 @@ window.EVO_DATA = __DATA_JSON__;
           } else {
             ux = dx / distance; uy = dy / distance;
           }
-          var weight = node.data('family') === 'term' ? 0.45 : 1;
+          var weight = node.data('family') === 'term' ? 0 : 1;
+          if (!weight) return;
           var shift = Math.min((clearance - distance + 8) * weight, 30);
           pushX += ux * shift;
           pushY += uy * shift;
@@ -1719,29 +1817,6 @@ window.EVO_DATA = __DATA_JSON__;
     });
   }
 
-  function layoutBackbone() {
-    var termNodes = cy.nodes('[family="term"]:visible');
-    if (!termNodes.length) return false;
-    var relationEdges = cy.edges('[family="relation"]:visible');
-    termNodes.union(relationEdges).layout({
-      name: 'cose',
-      animate: false,
-      randomize: true,
-      fit: false,
-      padding: 76,
-      nodeRepulsion: 11500,
-      nodeOverlap: 44,
-      idealEdgeLength: 215,
-      edgeElasticity: 90,
-      nestingFactor: 1.1,
-      gravity: 0.22,
-      componentSpacing: 150,
-      numIter: 2800,
-      nodeDimensionsIncludeLabels: true
-    }).run();
-    return true;
-  }
-
   function fitGraphToCenter(graph, padding) {
     if (!graph) return;
     var visible = graph.elements(':visible').not('node[family="anchor"]');
@@ -1754,10 +1829,9 @@ window.EVO_DATA = __DATA_JSON__;
     if (!cy) return;
     var visible = cy.elements(':visible').not('node[family="anchor"]');
     if (!visible.length) return;
-    if (!layoutBackbone()) {
+    if (!layoutTermHierarchy()) {
       visible.layout({ name: 'grid', fit: false, padding: 64, avoidOverlap: true }).run();
     }
-    spreadTermClusters();
     layoutSatellites();
     layoutUnownedSatellites();
     settleGraphGeometry();
