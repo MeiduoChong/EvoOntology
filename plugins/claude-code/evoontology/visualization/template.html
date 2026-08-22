@@ -590,12 +590,20 @@
         <li><span class="welcome-view"><span class="w-tag" data-i18n="tab.schema">Schema 层</span><span data-i18n="welcome.views.schema.desc">— 对象类型、受控关系取值与结构引用规则</span></span></li>
         <li><span class="welcome-view"><span class="w-tag" data-i18n="tab.tool">Tool 层</span><span data-i18n="welcome.views.tool.desc">— 智能体查询语义层时使用的 MCP 工具</span></span></li>
       </ul>
-      <h3 data-i18n="welcome.tips.title">快速上手</h3>
+      <h3 data-i18n="welcome.compare.title">版本与对比</h3>
       <ul class="welcome-list">
-        <li><span data-i18n="welcome.tips.1">点击图中的节点或连线，在右侧面板查看详情</span></li>
-        <li><span data-i18n="welcome.tips.2">双击 Term 卡片，展开或收起它的 Mapping / Constraint / Evidence</span></li>
-        <li><span data-i18n="welcome.tips.3">顶栏可搜索任意对象；左上角图例查看统计，左下角过滤器控制显示内容</span></li>
-        <li><span data-i18n="welcome.tips.4">可在右上角或本指南中切换中文和英文</span></li>
+        <li><span data-i18n="welcome.compare.1">使用顶部版本选择器查看任一已嵌入版本；旁边的徽标会说明当前查看的是激活版本还是指定版本</span></li>
+        <li><span data-i18n="welcome.compare.2">有至少两个版本时，点击“对比”，以当前版本为左侧并选择右侧版本；本体内容、Schema 层和 Tool 层均支持并排对比</span></li>
+        <li><span data-i18n="welcome.compare.3">点击新增、删除或修改统计可查看具体差异；“突出差异”只控制视觉强调，不会改变所选版本</span></li>
+      </ul>
+      <h3 data-i18n="welcome.tips.title">浏览与操作</h3>
+      <ul class="welcome-list">
+        <li><span data-i18n="welcome.tips.1">点击图中的节点、连线或 Schema / Tool 卡片，在右侧面板查看详情并定位对象</span></li>
+        <li><span data-i18n="welcome.tips.2">顶栏可搜索任意对象；若出现警告徽标，点击可查看因引用无法解析而跳过的记录</span></li>
+        <li><span data-i18n="welcome.tips.3">双击 Term 或使用“展开全部 / 收起全部”控制关联对象；显示过滤器可控制关系、引用及各类非核心节点</span></li>
+        <li><span data-i18n="welcome.tips.4">“适配视图”只缩放并居中当前可见内容；“恢复初始”会清空交互状态并恢复首次打开的布局</span></li>
+        <li><span data-i18n="welcome.tips.5">拖动空白处可平移，滚轮可缩放；可在右上角或本指南中切换中文和英文</span></li>
+        <li><span data-i18n="welcome.tips.6">“不再自动显示”只关闭后续开屏；仍可通过顶部“?”或介绍条中的“使用指南”重新打开</span></li>
       </ul>
     </div>
     <div id="welcome-foot">
@@ -734,11 +742,17 @@ window.EVO_DATA = __DATA_JSON__;
       'welcome.views.content.desc': '— 交互式语义图谱，支持搜索、过滤、展开 / 收起',
       'welcome.views.schema.desc': '— 对象类型、受控关系取值与结构引用规则',
       'welcome.views.tool.desc': '— 智能体查询语义层时使用的 MCP 工具',
-      'welcome.tips.title': '快速上手',
-      'welcome.tips.1': '点击图中的节点或连线，在右侧面板查看详情',
-      'welcome.tips.2': '双击 Term 卡片，展开或收起它的 Mapping / Constraint / Evidence',
-      'welcome.tips.3': '顶栏可搜索任意对象；左上角图例查看统计，左下角过滤器控制显示内容',
-      'welcome.tips.4': '可在右上角或本指南中切换中文和英文',
+      'welcome.compare.title': '版本与对比',
+      'welcome.compare.1': '使用顶部版本选择器查看任一已嵌入版本；旁边的徽标会说明当前查看的是激活版本还是指定版本',
+      'welcome.compare.2': '有至少两个版本时，点击“对比”，以当前版本为左侧并选择右侧版本；本体内容、Schema 层和 Tool 层均支持并排对比',
+      'welcome.compare.3': '点击新增、删除或修改统计可查看具体差异；“突出差异”只控制视觉强调，不会改变所选版本',
+      'welcome.tips.title': '浏览与操作',
+      'welcome.tips.1': '点击图中的节点、连线或 Schema / Tool 卡片，在右侧面板查看详情并定位对象',
+      'welcome.tips.2': '顶栏可搜索任意对象；若出现警告徽标，点击可查看因引用无法解析而跳过的记录',
+      'welcome.tips.3': '双击 Term 或使用“展开全部 / 收起全部”控制关联对象；显示过滤器可控制关系、引用及各类非核心节点',
+      'welcome.tips.4': '“适配视图”只缩放并居中当前可见内容；“恢复初始”会清空交互状态并恢复首次打开的布局',
+      'welcome.tips.5': '拖动空白处可平移，滚轮可缩放；可在右上角或本指南中切换中文和英文',
+      'welcome.tips.6': '“不再自动显示”只关闭后续开屏；仍可通过顶部“?”或介绍条中的“使用指南”重新打开',
       'welcome.hide': '不再自动显示',
       'welcome.start': '开始探索',
       'welcome.generated': '本页面为只读快照，生成于 {time}',
@@ -844,11 +858,17 @@ window.EVO_DATA = __DATA_JSON__;
       'welcome.views.content.desc': '— the interactive semantic graph with search, filters and expand / collapse',
       'welcome.views.schema.desc': '— object types, controlled relation values and structural reference rules',
       'welcome.views.tool.desc': '— the MCP tools agents use to query the semantic layer',
-      'welcome.tips.title': 'Quick start',
-      'welcome.tips.1': 'Click a node or edge to inspect it in the right-hand panel',
-      'welcome.tips.2': 'Double-click a Term card to expand / collapse its Mapping / Constraint / Evidence',
-      'welcome.tips.3': 'Search any object from the top bar; the legend (top-left) shows counts, the filters (bottom-left) control visibility',
-      'welcome.tips.4': 'Switch between CN and English in the top-right corner or inside this guide',
+      'welcome.compare.title': 'Versions and comparison',
+      'welcome.compare.1': 'Use the top version selector to view any embedded version; the adjacent badge identifies whether it is the active or an explicitly selected version',
+      'welcome.compare.2': 'When at least two versions exist, choose Compare to keep the current version on the left and select the right-hand version; Ontology Content, Schema Layer and Tool Layer all support side-by-side comparison',
+      'welcome.compare.3': 'Select an added, removed or changed count to inspect exact differences; Highlight differences only changes visual emphasis, not the selected versions',
+      'welcome.tips.title': 'Explore and control',
+      'welcome.tips.1': 'Select a graph node, edge, or Schema / Tool card to inspect details and locate the object from the right-hand panel',
+      'welcome.tips.2': 'Search any object from the top bar; when a warning badge appears, select it to inspect records skipped because their references could not be resolved',
+      'welcome.tips.3': 'Double-click a Term or use Expand all / Collapse all to control related objects; display filters control relations, references and each non-core node family',
+      'welcome.tips.4': 'Fit view only zooms and centers the currently visible content; Restore initial clears interaction state and returns to the first-open layout',
+      'welcome.tips.5': 'Drag the empty canvas to pan and scroll to zoom; switch between Chinese and English from the top-right corner or this guide',
+      'welcome.tips.6': 'Don\'t show this again only disables automatic opening; reopen the guide from the top “?” button or the Guide link in the introduction strip',
       'welcome.hide': "Don't show this again",
       'welcome.start': 'Start exploring',
       'welcome.generated': 'This page is a read-only snapshot generated at {time}',

@@ -441,7 +441,8 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert 'edge[kind="same_table"]' not in html
     assert "Same-table grounding" not in html
     assert "同表落地" not in html
-    assert "Switch between CN and English" in html
+    assert "switch between Chinese and English" in html
+    assert "Switch between CN and English" not in html
     assert "Switch between 中文 and English" not in html
     assert "可在右上角或本指南中切换中文和英文" in html
     assert "右上角或本指南弹窗内可在 中文 与 英文 之间切换" not in html
@@ -486,6 +487,23 @@ def test_bilingual_controls_use_stable_responsive_layout(workspace):
     assert ".welcome-list li { display: grid; grid-template-columns: 7px minmax(0, 1fr);" in html
     assert "#btn-compare-close { justify-self: end;" in html
     assert "#btn-reset { min-width: 112px; }" in html
+
+
+def test_welcome_guide_covers_current_controls(workspace):
+    html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
+
+    assert "'welcome.compare.title': '版本与对比'" in html
+    assert "本体内容、Schema 层和 Tool 层均支持并排对比" in html
+    assert "点击新增、删除或修改统计可查看具体差异" in html
+    assert "'welcome.tips.title': '浏览与操作'" in html
+    assert "“适配视图”只缩放并居中当前可见内容" in html
+    assert "“不再自动显示”只关闭后续开屏" in html
+    assert "'welcome.compare.title': 'Versions and comparison'" in html
+    assert "Ontology Content, Schema Layer and Tool Layer all support side-by-side comparison" in html
+    assert "Highlight differences only changes visual emphasis" in html
+    assert "'welcome.tips.title': 'Explore and control'" in html
+    assert "Fit view only zooms and centers the currently visible content" in html
+    assert "Don\\'t show this again only disables automatic opening" in html
 
 
 def test_restore_initial_is_the_only_layout_recovery_control(workspace):
