@@ -78,7 +78,7 @@
     white-space: nowrap; font-size: 13.5px; font-weight: 600; letter-spacing: 0;
   }
   #btn-compare.active { color: var(--accent); border-color: #c7cdf2; background: var(--accent-soft); }
-  .compare-icon { width: 16px; height: 16px; flex: none; stroke-width: 1.45; }
+  .compare-icon { width: 18px; height: 18px; flex: none; stroke-width: 1.55; }
   #status-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
   .chip {
     border: 1px solid var(--border-strong); background: var(--panel); color: var(--muted);
@@ -159,7 +159,11 @@
   .compare-vs { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
   #compare-version-select { width: 210px; max-width: 210px; font-size: 13px; }
   #diff-summary { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
-  .diff-chip { border-radius: 999px; padding: 3px 9px; font-size: 12px; font-weight: 650; white-space: nowrap; }
+  .diff-chip {
+    display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 10px;
+    font-size: 12.5px; font-weight: 650; white-space: nowrap; box-shadow: none;
+  }
+  .diff-chip:hover, .diff-chip[aria-pressed="true"] { box-shadow: 0 0 0 2px rgba(85, 99, 217, .14); }
   .diff-chip.added { color: #246547; background: #e8f6ee; border: 1px solid #b8dfc9; }
   .diff-chip.removed { color: #8a473b; background: #fbefed; border: 1px solid #edc6bf; }
   .diff-chip.changed { color: #805c20; background: #faf3e5; border: 1px solid #e9d09f; }
@@ -215,7 +219,7 @@
                        clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
   .swatch.evidence { background: var(--evidence-bg); border-color: var(--evidence-border); border-radius: 50%; }
   .swatch.relation { width: 17px; height: 0; border: none; border-top: 2px solid #98a4bd; border-radius: 0; }
-  .swatch.reference { width: 17px; height: 0; border: none; border-top: 2px dotted #c3cbd8; border-radius: 0; }
+  .swatch.reference { width: 19px; height: 0; border: none; border-top: 2.5px dotted #8f9bad; border-radius: 0; }
   #graph-actions { top: 16px; right: 16px; display: flex; gap: 7px; padding: 9px; }
   #graph-actions button { padding: 5px 12px; font-size: 13px; border-radius: 8px; background: rgba(255, 255, 255, .8); }
   #filters { bottom: 16px; left: 16px; display: flex; flex-direction: column; gap: 7px; }
@@ -263,7 +267,26 @@
     background: var(--accent-soft); border: 1px solid #d6dbf5; border-radius: 999px; padding: 2px 10px;
     max-width: 100%; white-space: normal; text-align: left; overflow-wrap: anywhere;
   }
+  .link-chip::before { content: '\2197'; margin-right: 5px; font-family: inherit; font-size: 11px; }
   .link-chip:hover { border-color: var(--accent); }
+  .value-chip {
+    display: inline-block; max-width: 100%; padding: 2px 9px; border: 1px solid var(--border-strong);
+    border-radius: 999px; background: var(--panel); color: #51637a; font-size: 13px;
+    line-height: 1.45; overflow-wrap: anywhere;
+  }
+  .diff-detail-list { display: grid; gap: 10px; margin-top: 12px; }
+  .diff-detail-item { border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; background: #f8f9fb; }
+  .diff-detail-item[data-element-id] { cursor: pointer; transition: border-color .15s, background .15s; }
+  .diff-detail-item[data-element-id]:hover { border-color: #c7cdf2; background: #f3f4fb; }
+  .diff-detail-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .diff-detail-name { min-width: 0; font-size: 14.5px; font-weight: 650; overflow-wrap: anywhere; }
+  .diff-detail-fields { display: grid; gap: 7px; margin-top: 9px; }
+  .diff-field { border-top: 1px solid var(--border); padding-top: 7px; }
+  .diff-field-name { color: #4d6076; font-size: 12.5px; font-weight: 700; margin-bottom: 3px; }
+  .diff-values { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
+  .diff-value { min-width: 0; padding: 6px 8px; border-radius: 8px; background: var(--panel); font-size: 12.5px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .diff-value.before { border-left: 3px solid #d59083; }
+  .diff-value.after { border-left: 3px solid #69a985; }
   .warn-item { background: #faf2e4; border: 1px solid #ecd3ae; color: #6e4a21; border-radius: 9px;
                padding: 9px 11px; margin-bottom: 9px; font-size: 14px; word-break: break-word; line-height: 1.55; }
 
@@ -595,6 +618,11 @@ window.EVO_DATA = __DATA_JSON__;
       'compare.removed': '移除 {n}',
       'compare.changed': '变更 {n}',
       'compare.same': '无差异',
+      'compare.inspect': '点击查看具体差异',
+      'compare.details': '{status}详情',
+      'compare.before': '之前',
+      'compare.after': '之后',
+      'compare.emptyValue': '（空）',
       'diff.added': '新增',
       'diff.removed': '移除',
       'diff.changed': '变更',
@@ -693,6 +721,11 @@ window.EVO_DATA = __DATA_JSON__;
       'compare.removed': '{n} removed',
       'compare.changed': '{n} changed',
       'compare.same': 'No differences',
+      'compare.inspect': 'Click to inspect the exact differences',
+      'compare.details': '{status} details',
+      'compare.before': 'Before',
+      'compare.after': 'After',
+      'compare.emptyValue': '(empty)',
       'diff.added': 'Added',
       'diff.removed': 'Removed',
       'diff.changed': 'Changed',
@@ -857,7 +890,7 @@ window.EVO_DATA = __DATA_JSON__;
   var measureCtx = null;
   try { measureCtx = document.createElement('canvas').getContext('2d'); }
   catch (e) { measureCtx = null; }
-  var MEASURE_FONT = '13px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+  var MEASURE_FONT = '14px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
 
   /* Mirror cytoscape's whitespace wrapping plus hard-break of overlong tokens;
      returns the widest wrapped line's width and the number of lines. */
@@ -894,7 +927,7 @@ window.EVO_DATA = __DATA_JSON__;
     if (d.family !== 'constraint' && d.family !== 'evidence') return;
     var res = measureWrapped(d.display || d.label || '', d.family === 'constraint' ? 150 : 140);
     if (!res) { d.w = 150; d.h = 52; return; }
-    var lineH = 13 * 1.28; /* font-size * line-height */
+    var lineH = 14 * 1.28; /* font-size * line-height */
     var textH = res.lines * lineH;
     var boxW, boxH, h, ratio;
     if (d.family === 'constraint') {
@@ -1084,8 +1117,10 @@ window.EVO_DATA = __DATA_JSON__;
         var row = el('div', 'kv-row');
         row.appendChild(el('div', 'kv-key', tr(pair[0])));
         var valBox = el('div', 'kv-val');
-        var items = Array.isArray(pair[1]) ? pair[1] : [pair[1]];
-        items.forEach(function (item) { valBox.appendChild(renderValue(item, model.recordId)); });
+        var isList = Array.isArray(pair[1]);
+        if (isList) valBox.classList.add('is-list');
+        var items = isList ? pair[1] : [pair[1]];
+        items.forEach(function (item) { valBox.appendChild(renderValue(item, model.recordId, isList)); });
         row.appendChild(valBox);
         table.appendChild(row);
       });
@@ -1094,7 +1129,7 @@ window.EVO_DATA = __DATA_JSON__;
     detailBody.scrollTop = 0;
   }
 
-  function renderValue(value, selfRecordId) {
+  function renderValue(value, selfRecordId, isList) {
     var targetId = typeof value === 'string' ? recordIndex[value] : null;
     if (targetId && value !== selfRecordId) {
       var chip = el('button', 'link-chip', value);
@@ -1103,7 +1138,7 @@ window.EVO_DATA = __DATA_JSON__;
       chip.addEventListener('click', function () { focusElement(targetId); });
       return chip;
     }
-    return el('span', 'kv-text', String(localizeValue(value)));
+    return el('span', isList ? 'value-chip' : 'kv-text', String(localizeValue(value)));
   }
 
   function showWarnings() {
@@ -1181,7 +1216,7 @@ window.EVO_DATA = __DATA_JSON__;
     { selector: 'node', style: {
         'label': 'data(display)',
         'font-family': '"Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
-        'font-size': 13,
+        'font-size': 14,
         'color': '#232a36',
         'text-wrap': 'wrap',
         'text-max-width': '150px',
@@ -1198,23 +1233,23 @@ window.EVO_DATA = __DATA_JSON__;
         'shape': 'round-rectangle',
         'width': 'label', 'height': 'label', 'padding': '12px',
         'background-color': '#edf1fc', 'border-color': '#aab9ef', 'color': '#35448e',
-        'font-size': 16, 'font-weight': 'bold', 'text-max-width': '210px'
+        'font-size': 17, 'font-weight': 'bold', 'text-max-width': '210px'
     }},
     { selector: 'node[family="mapping"]', style: {
         'shape': 'round-rectangle',
         'width': 'label', 'height': 'label', 'padding': '8px',
         'background-color': '#e9f5f0', 'border-color': '#9ccfbb', 'color': '#1e5c48',
-        'font-size': 13.5, 'text-max-width': '170px'
+        'font-size': 14.5, 'text-max-width': '170px'
     }},
     { selector: 'node[family="constraint"]', style: {
         'shape': 'hexagon', 'width': 'data(w)', 'height': 'data(h)',
         'background-color': '#fbf3e4', 'border-color': '#ddbe8e', 'color': '#77571d',
-        'font-size': 13, 'text-max-width': '150px', 'line-height': 1.28
+        'font-size': 14, 'text-max-width': '150px', 'line-height': 1.28
     }},
     { selector: 'node[family="evidence"]', style: {
         'shape': 'ellipse', 'width': 'data(w)', 'height': 'data(h)',
         'background-color': '#f1eefa', 'border-color': '#c0b4e0', 'color': '#55477c',
-        'font-size': 13, 'text-max-width': '140px', 'line-height': 1.28
+        'font-size': 14, 'text-max-width': '140px', 'line-height': 1.28
     }},
     { selector: 'node[family="anchor"]', style: {
         'shape': 'ellipse', 'width': 2, 'height': 2,
@@ -1227,7 +1262,7 @@ window.EVO_DATA = __DATA_JSON__;
         'line-color': '#b9c2cf',
         'target-arrow-shape': 'none',
         'opacity': 0.9,
-        'font-size': 12,
+        'font-size': 13,
         'color': '#5d6675',
         'text-background-color': '#f7f8fa',
         'text-background-opacity': 0.92,
@@ -1239,8 +1274,8 @@ window.EVO_DATA = __DATA_JSON__;
     { selector: 'edge[family="relation"]', style: {
         'width': 2, 'line-style': 'solid', 'line-color': '#8793aa', 'opacity': 0.92 } },
     { selector: 'edge[family="reference"]', style: {
-        'width': 1.15, 'line-style': 'dotted', 'line-color': '#c7cfdb',
-        'opacity': 0.82 } },
+        'width': 1.8, 'line-style': 'dotted', 'line-color': '#8f9bad',
+        'opacity': 0.96 } },
     { selector: 'edge.label-on', style: { 'label': 'data(label)' } },
     { selector: '.diff-unchanged', style: { 'opacity': 0.42 } },
     { selector: 'node.diff-added', style: {
@@ -2002,42 +2037,99 @@ window.EVO_DATA = __DATA_JSON__;
     return { nodes: nodes, edges: edges };
   }
 
-  function elementSignatures(versionData) {
-    var signatures = {};
-    ['nodes', 'edges'].forEach(function (kind) {
-      var items = versionData.content && versionData.content[kind] || [];
-      items.forEach(function (item) {
-        signatures[item.data.id] = JSON.stringify(item.data);
+  function stableNormalize(value) {
+    if (Array.isArray(value)) {
+      return value.map(stableNormalize).sort(function (a, b) {
+        return JSON.stringify(a).localeCompare(JSON.stringify(b));
       });
+    }
+    if (value && typeof value === 'object') {
+      var normalized = {};
+      Object.keys(value).sort().forEach(function (key) {
+        normalized[key] = stableNormalize(value[key]);
+      });
+      return normalized;
+    }
+    return value;
+  }
+
+  function stableStringify(value) { return JSON.stringify(stableNormalize(value)); }
+
+  /* Compare only canonical semantic records. Structural Reference edges are
+     derived from fields on those records, so counting them again would inflate
+     added/removed totals and make an unchanged neighboring node look changed. */
+  function semanticEntries(versionData) {
+    var entries = {};
+    var content = versionData.content || {};
+    (content.nodes || []).forEach(function (item) {
+      var d = item.data || {};
+      if (!d.comparison) return;
+      entries[d.id] = {
+        signature: stableStringify(d.comparison), fields: d.comparison,
+        family: d.family, title: d.label || d.record_id || d.id, elementId: d.id
+      };
     });
-    return signatures;
+    (content.edges || []).forEach(function (item) {
+      var d = item.data || {};
+      if (d.family !== 'relation' || !d.comparison) return;
+      entries[d.id] = {
+        signature: stableStringify(d.comparison), fields: d.comparison,
+        family: 'relation', title: d.record_id || d.label || d.id, elementId: d.id
+      };
+    });
+    return entries;
+  }
+
+  function fieldChanges(before, after) {
+    var changes = [];
+    var keys = {};
+    Object.keys(before || {}).forEach(function (key) { keys[key] = true; });
+    Object.keys(after || {}).forEach(function (key) { keys[key] = true; });
+    Object.keys(keys).sort().forEach(function (key) {
+      var leftValue = before ? before[key] : undefined;
+      var rightValue = after ? after[key] : undefined;
+      if (stableStringify(leftValue) !== stableStringify(rightValue)) {
+        changes.push({ field: key, before: leftValue, after: rightValue });
+      }
+    });
+    return changes;
   }
 
   function computeSignatureDiff(left, right) {
     var leftStatus = {}, rightStatus = {};
     var counts = { added: 0, removed: 0, changed: 0 };
+    var entries = { added: [], removed: [], changed: [] };
     Object.keys(left).forEach(function (id) {
-      if (right[id] == null) {
+      if (!Object.prototype.hasOwnProperty.call(right, id)) {
         leftStatus[id] = 'removed';
         counts.removed++;
-      } else if (left[id] !== right[id]) {
+        entries.removed.push(Object.assign({ key: id, status: 'removed' }, left[id]));
+      } else if (left[id].signature !== right[id].signature) {
         leftStatus[id] = rightStatus[id] = 'changed';
         counts.changed++;
+        entries.changed.push({
+          key: id, status: 'changed', title: left[id].title || right[id].title,
+          family: left[id].family || right[id].family,
+          elementId: left[id].elementId || right[id].elementId,
+          before: left[id].fields, after: right[id].fields,
+          changes: fieldChanges(left[id].fields, right[id].fields)
+        });
       } else {
         leftStatus[id] = rightStatus[id] = 'unchanged';
       }
     });
     Object.keys(right).forEach(function (id) {
-      if (left[id] == null) {
+      if (!Object.prototype.hasOwnProperty.call(left, id)) {
         rightStatus[id] = 'added';
         counts.added++;
+        entries.added.push(Object.assign({ key: id, status: 'added' }, right[id]));
       }
     });
-    return { left: leftStatus, right: rightStatus, counts: counts };
+    return { left: leftStatus, right: rightStatus, counts: counts, entries: entries };
   }
 
   function computeDiff(leftData, rightData) {
-    return computeSignatureDiff(elementSignatures(leftData), elementSignatures(rightData));
+    return computeSignatureDiff(semanticEntries(leftData), semanticEntries(rightData));
   }
 
   function applyDiffClasses(graph, statusById) {
@@ -2049,9 +2141,70 @@ window.EVO_DATA = __DATA_JSON__;
     });
   }
 
-  function renderDiffSummary(counts) {
+  function formatDiffValue(value) {
+    if (value == null || value === '') return t('compare.emptyValue');
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(localizeValue(value));
+  }
+
+  function focusDiffEntry(entry) {
+    if (currentViewName !== 'content' || !entry.elementId) return;
+    var graph = entry.status === 'added' ? compareCy : cy;
+    if (!graph) return;
+    var element = graph.getElementById(entry.elementId);
+    if (!element.nonempty()) return;
+    graph.elements().unselect();
+    element.select();
+    graph.animate({ center: { eles: element }, duration: 280 });
+  }
+
+  function showDiffDetails(status, diff) {
+    var items = diff && diff.entries && diff.entries[status] || [];
+    if (!items.length) return;
+    $all('.diff-chip').forEach(function (chip) {
+      chip.setAttribute('aria-pressed', chip.getAttribute('data-status') === status ? 'true' : 'false');
+    });
+    detailEmpty.hidden = true;
+    detailBody.hidden = false;
+    detailBody.innerHTML = '';
+    detailBody.appendChild(el('span', 'family-badge schema', t('tab.' + currentViewName)));
+    detailBody.appendChild(el('div', 'detail-title', t('compare.details', { status: t('diff.' + status) })));
+    detailBody.appendChild(el('div', 'detail-sub', diff.leftVersion + ' \u2192 ' + diff.rightVersion));
+    var list = el('div', 'diff-detail-list');
+    items.forEach(function (item) {
+      var box = el('div', 'diff-detail-item');
+      if (item.elementId) {
+        box.setAttribute('data-element-id', item.elementId);
+        box.addEventListener('click', function () { focusDiffEntry(item); });
+      }
+      var head = el('div', 'diff-detail-head');
+      head.appendChild(el('span', 'family-badge ' + item.family, familyLabel(item.family)));
+      head.appendChild(el('div', 'diff-detail-name', item.title || item.key));
+      box.appendChild(head);
+      if (status === 'changed') {
+        var fields = el('div', 'diff-detail-fields');
+        (item.changes || []).forEach(function (change) {
+          var field = el('div', 'diff-field');
+          field.appendChild(el('div', 'diff-field-name', change.field));
+          var values = el('div', 'diff-values');
+          values.appendChild(el('div', 'diff-value before', t('compare.before') + '\n' + formatDiffValue(change.before)));
+          values.appendChild(el('div', 'diff-value after', t('compare.after') + '\n' + formatDiffValue(change.after)));
+          field.appendChild(values);
+          fields.appendChild(field);
+        });
+        box.appendChild(fields);
+      }
+      list.appendChild(box);
+    });
+    detailBody.appendChild(list);
+    detailBody.scrollTop = 0;
+    lastDetail = function () { showDiffDetails(status, layerDiffs[currentViewName]); };
+  }
+
+  function renderDiffSummary(diff) {
     var summary = $('#diff-summary');
     summary.innerHTML = '';
+    var counts = diff ? diff.counts : { added: 0, removed: 0, changed: 0 };
     if (!counts.added && !counts.removed && !counts.changed) {
       summary.appendChild(el('span', 'diff-chip same', t('compare.same')));
       return;
@@ -2062,14 +2215,20 @@ window.EVO_DATA = __DATA_JSON__;
       ['changed', 'compare.changed']
     ].forEach(function (item) {
       if (!counts[item[0]]) return;
-      summary.appendChild(el('span', 'diff-chip ' + item[0],
-        t(item[1], { n: counts[item[0]] })));
+      var chip = el('button', 'diff-chip ' + item[0], t(item[1], { n: counts[item[0]] }));
+      chip.type = 'button';
+      chip.setAttribute('data-status', item[0]);
+      chip.setAttribute('aria-pressed', 'false');
+      var names = (diff.entries[item[0]] || []).map(function (entry) { return entry.title || entry.key; });
+      chip.title = t('compare.inspect') + (names.length ? ': ' + names.join(', ') : '');
+      chip.addEventListener('click', function () { showDiffDetails(item[0], diff); });
+      summary.appendChild(chip);
     });
   }
 
   function renderCurrentDiffSummary() {
     var diff = layerDiffs[currentViewName];
-    renderDiffSummary(diff ? diff.counts : { added: 0, removed: 0, changed: 0 });
+    renderDiffSummary(diff);
   }
 
   function positionCompareGraph(graph) {
@@ -2182,6 +2341,8 @@ window.EVO_DATA = __DATA_JSON__;
     });
     positionCompareGraph(compareCy);
     layerDiffs.content = computeDiff(DATA, VERSION_DATA[rightVersion]);
+    layerDiffs.content.leftVersion = currentVersion;
+    layerDiffs.content.rightVersion = rightVersion;
     applyDiffClasses(cy, layerDiffs.content.left);
     applyDiffClasses(compareCy, layerDiffs.content.right);
     $('#compare-pane-label').textContent = optionLabel(rightVersion);
@@ -2458,7 +2619,12 @@ window.EVO_DATA = __DATA_JSON__;
     groups.forEach(function (group) {
       group.items.forEach(function (item) {
         var value = item.signature == null ? item.raw : item.signature;
-        signatures[item.key] = JSON.stringify(value);
+        var detail = item.getDetail ? item.getDetail() : {};
+        var fields = item.signature == null ? value : { value: value };
+        signatures[item.key] = {
+          signature: stableStringify(value), fields: fields,
+          family: detail.family || 'schema', title: item.title || item.key
+        };
       });
     });
     return signatures;
@@ -2505,6 +2671,8 @@ window.EVO_DATA = __DATA_JSON__;
     layerDiffs.schema = computeSignatureDiff(
       groupedSignatures(leftGroups), groupedSignatures(rightGroups)
     );
+    layerDiffs.schema.leftVersion = currentVersion;
+    layerDiffs.schema.rightVersion = rightVersion;
     buildLayerCompareView(
       views.schema, currentVersion, rightVersion, leftGroups, rightGroups, layerDiffs.schema
     );
@@ -2519,6 +2687,8 @@ window.EVO_DATA = __DATA_JSON__;
     layerDiffs.tool = computeSignatureDiff(
       groupedSignatures(leftGroups), groupedSignatures(rightGroups)
     );
+    layerDiffs.tool.leftVersion = currentVersion;
+    layerDiffs.tool.rightVersion = rightVersion;
     buildLayerCompareView(
       views.tool, currentVersion, rightVersion, leftGroups, rightGroups, layerDiffs.tool
     );

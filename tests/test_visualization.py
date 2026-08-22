@@ -107,6 +107,38 @@ def test_minimal_content_conversion(workspace):
     assert not content["warnings"]
 
 
+def test_compare_payload_excludes_derived_reference_false_positives(tmp_path):
+    """Compare signatures represent records, not backlinks or derived edges."""
+    ws = ensure_workspace(tmp_path)
+    save_project(_project("fixed_split"), ws)
+    base_records = _records()
+    next_records = _records()
+    next_records["mappings"] = [*next_records["mappings"], {
+        "id": "mapping_operating_cost",
+        "term_id": "operating_cost",
+        "database_source": "financial_database",
+        "table": "expense_statement",
+        "column": "operating_expense",
+    }]
+    SemanticStore.save_version(ws, "semantic_v0", base_records)
+    SemanticStore.save_version(ws, "candidate_v1", next_records)
+
+    before = build_content_elements(SemanticStore.load_version(ws, "semantic_v0"))
+    after = build_content_elements(SemanticStore.load_version(ws, "candidate_v1"))
+    before_terms = {n["data"]["record_id"]: n["data"] for n in before["nodes"]
+                    if n["data"]["family"] == "term"}
+    after_terms = {n["data"]["record_id"]: n["data"] for n in after["nodes"]
+                   if n["data"]["family"] == "term"}
+
+    # The rendered backlink list changes, but the Term record itself does not.
+    assert before_terms["operating_cost"]["detail"] != after_terms["operating_cost"]["detail"]
+    assert before_terms["operating_cost"]["comparison"] == after_terms["operating_cost"]["comparison"]
+    assert all("comparison" not in edge["data"] for edge in after["edges"]
+               if edge["data"]["family"] == "reference")
+    assert all("comparison" in edge["data"] for edge in after["edges"]
+               if edge["data"]["family"] == "relation")
+
+
 # ---- 2. Relation records render as edges, not nodes ------------------------
 
 def test_relation_records_render_as_edges_not_nodes(workspace):
@@ -293,6 +325,12 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert 'id="chk-highlight-diff"' in html
     assert "function buildSchemaCompareView(" in html
     assert "function buildToolCompareView(" in html
+    assert "function semanticEntries(" in html
+    assert "if (d.family !== 'relation' || !d.comparison) return" in html
+    assert "function showDiffDetails(" in html
+    assert "chip.addEventListener('click', function () { showDiffDetails" in html
+    assert "'width': 1.8, 'line-style': 'dotted', 'line-color': '#8f9bad'" in html
+    assert "isList ? 'value-chip' : 'kv-text'" in html
     assert html.count('"schema":{"object_types"') == 2
     assert "function layoutBackbone(" in html
     assert "function fitGraphToCenter(" in html

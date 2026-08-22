@@ -188,7 +188,8 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
         return f"{family}:{record_id}"
 
     def _add_node(record_id: str, family: str, label: str, search: List[str],
-                  detail: List[List[Any]], extra: Optional[Dict[str, Any]] = None) -> None:
+                  detail: List[List[Any]], comparison: Dict[str, Any],
+                  extra: Optional[Dict[str, Any]] = None) -> None:
         if record_id in used_ids:
             warnings.append(f"duplicate object id skipped: {record_id!r}")
             return
@@ -200,6 +201,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
             "label": label,
             "search": sorted({s.lower() for s in search if s}),
             "detail": detail,
+            "comparison": comparison,
         }
         if extra:
             data.update(extra)
@@ -226,7 +228,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                       ("Constraints", sorted(constraints_by_target.get(term.id, []))),
                       ("Evidence", term.evidence_refs),
                       ("Lifecycle", term.lifecycle_state),
-                  ]),
+                  ]), dataclasses.asdict(term),
                   {"definition": term.definition or ""})
 
     for mapping in store.mappings.values():
@@ -247,7 +249,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                       ("Confidence", mapping.confidence_level),
                       ("Evidence", mapping.evidence_refs),
                       ("Lifecycle", mapping.lifecycle_state),
-                  ]))
+                  ]), dataclasses.asdict(mapping))
 
     for constraint in store.constraints.values():
         _add_node(constraint.id, "constraint", constraint.constraint_type or constraint.id,
@@ -263,7 +265,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                       ("Description", constraint.description),
                       ("Evidence", constraint.evidence_refs),
                       ("Lifecycle", constraint.lifecycle_state),
-                  ]))
+                  ]), dataclasses.asdict(constraint))
 
     for evidence in store.evidence.values():
         _add_node(evidence.id, "evidence", evidence.id,
@@ -275,7 +277,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                       ("Result", evidence.result),
                       ("Validation Method", evidence.validation_method),
                       ("Timestamp", evidence.timestamp),
-                  ]))
+                  ]), dataclasses.asdict(evidence))
 
     # Semantic Relation edges: Relation records between Terms.
     for relation in store.relations.values():
@@ -296,6 +298,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                     ("Evidence", relation.evidence_refs),
                     ("Lifecycle", relation.lifecycle_state),
                 ]),
+                "comparison": dataclasses.asdict(relation),
             })
         else:
             warnings.append(
