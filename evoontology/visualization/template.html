@@ -497,14 +497,14 @@
         <div id="empty-hint"></div>
         <div class="glass" id="legend"><div class="glass-title" data-i18n="legend.title">图例</div></div>
         <div class="glass" id="graph-actions">
-          <button id="btn-fit" type="button" data-i18n="action.fit" data-i18n-title="action.fit.title" title="缩放至适应所有可见元素">适应视图</button>
+          <button id="btn-fit" type="button" data-i18n="action.fit" data-i18n-title="action.fit.title" title="缩放并居中显示所有可见元素">适配视图</button>
           <button id="btn-layout" type="button" data-i18n="action.layout" data-i18n-title="action.layout.title" title="保留当前筛选状态并重新计算节点布局">重新布局</button>
           <button id="btn-expand-all" type="button" data-i18n="action.expandAll" data-i18n-title="action.expandAll.title" title="展开所有 Term 的关联对象">展开全部</button>
           <button id="btn-collapse-all" type="button" data-i18n="action.collapseAll" data-i18n-title="action.collapseAll.title" title="收起所有关联对象，仅保留 Term 与语义关系">收起全部</button>
           <button id="btn-reset" type="button" data-i18n="action.reset" data-i18n-title="action.reset.title" title="重置过滤、搜索与布局">重置</button>
         </div>
         <div class="glass" id="filters">
-          <div class="glass-title" data-i18n="filters.title">显示过滤</div>
+          <div class="glass-title" data-i18n="filters.title">显示内容</div>
           <label><input type="checkbox" id="chk-relations" checked><span class="swatch relation"></span><span data-i18n="filters.relations">语义关系</span></label>
           <label><input type="checkbox" id="chk-refs" checked><span class="swatch reference"></span><span data-i18n="filters.refs">结构引用</span></label>
           <label><input type="checkbox" data-family="mapping" checked><span class="swatch mapping"></span>Mapping</label>
@@ -544,7 +544,7 @@
         </div>
       </div>
       <h2 id="welcome-title" data-i18n="welcome.title">欢迎使用 EvoOntology 语义层浏览器</h2>
-      <p data-i18n="welcome.subtitle">一张交互式地图，帮你看懂当前语义层版本</p>
+      <p data-i18n="welcome.subtitle">通过交互式图谱理解当前语义层版本</p>
     </div>
     <div id="welcome-body">
       <h3 data-i18n="welcome.what.title">这个页面是什么？</h3>
@@ -560,7 +560,7 @@
         <li data-i18n="welcome.tips.1">点击图中的节点或连线，在右侧面板查看详情</li>
         <li data-i18n="welcome.tips.2">双击 Term 卡片，展开或收起它的 Mapping / Constraint / Evidence</li>
         <li data-i18n="welcome.tips.3">顶栏可搜索任意对象；左上角图例查看统计，左下角过滤器控制显示内容</li>
-        <li data-i18n="welcome.tips.4">右上角或本指南弹窗内可在 中文 与 英文 之间切换</li>
+        <li data-i18n="welcome.tips.4">可在右上角或本指南中切换中文和英文</li>
       </ul>
     </div>
     <div id="welcome-foot">
@@ -595,7 +595,6 @@ window.EVO_DATA = __DATA_JSON__;
   var DATA = dataForVersion(currentVersion);
   var FAMILY_ORDER = ['term', 'mapping', 'constraint', 'evidence'];
   var COUNT_KEY = { term: 'terms', mapping: 'mappings', constraint: 'constraints', evidence: 'evidence' };
-  var LANG_KEY = 'evo-viz-lang';
   var WELCOME_KEY = 'evo-viz-welcome-hidden';
 
   /* ================= i18n dictionaries ================= */
@@ -613,21 +612,21 @@ window.EVO_DATA = __DATA_JSON__;
       'compare.select.title': '选择右侧对比版本',
       'compare.close': '退出对比',
       'compare.highlight': '突出差异',
-      'compare.added': '新增 {n}',
-      'compare.removed': '移除 {n}',
-      'compare.changed': '变更 {n}',
+      'compare.added': '新增 {n} 项',
+      'compare.removed': '删除 {n} 项',
+      'compare.changed': '修改 {n} 项',
       'compare.same': '无差异',
       'compare.inspect': '点击查看具体差异',
-      'compare.details': '{status}详情',
-      'compare.before': '之前',
-      'compare.after': '之后',
-      'compare.emptyValue': '（空）',
+      'compare.details': '{status}明细',
+      'compare.before': '修改前',
+      'compare.after': '修改后',
+      'compare.emptyValue': '（无）',
       'diff.added': '新增',
-      'diff.removed': '移除',
-      'diff.changed': '变更',
+      'diff.removed': '删除',
+      'diff.changed': '修改',
       'search.placeholder': '搜索 Term / Mapping / Constraint / Evidence',
-      'search.matches': '{n} 个匹配',
-      'search.none': '无匹配',
+      'search.matches': '找到 {n} 项',
+      'search.none': '未找到匹配项',
       'help.title': '查看使用指南',
       'intro.text': '这是语义层版本 {version} 的只读交互式可视化：展示 Term（业务概念）、Mapping（数据落地）、Constraint（使用约束）、Evidence（证据）及其语义关系。点击任意节点或连线查看详情。',
       'intro.guide': '使用指南',
@@ -637,11 +636,11 @@ window.EVO_DATA = __DATA_JSON__;
       'legend.title': '图例',
       'legend.relations': '语义关系',
       'legend.refs': '结构引用',
-      'legend.mismatch': '已渲染 {rendered} 个；该版本记录共 {total} 条，其中 {skipped} 条因引用无法解析被跳过（见顶栏警告）',
+      'legend.mismatch': '图中显示 {rendered} 项；该版本共有 {total} 条记录，其中 {skipped} 条因引用无法解析而未显示（详见顶栏警告）',
       'family.relation': '语义关系',
       'family.reference': '结构引用',
-      'action.fit': '适应视图',
-      'action.fit.title': '缩放至适应所有可见元素',
+      'action.fit': '适配视图',
+      'action.fit.title': '缩放并居中显示所有可见元素',
       'action.layout': '重新布局',
       'action.layout.title': '保留当前筛选状态并重新计算节点布局',
       'action.expandAll': '展开全部',
@@ -649,11 +648,11 @@ window.EVO_DATA = __DATA_JSON__;
       'action.collapseAll': '收起全部',
       'action.collapseAll.title': '收起所有关联对象，仅保留 Term 与语义关系',
       'action.reset': '重置',
-      'action.reset.title': '重置过滤、搜索与布局',
-      'filters.title': '显示过滤',
+      'action.reset.title': '重置筛选、搜索与布局',
+      'filters.title': '显示内容',
       'filters.relations': '语义关系',
       'filters.refs': '结构引用',
-      'filters.labels': '显示关系标签',
+      'filters.labels': '显示连线标签',
       'hint.bar': '实线为语义关系（Semantic Relations），点线为结构引用（Structural References）；双击 Term 卡片可收起或重新展开其关联对象，按住空白处拖动可平移画布，滚轮缩放。',
       'detail.empty': '点击图中的节点、连线，或 Schema / Tool 页签中的卡片，即可在这里查看详情。',
       'detail.expand': '展开关联对象',
@@ -661,20 +660,20 @@ window.EVO_DATA = __DATA_JSON__;
       'detail.center': '居中',
       'detail.locate': '定位到 {id}',
       'detail.warnings.title': '数据质量警告',
-      'detail.warnings.sub': '以下引用无法解析，已被跳过，未生成虚拟对象',
+      'detail.warnings.sub': '以下引用无法解析，已被跳过；系统未为其创建虚拟对象',
       'tooltip.expand': '双击展开 Mapping / Constraint / Evidence',
       'tooltip.collapse': '双击收起关联对象',
       'tooltip.clickDetail': '点击查看详情',
       'status.warnings': '{n} 条警告',
-      'status.warnings.title': '点击查看被跳过的损坏引用',
-      'schema.objects': '对象类型（Schema Layer 定义）',
+      'status.warnings.title': '点击查看无法解析并已跳过的引用',
+      'schema.objects': 'Schema Layer 定义的对象类型',
       'schema.fields': '{n} 个字段',
       'schema.relation': 'Relation（语义关系）',
       'schema.relation.note': 'Relation 记录 Term 与 Term 之间的语义关系，在内容图谱中渲染为连线。每条 Relation 的 relation_type 字段必须取下方嵌套列出的受控值之一。',
-      'schema.relationTypes': 'relation_type 受控取值（Relation 记录字段）',
-      'schema.relationTypes.belongsTo': '归属',
-      'schema.relationTypes.belongsValue': 'Relation.relation_type 字段的受控取值',
-      'schema.directionality': '方向性',
+      'schema.relationTypes': 'relation_type 的受控取值',
+      'schema.relationTypes.belongsTo': '适用字段',
+      'schema.relationTypes.belongsValue': 'Relation.relation_type',
+      'schema.directionality': '是否有向',
       'schema.direction': '具体方向',
       'schema.directed': '有向',
       'schema.undirected': '无向（对称）',
@@ -689,13 +688,13 @@ window.EVO_DATA = __DATA_JSON__;
       'schema.references': '结构引用规则',
       'tool.title': '语义工具（MCP Tool Layer）',
       'tool.params': '参数',
-      'tool.manifest': 'Layer Manifest',
+      'tool.manifest': '语义层清单（Layer Manifest）',
       'common.description': '描述',
       'common.fields': '字段',
       'empty.noObjects': '该版本没有任何语义对象。',
       'empty.initFailed': '图谱初始化失败：{err}\nSchema / Tool 页签仍可正常使用。',
       'welcome.title': '欢迎使用 EvoOntology 语义层浏览器',
-      'welcome.subtitle': '一张交互式地图，帮你看懂当前语义层版本',
+      'welcome.subtitle': '通过交互式图谱理解当前语义层版本',
       'welcome.what.title': '这个页面是什么？',
       'welcome.what.body': '本页面由 EvoOntology 语义层自动渲染（只读快照，不修改任何语义层状态）。它把当前本体版本可视化为一张图谱：业务概念（Term）如何落地到数据库表列（Mapping）、受哪些使用约束（Constraint）、由哪些证据（Evidence）支撑，以及概念之间的语义关系（Relation）。',
       'welcome.views.title': '三个视图',
@@ -706,7 +705,7 @@ window.EVO_DATA = __DATA_JSON__;
       'welcome.tips.1': '点击图中的节点或连线，在右侧面板查看详情',
       'welcome.tips.2': '双击 Term 卡片，展开或收起它的 Mapping / Constraint / Evidence',
       'welcome.tips.3': '顶栏可搜索任意对象；左上角图例查看统计，左下角过滤器控制显示内容',
-      'welcome.tips.4': '右上角或本指南弹窗内可在 中文 与 英文 之间切换',
+      'welcome.tips.4': '可在右上角或本指南中切换中文和英文',
       'welcome.hide': '不再自动显示',
       'welcome.start': '开始探索',
       'welcome.generated': '本页面为只读快照，生成于 {time}',
@@ -830,15 +829,15 @@ window.EVO_DATA = __DATA_JSON__;
   /* Detail-panel field keys come from Core in English; show them in Chinese in zh mode. */
   var KEY_ZH = {
     'Name': '名称', 'ID': 'ID', 'Type': '类型', 'Definition': '定义', 'Scope': '作用域',
-    'Aliases': '别名', 'Mappings': '映射 (Mapping)', 'Relations': '关系 (Relation)',
-    'Constraints': '约束 (Constraint)', 'Evidence': '证据 (Evidence)', 'Lifecycle': '生命周期',
-    'Related Term': '关联 Term', 'Data source': '数据源', 'Table': '表', 'Column': '列',
+    'Aliases': '别名', 'Mappings': '映射（Mapping）', 'Relations': '关系（Relation）',
+    'Constraints': '约束（Constraint）', 'Evidence': '证据（Evidence）', 'Lifecycle': '生命周期',
+    'Related Term': '关联概念（Term）', 'Data source': '数据源', 'Table': '表', 'Column': '列',
     'Semantic Filter': '语义过滤条件', 'Aggregation': '聚合语义', 'Grain': '粒度',
-    'Validation': '校验', 'Confidence': '置信度', 'Source': '来源', 'Query': '查询语句',
+    'Validation': '验证', 'Confidence': '置信度', 'Source': '来源', 'Query': '查询语句',
     'Result': '结果', 'Validation Method': '验证方法', 'Timestamp': '时间戳',
     'Connection': '连接条件', 'Description': '描述', 'Note': '说明', 'Target': '作用对象',
     'Trigger Keywords': '触发关键词', 'Severity': '严重级别', 'Reference': '引用类型',
-    'Terms': '相关 Term', 'Object': '对象', 'From': 'From', 'To': 'To'
+    'Terms': '相关概念（Term）', 'Object': '对象', 'From': '来源类型', 'To': '目标类型'
   };
 
   function detectLang() {
@@ -846,11 +845,7 @@ window.EVO_DATA = __DATA_JSON__;
       var q = new URLSearchParams(window.location.search).get('lang');
       if (q === 'zh' || q === 'en') return q;
     } catch (e) { /* ignore */ }
-    try {
-      var saved = window.localStorage.getItem(LANG_KEY);
-      if (saved === 'zh' || saved === 'en') return saved;
-    } catch (e) { /* storage unavailable */ }
-    return 'en'; // first open defaults to English; switch to 中文 via the language toggle
+    return 'en'; // every new page open defaults to English; ?lang=zh opts into Chinese
   }
 
   var LANG = detectLang();
@@ -2884,7 +2879,6 @@ window.EVO_DATA = __DATA_JSON__;
   function setLang(lang) {
     if (lang !== 'zh' && lang !== 'en') return;
     LANG = lang;
-    try { window.localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
     applyI18n();
   }
 

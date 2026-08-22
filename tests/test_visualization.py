@@ -350,8 +350,22 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert "同表落地" not in html
     assert "Switch between CN and English" in html
     assert "Switch between 中文 and English" not in html
-    assert "右上角或本指南弹窗内可在 中文 与 英文 之间切换" in html
-    assert "右上角或本指南弹窗内可在 中文 与 English 之间切换" not in html
+    assert "可在右上角或本指南中切换中文和英文" in html
+    assert "右上角或本指南弹窗内可在 中文 与 英文 之间切换" not in html
+    assert "var LANG_KEY" not in html
+    assert "localStorage.getItem(LANG_KEY)" not in html
+    assert "localStorage.setItem(LANG_KEY" not in html
+    assert "return 'en'; // every new page open defaults to English" in html
+    assert "'compare.added': '新增 {n} 项'" in html
+    assert "'compare.removed': '删除 {n} 项'" in html
+    assert "'compare.changed': '修改 {n} 项'" in html
+    assert "'compare.details': '{status}明细'" in html
+    assert "'filters.title': '显示内容'" in html
+    assert "'action.fit': '适配视图'" in html
+    assert "'search.matches': '找到 {n} 项'" in html
+    assert "'status.warnings.title': '点击查看无法解析并已跳过的引用'" in html
+    assert "'schema.relationTypes.belongsTo': '适用字段'" in html
+    assert "'tool.manifest': '语义层清单（Layer Manifest）'" in html
     assert "#version-select { width: 220px; max-width: 220px; font-size: 13px; }" in html
     assert "#compare-version-select { width: 210px; max-width: 210px; font-size: 13px; }" in html
 
@@ -448,7 +462,7 @@ def test_schema_view_nests_relation_types_under_relation(workspace):
     Relation 小节内展示，而不是与 Relation 记录并列的独立小节。"""
     html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
     assert "Relation（语义关系）" in html
-    assert "relation_type 受控取值" in html
+    assert "relation_type 的受控取值" in html
     assert "'语义关系类型'" not in html, "relation types must not stay a standalone section"
     assert ".link-chip::before" not in html, "navigable values must not show a misleading arrow"
     assert "function relationDirectionLabel(" in html
