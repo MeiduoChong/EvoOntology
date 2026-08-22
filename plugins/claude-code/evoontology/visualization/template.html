@@ -579,11 +579,11 @@
         </div>
       </div>
       <h2 id="welcome-title" data-i18n="welcome.title">欢迎使用 EvoOntology 语义层浏览器</h2>
-      <p data-i18n="welcome.subtitle">通过交互式图谱理解当前语义层版本</p>
+      <p data-i18n="welcome.subtitle">探索面向 Data Agent 构建的 Agent-first 自进化本体层</p>
     </div>
     <div id="welcome-body">
       <h3 data-i18n="welcome.what.title">这个页面是什么？</h3>
-      <p data-i18n="welcome.what.body">本页面由 EvoOntology 语义层自动渲染（只读快照，不修改任何语义层状态）。它把当前本体版本可视化为一张图谱：业务概念（Term）如何落地到数据库表列（Mapping）、受哪些使用约束（Constraint）、由哪些证据（Evidence）支撑，以及概念之间的语义关系（Relation）。</p>
+      <p data-i18n="welcome.what.body">本页面是 EvoOntology 当前 ontology layer 的只读快照，不修改任何语义层状态。该层围绕 Agent 的工作负载构建，通过 Agent 的 MCP 工具接口按需访问，并根据 Agent 的执行轨迹持续进化。本页面将当前本体版本可视化为图谱：业务概念（Term）如何落地到数据库表列（Mapping）、受哪些使用约束（Constraint）、由哪些证据（Evidence）支撑，以及概念之间的语义关系（Relation）。</p>
       <h3 data-i18n="welcome.views.title">三个视图</h3>
       <ul class="welcome-list">
         <li><span class="welcome-view"><span class="w-tag" data-i18n="tab.content">本体内容</span><span data-i18n="welcome.views.content.desc">— 交互式语义图谱，支持搜索、过滤、展开 / 收起</span></span></li>
@@ -663,7 +663,7 @@ window.EVO_DATA = __DATA_JSON__;
       'search.matches': '找到 {n} 项',
       'search.none': '未找到匹配项',
       'help.title': '查看使用指南',
-      'intro.text': '这是语义层版本 {version} 的只读交互式可视化：展示 Term（业务概念）、Mapping（数据落地）、Constraint（使用约束）、Evidence（证据）及其语义关系。点击任意节点或连线查看详情。',
+      'intro.text': '这是 Agent-first 本体层版本 {version} 的只读视图：展示 Term（业务概念）、Mapping（数据落地）、Constraint（使用约束）、Evidence（证据）及其语义关系。点击任意节点或连线查看详情。',
       'intro.guide': '使用指南',
       'tab.content': '本体内容',
       'tab.schema': 'Schema 层',
@@ -727,9 +727,9 @@ window.EVO_DATA = __DATA_JSON__;
       'empty.noObjects': '该版本没有任何语义对象。',
       'empty.initFailed': '图谱初始化失败：{err}\nSchema / Tool 页签仍可正常使用。',
       'welcome.title': '欢迎使用 EvoOntology 语义层浏览器',
-      'welcome.subtitle': '通过交互式图谱理解当前语义层版本',
+      'welcome.subtitle': '探索面向 Data Agent 构建的 Agent-first 自进化本体层',
       'welcome.what.title': '这个页面是什么？',
-      'welcome.what.body': '本页面由 EvoOntology 语义层自动渲染（只读快照，不修改任何语义层状态）。它把当前本体版本可视化为一张图谱：业务概念（Term）如何落地到数据库表列（Mapping）、受哪些使用约束（Constraint）、由哪些证据（Evidence）支撑，以及概念之间的语义关系（Relation）。',
+      'welcome.what.body': '本页面是 EvoOntology 当前 ontology layer 的只读快照，不修改任何语义层状态。该层围绕 Agent 的工作负载构建，通过 Agent 的 MCP 工具接口按需访问，并根据 Agent 的执行轨迹持续进化。本页面将当前本体版本可视化为图谱：业务概念（Term）如何落地到数据库表列（Mapping）、受哪些使用约束（Constraint）、由哪些证据（Evidence）支撑，以及概念之间的语义关系（Relation）。',
       'welcome.views.title': '三个视图',
       'welcome.views.content.desc': '— 交互式语义图谱，支持搜索、过滤、展开 / 收起',
       'welcome.views.schema.desc': '— 对象类型、受控关系取值与结构引用规则',
@@ -773,7 +773,7 @@ window.EVO_DATA = __DATA_JSON__;
       'search.matches': '{n} matches',
       'search.none': 'No matches',
       'help.title': 'Open the guide',
-      'intro.text': 'Read-only interactive visualization of semantic-layer version {version}: Terms (business concepts), Mappings (data grounding), Constraints, Evidence and the relations between them. Click any node or edge to inspect it.',
+      'intro.text': 'Read-only view of agent-first ontology-layer version {version}: Terms (business concepts), Mappings (data grounding), Constraints, Evidence and the relations between them. Click any node or edge to inspect it.',
       'intro.guide': 'Guide',
       'tab.content': 'Ontology Content',
       'tab.schema': 'Schema Layer',
@@ -837,9 +837,9 @@ window.EVO_DATA = __DATA_JSON__;
       'empty.noObjects': 'This version contains no semantic objects.',
       'empty.initFailed': 'Graph initialisation failed: {err}\nThe Schema / Tool tabs still work.',
       'welcome.title': 'Welcome to the EvoOntology Semantic Layer Explorer',
-      'welcome.subtitle': 'An interactive map of the current semantic-layer version',
+      'welcome.subtitle': 'Explore an agent-first, self-evolving ontology layer for data agents',
       'welcome.what.title': 'What is this page?',
-      'welcome.what.body': 'This page is rendered automatically by the EvoOntology semantic layer (a read-only snapshot; it never modifies semantic-layer state). It visualizes the current ontology version as a graph: how business concepts (Terms) are grounded to database tables and columns (Mappings), which usage Constraints apply, which Evidence supports them, and how the concepts relate to each other (Relations).',
+      'welcome.what.body': 'This page is a read-only snapshot of the current EvoOntology ontology layer; it never modifies semantic-layer state. The layer is built around the agent\'s workload, queried on demand through the agent\'s MCP tool interface, and continuously adapted from the agent\'s execution trajectories. This page visualizes the current ontology version as a graph: how business concepts (Terms) are grounded to database tables and columns (Mappings), which usage Constraints apply, which Evidence supports them, and how the concepts relate to each other (Relations).',
       'welcome.views.title': 'Three views',
       'welcome.views.content.desc': '— the interactive semantic graph with search, filters and expand / collapse',
       'welcome.views.schema.desc': '— object types, controlled relation values and structural reference rules',

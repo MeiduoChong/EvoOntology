@@ -459,6 +459,12 @@ def test_one_html_contains_version_switch_and_compare(workspace):
     assert "'status.warnings.title': '点击查看无法解析并已跳过的引用'" in html
     assert "'schema.relationTypes.belongsTo': '适用字段'" in html
     assert "'tool.manifest': '语义层清单（Layer Manifest）'" in html
+    assert "'intro.text': '这是 Agent-first 本体层版本 {version} 的只读视图" in html
+    assert "'welcome.subtitle': '探索面向 Data Agent 构建的 Agent-first 自进化本体层'" in html
+    assert "该层围绕 Agent 的工作负载构建，通过 Agent 的 MCP 工具接口按需访问" in html
+    assert "'intro.text': 'Read-only view of agent-first ontology-layer version {version}" in html
+    assert "'welcome.subtitle': 'Explore an agent-first, self-evolving ontology layer for data agents'" in html
+    assert "The layer is built around the agent\\'s workload, queried on demand through the agent\\'s MCP tool interface" in html
     assert "#version-select { width: 220px; max-width: 220px; font-size: 13px; }" in html
     assert "#compare-version-select { width: 210px; max-width: 210px; font-size: 13px; }" in html
 

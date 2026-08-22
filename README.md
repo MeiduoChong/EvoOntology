@@ -1,10 +1,10 @@
 # EvoOntology
 
-*面向异构数据（表、文件、数据库）的 Data Agent 常困于「agent–data gap」：数据在 Agent
-之外，通用工具只露出列名与文件路径，数据的结构和内容一开始是未知的，Agent 只能反复盲目
-试探。EvoOntology 是一个自进化的 ontology layer——Builder 从扎根于原始数据的探测查询中
-构建初始语义，进化循环再以「诊断 → 归因 → 补丁 → 配对评估门控」持续精化，让 Agent 在
-运行时主动查询语义层，把盲目探索变成有依据的数据理解。*
+**Agent-first, self-evolving ontology layer for Data Agents.**
+
+*EvoOntology 是面向 Data Agent 的 Agent-first、自进化 ontology layer：它围绕实际工作负载构建，
+通过 Agent 的 MCP 工具接口按需访问，并根据执行轨迹持续适配，从而将异构数据上的盲目探索转化为
+有依据的数据理解。*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
