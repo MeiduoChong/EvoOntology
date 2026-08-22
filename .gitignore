@@ -11,6 +11,7 @@ benchmarks/bird/data/split_data.py
 logs/
 outputs/
 results/
+/tmp/
 *.sqlite
 *.db
 *.log

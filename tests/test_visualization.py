@@ -11,7 +11,6 @@ from evoontology.visualization.renderer import (
     build_content_elements,
     build_schema_view,
     build_tool_view,
-    load_evolution_metadata,
     resolve_version,
 )
 
@@ -50,17 +49,25 @@ def _records(broken: bool = False) -> dict:
         "relations": [
             {"id": "rel_cost_composition", "source": "operating_cost",
              "relation_type": "composition", "target": "labor_cost",
-             "connection_condition": "labor expense is part of operating cost"},
+             "connection_condition": "labor expense is part of operating cost",
+             "evidence": ["evidence_rel_only"]},
         ],
         "constraints": [
             {"id": "constraint_annual", "target": "labor_cost",
              "constraint_type": "scope", "severity": "warning",
-             "trigger_keywords": ["annual"], "description": "Use annual grain"},
+             "trigger_keywords": ["annual"], "description": "Use annual grain",
+             "evidence": ["evidence_con_only"]},
         ],
         "evidence": [
             {"id": "evidence_001", "source": "financial_database",
              "query": "SELECT DISTINCT category FROM expenses",
              "result": "labor_expense exists", "validation_method": "schema verification"},
+            {"id": "evidence_rel_only", "source": "financial_database",
+             "query": "SELECT COUNT(*) FROM expense_statement",
+             "result": "composition supported", "validation_method": "schema verification"},
+            {"id": "evidence_con_only", "source": "financial_database",
+             "query": "SELECT grain FROM expense_statement LIMIT 1",
+             "result": "annual grain", "validation_method": "schema verification"},
         ],
     }
     if broken:
@@ -138,10 +145,106 @@ def test_broken_references_warn_without_fabricating(tmp_path):
     assert any("rel_broken" in warning for warning in content["warnings"])
 
     node_ids = {node["data"]["id"] for node in content["nodes"]}
+    relation_edge_ids = {edge["data"]["id"] for edge in content["edges"]
+                         if edge["data"]["family"] == "relation"}
     for edge in content["edges"]:
-        assert edge["data"]["source"] in node_ids
+        assert edge["data"]["source"] in node_ids | relation_edge_ids
         assert edge["data"]["target"] in node_ids
     assert "missing_term" not in node_ids
+
+
+def test_every_evidence_node_is_connected(workspace):
+    """每个 Evidence 节点必须挂进图谱：Term / Mapping / Constraint / Relation
+    的 evidence 引用都要渲染成 supported_by 连线，不允许出现孤立证据节点。"""
+    content = build_content_elements(SemanticStore.load(workspace))
+    evidence_nodes = [node["data"]["id"] for node in content["nodes"]
+                      if node["data"]["family"] == "evidence"]
+    assert len(evidence_nodes) == 3
+    degree = {}
+    for edge in content["edges"]:
+        for endpoint in (edge["data"]["source"], edge["data"]["target"]):
+            degree[endpoint] = degree.get(endpoint, 0) + 1
+    for node_id in evidence_nodes:
+        assert degree.get(node_id, 0) >= 1, f"{node_id} is disconnected"
+
+
+def test_relation_evidence_edges_are_renderable(workspace):
+    """Cytoscape 不支持边挂到边上：source 为关系（rel:*）的 supported_by 边
+    必须由模板重锚到隐形中点锚节点（mid:* / family=anchor）并随关系边中点同步，
+    否则关系证据会被静默丢弃、退化成孤立节点。"""
+    html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
+    assert "familyByNode[anchorId] = 'anchor'" in html, "anchor nodes must be created for rel:* sources"
+    assert "function syncAnchors()" in html, "anchors must track the relation edge midpoint"
+    assert 'node[family="anchor"]' in html, "anchors must be excluded from layout/overlap passes"
+    assert "get('lang')" in html, "language must be overridable via ?lang= for verification"
+
+
+def test_content_edges_use_only_schema_defined_families(tmp_path):
+    """Content 图只允许论文定义的 Semantic Relation 与 Structural Reference。
+
+    同表落地不是 schema reference rule，不能为视觉连通性凭空生成第三类边。
+    """
+    records = _records()
+    records["terms"].append({
+        "id": "labor_cost_label", "name": "Labor Cost Label", "type": "dimension",
+    })
+    records["mappings"].append({
+        "id": "mapping_labor_cost_label", "term_id": "labor_cost_label",
+        "database_source": "financial_database", "table": "expense_statement",
+        "column": "labor_label",
+    })
+    ws = ensure_workspace(tmp_path)
+    save_project(_project("fixed_split"), ws)
+    SemanticStore.save_version(ws, "semantic_v0", records)
+
+    content = build_content_elements(SemanticStore.load_version(ws, "semantic_v0"))
+    assert {edge["data"]["family"] for edge in content["edges"]} <= {
+        "relation", "reference",
+    }
+    assert not any(edge["data"].get("kind") == "same_table"
+                   for edge in content["edges"])
+    reference_kinds = {
+        edge["data"].get("kind") for edge in content["edges"]
+        if edge["data"]["family"] == "reference"
+    }
+    assert reference_kinds <= {"grounded_by", "constrained_by", "supported_by"}
+    assert any(edge["data"].get("kind") == "grounded_by" and
+               "term:labor_cost_label" in (edge["data"]["source"], edge["data"]["target"])
+               for edge in content["edges"])
+
+
+def test_isolated_term_does_not_gain_a_fabricated_semantic_relation(tmp_path):
+    """没有 Relation 记录的 Term 可通过结构引用接入图谱，但不能伪造语义边。"""
+    records = _records()
+    records["terms"].append({
+        "id": "labor_cost_label", "name": "Labor Cost Label", "type": "dimension",
+    })
+    records["mappings"].append({
+        "id": "mapping_labor_cost_label", "term_id": "labor_cost_label",
+        "database_source": "financial_database", "table": "expense_statement",
+        "column": "labor_label",
+    })
+    ws = ensure_workspace(tmp_path)
+    save_project(_project("fixed_split"), ws)
+    SemanticStore.save_version(ws, "semantic_v0", records)
+
+    content = build_content_elements(SemanticStore.load_version(ws, "semantic_v0"))
+    semantic_edges = [edge["data"] for edge in content["edges"]
+                      if edge["data"]["family"] == "relation"]
+    assert not any("term:labor_cost_label" in (edge["source"], edge["target"])
+                   for edge in semantic_edges)
+    assert any(edge["data"].get("kind") == "grounded_by" and
+               edge["data"]["source"] == "term:labor_cost_label"
+               for edge in content["edges"])
+
+
+def test_term_nodes_show_semantics_only(workspace):
+    """Term 卡片只展示语义名称；物理表列仍保留在 Mapping 与详情中。"""
+    content = build_content_elements(SemanticStore.load(workspace))
+    term = next(node["data"] for node in content["nodes"]
+                if node["data"]["record_id"] == "labor_cost")
+    assert term["label"] == "Labor Cost"
+    assert "sublabel" not in term
 
 
 # ---- 4/5. version resolution ------------------------------------------------
@@ -149,7 +252,7 @@ def test_broken_references_warn_without_fabricating(tmp_path):
 def test_active_version_resolves_active_json(workspace):
     assert resolve_version(workspace, "active") == "semantic_v0"
     output = visualize(workspace=workspace, open_browser=False)
-    assert output == workspace / "visualizations" / "semantic_v0.html"
+    assert output == workspace / "visualizations" / "index.html"
     assert output.is_file()
 
 
@@ -159,10 +262,71 @@ def test_explicit_version_renders_without_changing_active(workspace):
 
     output = visualize(workspace=workspace, version="semantic_v1", open_browser=False)
 
-    assert output.name == "semantic_v1.html"
+    assert output.name == "index.html"
     assert output.is_file()
+    html = output.read_text(encoding="utf-8")
+    assert '"semantic_v0"' in html and '"semantic_v1"' in html
+    assert '"initial_version":"semantic_v1"' in html
     active_after = json.loads((workspace / "active.json").read_text(encoding="utf-8"))
     assert active_after == active_before == {"active_version": "semantic_v0"}
+
+
+def test_one_html_contains_version_switch_and_compare(workspace):
+    records_v1 = _records()
+    records_v1["terms"] = [dict(item) for item in records_v1["terms"]]
+    records_v1["terms"][0]["definition"] = "Changed definition"
+    records_v1["terms"].append({"id": "profit", "name": "Profit", "type": "metric"})
+    SemanticStore.save_version(workspace, "semantic_v1", records_v1)
+
+    html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
+
+    assert 'id="version-select"' in html
+    assert 'id="btn-compare"' in html
+    assert 'id="compare-version-select"' in html
+    assert 'id="cy-compare"' in html
+    assert "function switchVersion(" in html
+    assert "function computeDiff(" in html
+    assert "diff-added" in html and "diff-removed" in html and "diff-changed" in html
+    assert 'class="compare-icon"' in html
+    assert "'version.activeSuffix'" not in html
+    assert "fillVersionSelect(compareSelect, selectedCompare, currentVersion)" in html
+    assert 'id="chk-highlight-diff"' in html
+    assert "function buildSchemaCompareView(" in html
+    assert "function buildToolCompareView(" in html
+    assert html.count('"schema":{"object_types"') == 2
+    assert "function layoutBackbone(" in html
+    assert "function fitGraphToCenter(" in html
+    assert "runLayout(true);" in html
+    assert "nodeRepulsion: 11500" in html
+    assert "idealEdgeLength: 215" in html
+    assert "function spreadTermClusters(" in html
+    assert "function avoidEdgeNodeCrossings(" in html
+    assert "function settleGraphGeometry(" in html
+    assert "'target-arrow-shape': 'triangle'" not in html
+    assert "'target-arrow-shape': 'none'" in html
+    assert "function stableManifestSignature(" in html
+    assert "item.signature == null ? item.raw : item.signature" in html
+    assert "Semantic layer version:|Objects:|Active constraints:" in html
+    assert 'edge[kind="same_table"]' not in html
+    assert "Same-table grounding" not in html
+    assert "同表落地" not in html
+    assert "Switch between CN and English" in html
+    assert "Switch between 中文 and English" not in html
+    assert "右上角或本指南弹窗内可在 中文 与 英文 之间切换" in html
+    assert "右上角或本指南弹窗内可在 中文 与 English 之间切换" not in html
+    assert "#version-select { width: 220px; max-width: 220px; font-size: 13px; }" in html
+    assert "#compare-version-select { width: 210px; max-width: 210px; font-size: 13px; }" in html
+
+
+def test_relayout_and_reset_keep_distinct_responsibilities(workspace):
+    html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
+    assert 'id="btn-layout"' in html
+    assert "$('#btn-layout').addEventListener('click', function () { runLayout(true); });" in html
+    reset_body = html.split("function resetView()", 1)[1].split(
+        "/* ================= graph: interactions", 1
+    )[0]
+    assert "familyVisible = { mapping: true, constraint: true, evidence: true };" in reset_body
+    assert "input.value = '';" in reset_body
 
 
 # ---- 6. generated HTML is offline and self-contained ------------------------
@@ -180,11 +344,9 @@ def test_generated_html_is_offline(workspace):
 # ---- 7. initial build without evolution history -----------------------------
 
 def test_initial_build_without_evolution_renders(workspace):
-    metadata = load_evolution_metadata(workspace, "semantic_v0")
-    assert metadata["initial_build"] is True
-    assert metadata["label"] == "Initial Build"
     html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
-    assert "Initial Build" in html
+    assert "Labor Cost" in html
+    assert '"evolution"' not in html
 
 
 # ---- 8. both project modes render -------------------------------------------
@@ -198,30 +360,6 @@ def test_fixed_split_and_rolling_trajectory_both_render(tmp_path):
         output = visualize(workspace=ws, open_browser=False)
         assert output.is_file(), f"{mode} failed to render"
         assert "Labor Cost" in output.read_text(encoding="utf-8")
-
-
-# ---- evolution metadata ------------------------------------------------------
-
-def test_evolution_metadata_from_run_records(workspace):
-    run_dir = workspace / "evolution" / "run_1"
-    run_dir.mkdir(parents=True)
-    (run_dir / "run.json").write_text(json.dumps({
-        "schema_version": 1, "run_id": "run_1", "status": "accepted",
-        "parent_version": "semantic_v0", "accepted_version": "semantic_v1",
-        "current_hypothesis": "improve cost composition coverage",
-        "updated_at": "2026-08-01T00:00:00+00:00",
-    }), encoding="utf-8")
-    (run_dir / "rounds.jsonl").write_text(json.dumps({
-        "round": 1, "decision": "reject", "target_dimension": "content",
-        "changed_components": ["semantic content"], "metrics": {},
-    }) + "\n", encoding="utf-8")
-
-    metadata = load_evolution_metadata(workspace, "semantic_v1")
-    assert metadata["initial_build"] is False
-    assert metadata["parent_version"] == "semantic_v0"
-    assert metadata["decision"] == "accepted"
-    assert metadata["target_dimension"] == "content"
-    assert metadata["changed_components"] == ["semantic content"]
 
 
 # ---- schema / tool views ------------------------------------------------------

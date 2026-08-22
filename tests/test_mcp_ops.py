@@ -48,7 +48,7 @@ def test_visualize_semantics_writes_html(tmp_path):
     result = ops.execute("visualize_semantics", {"workspace": ws, "open_browser": False})
     assert result["status"] == "ok"
     assert result["opened_in_browser"] is False
-    assert (tmp_path / ".evoontology" / "visualizations" / "semantic_v0.html").is_file()
+    assert (tmp_path / ".evoontology" / "visualizations" / "index.html").is_file()
 
 
 def test_visualize_semantics_opens_browser_by_default(tmp_path, monkeypatch):
@@ -61,7 +61,7 @@ def test_visualize_semantics_opens_browser_by_default(tmp_path, monkeypatch):
     result = ops.execute("visualize_semantics", {"workspace": ws})
     assert result["opened_in_browser"] is True
     assert len(opened) == 1
-    assert opened[0].endswith("semantic_v0.html")
+    assert opened[0].endswith("index.html")
 
 
 def test_evolution_accept_flow(tmp_path):

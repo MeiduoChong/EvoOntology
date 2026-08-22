@@ -13,7 +13,7 @@ from .renderer import ACTIVE, visualize
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Render one ontology version as a standalone interactive HTML file."
+        description="Render all ontology versions as one standalone interactive HTML explorer."
     )
     parser.add_argument(
         "--root",
@@ -23,7 +23,7 @@ def main() -> None:
     parser.add_argument(
         "--version",
         default=ACTIVE,
-        help="Ontology version to render (default: active version)",
+        help="Ontology version initially shown (default: active version)",
     )
     parser.add_argument(
         "--no-browser",

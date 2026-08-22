@@ -12,7 +12,6 @@ from .renderer import (
     build_content_elements,
     build_schema_view,
     build_tool_view,
-    load_evolution_metadata,
     load_ontology,
     render_html,
     resolve_version,
@@ -30,6 +29,5 @@ __all__ = [
     "build_content_elements",
     "build_schema_view",
     "build_tool_view",
-    "load_evolution_metadata",
     "render_html",
 ]

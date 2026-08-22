@@ -1,12 +1,11 @@
-"""Read-only ontology visualization: one ontology version -> one standalone HTML.
+"""Read-only ontology visualization: all ontology versions -> one HTML explorer.
 
 Pipeline::
 
-    ontology version
-        -> build_content_elements / build_schema_view /
-           build_tool_view / load_evolution_metadata
+    ontology versions
+        -> per-version content / tool views + shared schema view
         -> render_html (template.html + vendored cytoscape.min.js)
-        -> <workspace>/visualizations/<version>.html
+        -> <workspace>/visualizations/index.html
 
 The module is strictly read-only: records are loaded through ``SemanticStore``
 and the only write is the generated HTML. ``active.json``, versions,
@@ -17,7 +16,6 @@ from __future__ import annotations
 
 import dataclasses
 import json
-import re
 import webbrowser
 from datetime import datetime
 from pathlib import Path
@@ -42,7 +40,6 @@ RELATION_TYPES = (
     "derivation",
 )
 
-_RUN_DIR_RE = re.compile(r"^run_(\d+)$")
 _PACKAGE_DIR = Path(__file__).resolve().parent
 
 _SCHEMA_OBJECTS = (
@@ -75,43 +72,56 @@ def visualize(
     version: str = ACTIVE,
     open_browser: bool = True,
 ) -> Path:
-    """Render one ontology version to a standalone HTML file and return its path.
+    """Render all ontology versions to one standalone HTML file and return its path.
 
-    ``version="active"`` follows ``active.json``; an explicit version is
-    rendered without touching ``active.json``. The HTML is written to
-    ``<workspace>/visualizations/<version>.html`` (overwriting any previous
-    render of the same version).
+    ``version="active"`` follows ``active.json``; an explicit version selects
+    the initially visible version without touching ``active.json``. Every
+    version under ``versions/`` is embedded so the page can switch and compare
+    versions offline. The stable output is ``<workspace>/visualizations/index.html``.
     """
     root = resolve_workspace(workspace)
     if not root.is_dir():
         raise FileNotFoundError("EvoOntology workspace not initialized.")
     selected = resolve_version(root, version)
-    store = load_ontology(root, selected)
-
     active_version: Optional[str] = None
     try:
         active_version = SemanticStore.active_version(root)
     except (FileNotFoundError, ValueError):
         active_version = None
 
-    content = build_content_elements(store)
+    generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    available_versions = SemanticStore.list_versions(root)
+    schema_snapshot = build_schema_view()
+    version_data: Dict[str, Any] = {}
+    for version_name in available_versions:
+        store = load_ontology(root, version_name)
+        content = build_content_elements(store)
+        version_data[version_name] = {
+            "meta": {
+                "version": version_name,
+                "active": version_name == active_version,
+                "counts": store.counts(),
+                "warnings": content["warnings"],
+                "generated_at": generated_at,
+            },
+            "content": {"nodes": content["nodes"], "edges": content["edges"]},
+            "schema": schema_snapshot,
+            "tools": build_tool_view(store),
+        }
+
     data = {
         "meta": {
-            "version": selected,
-            "active": selected == active_version,
-            "counts": store.counts(),
-            "warnings": content["warnings"],
-            "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "initial_version": selected,
+            "active_version": active_version,
+            "versions": available_versions,
+            "generated_at": generated_at,
         },
-        "content": {"nodes": content["nodes"], "edges": content["edges"]},
-        "schema": build_schema_view(),
-        "tools": build_tool_view(store),
-        "evolution": load_evolution_metadata(root, selected),
+        "versions": version_data,
     }
 
     out_dir = root / VISUALIZATIONS_DIRNAME
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{selected}.html"
+    out_path = out_dir / "index.html"
     out_path.write_text(render_html(data), encoding="utf-8")
 
     if open_browser:
@@ -202,15 +212,6 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
         edges.append({"data": data})
 
     for term in store.terms.values():
-        term_maps = mappings_by_term.get(term.id, [])
-        sublabel = ""
-        if term_maps:
-            first = store.mappings.get(term_maps[0])
-            grounding = ".".join(part for part in (first.table, first.column) if part) if first else ""
-            if grounding:
-                sublabel = grounding + (f" +{len(term_maps) - 1}" if len(term_maps) > 1 else "")
-            else:
-                sublabel = f"{len(term_maps)} mapping(s)"
         _add_node(term.id, "term", term.name or term.id,
                   [term.name, term.id, *term.aliases],
                   _pairs([
@@ -226,7 +227,7 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                       ("Evidence", term.evidence_refs),
                       ("Lifecycle", term.lifecycle_state),
                   ]),
-                  {"sublabel": sublabel, "definition": term.definition or ""})
+                  {"definition": term.definition or ""})
 
     for mapping in store.mappings.values():
         grounding = ".".join(part for part in (mapping.table, mapping.column) if part)
@@ -302,50 +303,6 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                 f"(source={relation.source!r}, target={relation.target!r})"
             )
 
-    # Implicit same-table Term links (visualization-level, derived from mapping
-    # grounding) so attribute Terms never float disconnected in the Term view.
-    explicit_pairs = {
-        frozenset((rel.source, rel.target))
-        for rel in store.relations.values()
-        if rel.source in store.terms and rel.target in store.terms
-    }
-    relation_degree: Dict[str, int] = {}
-    for rel in store.relations.values():
-        relation_degree[rel.source] = relation_degree.get(rel.source, 0) + 1
-        relation_degree[rel.target] = relation_degree.get(rel.target, 0) + 1
-    terms_by_table: Dict[str, List[str]] = {}
-    for term_id in store.terms:
-        tables: List[str] = []
-        for mid in mappings_by_term.get(term_id, []):
-            mapping = store.mappings.get(mid)
-            if mapping and mapping.table and mapping.table not in tables:
-                tables.append(mapping.table)
-        for table in tables:
-            terms_by_table.setdefault(table, []).append(term_id)
-    for table in sorted(terms_by_table):
-        members = sorted(terms_by_table[table])
-        if len(members) < 2:
-            continue
-        hub = members[0]
-        for tid in members[1:]:
-            if (relation_degree.get(tid, 0), len(mappings_by_term.get(tid, []))) > (
-                relation_degree.get(hub, 0), len(mappings_by_term.get(hub, []))
-            ):
-                hub = tid
-        for member in members:
-            if member == hub or frozenset((hub, member)) in explicit_pairs:
-                continue
-            _add_edge(f"ref:same_table:{table}:{hub}:{member}", "reference",
-                      _nid("term", hub), _nid("term", member), {
-                "kind": "same_table",
-                "label": table,
-                "detail": _pairs([
-                    ("Reference", "same_table"),
-                    ("Table", table),
-                    ("Terms", f"{term_names.get(hub, hub)} \u2194 {term_names.get(member, member)}"),
-                ]),
-            })
-
     # Structural Reference edges: induced by schema-defined object references.
     for mapping in store.mappings.values():
         if not mapping.term_id:
@@ -406,6 +363,46 @@ def build_content_elements(store: SemanticStore) -> Dict[str, Any]:
                     f"{owner.id}: unresolved evidence reference {ref!r}, reference skipped"
                 )
 
+    for constraint in store.constraints.values():
+        for ref in constraint.evidence_refs:
+            if ref in evidence_ids:
+                _add_edge(f"ref:supported_by:con:{constraint.id}:{ref}", "reference",
+                          _nid("constraint", constraint.id), _nid("evidence", ref), {
+                              "kind": "supported_by",
+                              "detail": _pairs([
+                                  ("Reference", "supported_by"),
+                                  ("Object", constraint.id),
+                                  ("Evidence", ref),
+                              ]),
+                          })
+            else:
+                warnings.append(
+                    f"constraint {constraint.id}: unresolved evidence reference {ref!r}, "
+                    "reference skipped"
+                )
+
+    for relation in store.relations.values():
+        if relation.source not in store.terms or relation.target not in store.terms:
+            continue  # unresolved endpoints already warned above
+        for ref in relation.evidence_refs:
+            if ref in evidence_ids:
+                _add_edge(f"ref:supported_by:rel:{relation.id}:{ref}", "reference",
+                          f"rel:{relation.id}", _nid("evidence", ref), {
+                              "kind": "supported_by",
+                              "owner_terms": [_nid("term", relation.source),
+                                              _nid("term", relation.target)],
+                              "detail": _pairs([
+                                  ("Reference", "supported_by"),
+                                  ("Object", relation.id),
+                                  ("Evidence", ref),
+                              ]),
+                          })
+            else:
+                warnings.append(
+                    f"relation {relation.id}: unresolved evidence reference {ref!r}, "
+                    "reference skipped"
+                )
+
     return {"nodes": nodes, "edges": edges, "warnings": warnings}
 
 
@@ -452,79 +449,13 @@ def build_tool_view(store: SemanticStore) -> Dict[str, Any]:
     return {"manifest": layer.manifest(), "tools": tools}
 
 
-def load_evolution_metadata(root: PathLike, version: str) -> Dict[str, Any]:
-    """Read lightweight evolution context from the latest ``evolution/run_N``."""
-    root = Path(root)
-    runs: List[tuple] = []
-    evolution_dir = root / "evolution"
-    if evolution_dir.is_dir():
-        for child in evolution_dir.iterdir():
-            match = _RUN_DIR_RE.match(child.name)
-            if match and (child / "run.json").is_file():
-                runs.append((int(match.group(1)), child))
-    if not runs:
-        return {"initial_build": True, "label": "Initial Build", "current_version": version}
-
-    runs.sort(key=lambda item: item[0])
-    run_dir = runs[-1][1]
-    try:
-        run = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {"initial_build": True, "label": "Initial Build", "current_version": version}
-    if not isinstance(run, dict):
-        return {"initial_build": True, "label": "Initial Build", "current_version": version}
-
-    target_dimension = str(run.get("target_dimension", "") or "")
-    changed_components = list(run.get("changed_components", []) or [])
-
-    # Rounds may carry the per-round dimension/components recorded by the skill.
-    rounds_path = run_dir / "rounds.jsonl"
-    if rounds_path.is_file():
-        try:
-            lines = rounds_path.read_text(encoding="utf-8").splitlines()
-        except OSError:
-            lines = []
-        for line in reversed(lines):
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if not isinstance(entry, dict):
-                continue
-            metrics = entry.get("metrics") if isinstance(entry.get("metrics"), dict) else {}
-            if not target_dimension:
-                target_dimension = str(
-                    entry.get("target_dimension") or metrics.get("target_dimension") or ""
-                )
-            if not changed_components:
-                components = entry.get("changed_components") or metrics.get("changed_components")
-                if isinstance(components, list):
-                    changed_components = [str(item) for item in components]
-            if target_dimension and changed_components:
-                break
-
-    return {
-        "initial_build": False,
-        "label": f"Evolution {run.get('run_id', '')}".strip(),
-        "current_version": version,
-        "run_id": str(run.get("run_id", "")),
-        "parent_version": str(run.get("parent_version", "") or ""),
-        "decision": str(run.get("status", "") or ""),
-        "accepted_version": str(run.get("accepted_version", "") or ""),
-        "target_dimension": target_dimension,
-        "changed_components": changed_components,
-        "hypothesis": str(run.get("current_hypothesis", "") or ""),
-        "updated_at": str(run.get("updated_at", "") or ""),
-    }
-
-
 def render_html(data: Dict[str, Any]) -> str:
     """Inline Cytoscape.js, CSS, data, and interaction JS into one HTML file."""
     template = _read_package_text("template.html")
     cytoscape_js = _read_package_text(Path("vendor") / "cytoscape.min.js")
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     payload = payload.replace("</", "<\\/")  # keep </script> safe inside JSON
-    title = f"EvoOntology · {data['meta']['version']}"
+    title = "EvoOntology · Semantic Layer Explorer"
     return (
         template
         .replace("__TITLE__", title)
