@@ -235,9 +235,8 @@
   #graph-actions { top: 16px; right: 16px; display: flex; gap: 7px; padding: 9px; }
   #graph-actions button { padding: 5px 10px; font-size: 13px; border-radius: 8px; background: rgba(255, 255, 255, .8); white-space: nowrap; }
   #btn-fit { min-width: 78px; }
-  #btn-layout { min-width: 86px; }
   #btn-expand-all, #btn-collapse-all { min-width: 96px; }
-  #btn-reset { min-width: 62px; }
+  #btn-reset { min-width: 112px; }
   #filters { bottom: 16px; left: 16px; width: 220px; display: flex; flex-direction: column; gap: 7px; }
   #filters label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; }
   #filters label.subtle { color: var(--muted); border-top: 1px dashed var(--border-strong); padding-top: 7px; margin-top: 3px; }
@@ -535,7 +534,6 @@
         <div class="glass" id="legend"><div class="glass-title" data-i18n="legend.title">图例</div></div>
         <div class="glass" id="graph-actions">
           <button id="btn-fit" type="button" data-i18n="action.fit" data-i18n-title="action.fit.title" title="缩放并居中显示所有可见元素">适配视图</button>
-          <button id="btn-layout" type="button" data-i18n="action.layout" data-i18n-title="action.layout.title" title="保留当前交互状态，只整理节点位置" disabled>整理当前</button>
           <button id="btn-expand-all" type="button" data-i18n="action.expandAll" data-i18n-title="action.expandAll.title" title="展开所有 Term 的关联对象">展开全部</button>
           <button id="btn-collapse-all" type="button" data-i18n="action.collapseAll" data-i18n-title="action.collapseAll.title" title="收起所有关联对象，仅保留 Term 与语义关系">收起全部</button>
           <button id="btn-reset" type="button" data-i18n="action.reset" data-i18n-title="action.reset.title" title="清空交互状态并恢复首次打开的视图">恢复初始</button>
@@ -678,9 +676,6 @@ window.EVO_DATA = __DATA_JSON__;
       'family.reference': '结构引用',
       'action.fit': '适配视图',
       'action.fit.title': '缩放并居中显示所有可见元素',
-      'action.layout': '整理当前',
-      'action.layout.title': '保留搜索、筛选、展开与标签状态，只整理节点位置',
-      'action.layout.clean.title': '当前布局已整理',
       'action.expandAll': '展开全部',
       'action.expandAll.title': '展开所有 Term 的关联对象',
       'action.collapseAll': '收起全部',
@@ -791,9 +786,6 @@ window.EVO_DATA = __DATA_JSON__;
       'family.reference': 'Structural Reference',
       'action.fit': 'Fit view',
       'action.fit.title': 'Zoom to fit all visible elements',
-      'action.layout': 'Tidy current',
-      'action.layout.title': 'Keep search, filters, expansion and labels; only tidy node positions',
-      'action.layout.clean.title': 'The current layout is already tidy',
       'action.expandAll': 'Expand all',
       'action.expandAll.title': 'Expand related objects of every Term',
       'action.collapseAll': 'Collapse all',
@@ -1013,7 +1005,6 @@ window.EVO_DATA = __DATA_JSON__;
       button.classList.toggle('active', button.getAttribute('data-lang') === LANG);
     });
     $('#intro-text').textContent = t('intro.text', { version: meta.version || '' });
-    updateLayoutAction();
   }
 
   /* ================= header ================= */
@@ -1219,20 +1210,7 @@ window.EVO_DATA = __DATA_JSON__;
   var relationsVisible = true;
   var refsVisible = true;
   var labelToggleOn = false;
-  var layoutDirty = false;
   var termLayout = { coreId: null, sectors: {}, coreSlots: [], termRadius: 0 };
-
-  function updateLayoutAction() {
-    var button = $('#btn-layout');
-    if (!button) return;
-    button.disabled = !layoutDirty;
-    button.title = t(layoutDirty ? 'action.layout.title' : 'action.layout.clean.title');
-  }
-
-  function setLayoutDirty(dirty) {
-    layoutDirty = !!dirty;
-    updateLayoutAction();
-  }
 
   function addOwner(satelliteId, termId) {
     if (!owners[satelliteId]) owners[satelliteId] = new Set();
@@ -1374,7 +1352,6 @@ window.EVO_DATA = __DATA_JSON__;
     expanded = new Set();
     expandAllFlag = false;
     termLayout = { coreId: null, sectors: {}, coreSlots: [], termRadius: 0 };
-    setLayoutDirty(false);
     emptyState = null;
     $('#empty-hint').style.display = 'none';
   }
@@ -1986,7 +1963,6 @@ window.EVO_DATA = __DATA_JSON__;
     layoutUnownedSatellites();
     settleGraphGeometry();
     if (fitAfter !== false) fitGraphToCenter(cy, 64);
-    setLayoutDirty(false);
   }
 
   function syncFilterBoxes() {
@@ -2019,28 +1995,23 @@ window.EVO_DATA = __DATA_JSON__;
     applyVisibility();
     layoutSatellites();
     settleGraphGeometry();
-    setLayoutDirty(true);
   }
 
   function expandEverything() {
     if (!cy) return;
-    var changed = !expandAllFlag || expanded.size !== cy.nodes('[family="term"]').length;
     expandAllFlag = true;
     cy.nodes('[family="term"]').forEach(function (n) { expanded.add(n.id()); });
     applyVisibility();
     layoutSatellites();
     settleGraphGeometry();
     fitGraphToCenter(cy, 60);
-    if (changed) setLayoutDirty(true);
   }
 
   function collapseEverything() {
-    var changed = expandAllFlag || expanded.size > 0;
     expandAllFlag = false;
     expanded.clear();
     applyVisibility();
     settleGraphGeometry();
-    if (changed) setLayoutDirty(true);
   }
 
   function resetView() {
@@ -2183,13 +2154,11 @@ window.EVO_DATA = __DATA_JSON__;
     cy.on('mouseout', 'edge', function (event) {
       if (!labelToggleOn && !event.target.selected()) event.target.removeClass('label-on');
     });
-    cy.on('dragfree', 'node:not([family="anchor"])', function () { setLayoutDirty(true); });
     cy.on('position', 'node', scheduleAnchorSync);
   }
 
   function wireToolbarAndFilters() {
     $('#btn-fit').addEventListener('click', function () { fitGraphToCenter(cy, 60); });
-    $('#btn-layout').addEventListener('click', function () { runLayout(true); });
     $('#btn-expand-all').addEventListener('click', expandEverything);
     $('#btn-collapse-all').addEventListener('click', collapseEverything);
     $('#btn-reset').addEventListener('click', resetView);
@@ -2197,18 +2166,15 @@ window.EVO_DATA = __DATA_JSON__;
       box.addEventListener('change', function () {
         familyVisible[box.getAttribute('data-family')] = box.checked;
         applyVisibility();
-        setLayoutDirty(true);
       });
     });
     $('#chk-relations').addEventListener('change', function () {
       relationsVisible = this.checked;
       applyVisibility();
-      setLayoutDirty(true);
     });
     $('#chk-refs').addEventListener('change', function () {
       refsVisible = this.checked;
       applyVisibility();
-      setLayoutDirty(true);
     });
     $('#chk-labels').addEventListener('change', function () {
       labelToggleOn = this.checked;

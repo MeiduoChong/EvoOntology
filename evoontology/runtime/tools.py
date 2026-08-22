@@ -90,7 +90,7 @@ OPERATIONS = [
         "name": "visualize_semantics",
         "description": (
             "Render every ontology version into one standalone offline HTML explorer "
-            "at <workspace>/visualizations/index.html (read-only) and open it in the "
+            "at <workspace>/visualizations/semantic-layer-explorer.html (read-only) and open it in the "
             "default browser automatically unless open_browser is false."
         ),
         "inputSchema": {

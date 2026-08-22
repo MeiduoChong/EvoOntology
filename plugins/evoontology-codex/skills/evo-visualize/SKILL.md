@@ -27,7 +27,7 @@ read-only.
    and `open_browser`. Do not run
    `python -m evoontology.visualization`.
 
-4. Return the generated path `<resolved-workspace>/visualizations/index.html`
+4. Return the generated path `<resolved-workspace>/visualizations/semantic-layer-explorer.html`
    and the resolved workspace reported by the tool.
    The MCP tool writes the file and then opens it in the default browser
    exactly once (`open_browser` defaults to true). Pass `open_browser: false`

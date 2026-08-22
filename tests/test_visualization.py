@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from evoontology import SemanticStore, ensure_workspace, save_project
-from evoontology.visualization import visualize
+from evoontology.visualization import VISUALIZATION_FILENAME, visualize
 from evoontology.visualization.renderer import (
     build_content_elements,
     build_schema_view,
@@ -284,7 +284,7 @@ def test_term_nodes_show_semantics_only(workspace):
 def test_active_version_resolves_active_json(workspace):
     assert resolve_version(workspace, "active") == "semantic_v0"
     output = visualize(workspace=workspace, open_browser=False)
-    assert output == workspace / "visualizations" / "index.html"
+    assert output == workspace / "visualizations" / VISUALIZATION_FILENAME
     assert output.is_file()
 
 
@@ -296,7 +296,7 @@ def test_visualize_discovers_one_workspace_at_arbitrary_nested_depth(tmp_path):
 
     output = visualize(workspace=container, open_browser=False)
 
-    assert output == nested / "visualizations" / "index.html"
+    assert output == nested / "visualizations" / VISUALIZATION_FILENAME
     assert output.is_file()
     assert not (container / "visualizations").exists()
 
@@ -309,7 +309,7 @@ def test_visualize_accepts_project_root_containing_nested_workspace(tmp_path):
 
     output = visualize(workspace=project_root, open_browser=False)
 
-    assert output == nested / "visualizations" / "index.html"
+    assert output == nested / "visualizations" / VISUALIZATION_FILENAME
 
 
 def test_visualize_uses_explicit_version_to_disambiguate_nested_workspaces(tmp_path):
@@ -325,7 +325,7 @@ def test_visualize_uses_explicit_version_to_disambiguate_nested_workspaces(tmp_p
         workspace=container, version="semantic_v1", open_browser=False
     )
 
-    assert output == second / "visualizations" / "index.html"
+    assert output == second / "visualizations" / VISUALIZATION_FILENAME
 
 
 def test_visualize_rejects_ambiguous_nested_workspaces(tmp_path):
@@ -356,7 +356,7 @@ def test_visualize_ignores_nested_active_pointer_without_target_version(tmp_path
 
     output = visualize(workspace=container, open_browser=False)
 
-    assert output == valid / "visualizations" / "index.html"
+    assert output == valid / "visualizations" / VISUALIZATION_FILENAME
 
 
 def test_explicit_version_renders_without_changing_active(workspace):
@@ -365,13 +365,25 @@ def test_explicit_version_renders_without_changing_active(workspace):
 
     output = visualize(workspace=workspace, version="semantic_v1", open_browser=False)
 
-    assert output.name == "index.html"
+    assert output.name == VISUALIZATION_FILENAME
     assert output.is_file()
     html = output.read_text(encoding="utf-8")
     assert '"semantic_v0"' in html and '"semantic_v1"' in html
     assert '"initial_version":"semantic_v1"' in html
     active_after = json.loads((workspace / "active.json").read_text(encoding="utf-8"))
     assert active_after == active_before == {"active_version": "semantic_v0"}
+
+
+def test_visualize_replaces_legacy_index_output(workspace):
+    legacy = workspace / "visualizations" / "index.html"
+    legacy.parent.mkdir(parents=True)
+    legacy.write_text("stale visualization", encoding="utf-8")
+
+    output = visualize(workspace=workspace, open_browser=False)
+
+    assert output.name == VISUALIZATION_FILENAME
+    assert output.is_file()
+    assert not legacy.exists()
 
 
 def test_one_html_contains_version_switch_and_compare(workspace):
@@ -467,18 +479,16 @@ def test_bilingual_controls_use_stable_responsive_layout(workspace):
     assert ".detail-actions { display: flex; gap: 8px; flex-wrap: wrap;" in html
     assert ".welcome-list li { display: grid; grid-template-columns: 7px minmax(0, 1fr);" in html
     assert "#btn-compare-close { justify-self: end;" in html
+    assert "#btn-reset { min-width: 112px; }" in html
 
 
-def test_relayout_and_reset_keep_distinct_responsibilities(workspace):
+def test_restore_initial_is_the_only_layout_recovery_control(workspace):
     html = visualize(workspace=workspace, open_browser=False).read_text(encoding="utf-8")
-    assert 'id="btn-layout"' in html and 'disabled>整理当前</button>' in html
-    assert "$('#btn-layout').addEventListener('click', function () { runLayout(true); });" in html
-    assert "'action.layout': '整理当前'" in html
-    assert "'action.layout': 'Tidy current'" in html
-    assert "'action.layout.clean.title': '当前布局已整理'" in html
-    assert "cy.on('dragfree', 'node:not([family=\"anchor\"])'" in html
-    assert "setLayoutDirty(false);" in html
-    assert "setLayoutDirty(true);" in html
+    assert 'id="btn-layout"' not in html
+    assert "action.layout" not in html
+    assert "layoutDirty" not in html
+    assert "setLayoutDirty" not in html
+    assert "updateLayoutAction" not in html
     reset_body = html.split("function resetView()", 1)[1].split(
         "/* ================= graph: interactions", 1
     )[0]

@@ -20,7 +20,7 @@ description: 可视化本体——生成离线、单文件的交互式 HTML
 行为约定：
 
 - 只读：不修改 Build / Evolve / Runtime，也不修改 `active.json`、`versions/` 等任何状态；
-- 输出唯一稳定文件 `<resolved-workspace>/visualizations/index.html`（重复生成会覆盖），并报告实际解析出的工作区；MCP 工具生成文件后默认自动在默认浏览器中打开（传 `open_browser: false` 可关闭）；
+- 输出唯一稳定文件 `<resolved-workspace>/visualizations/semantic-layer-explorer.html`（重复生成会覆盖，并清理旧版 `index.html`），并报告实际解析出的工作区；MCP 工具生成文件后默认自动在默认浏览器中打开（传 `open_browser: false` 可关闭）；
 - 错误显式：workspace 未初始化 / 无 active 版本 / 请求版本不存在 / 多个工作区同时匹配；断裂引用只告警，不虚构图对象。
 
 执行成功后报告生成的 HTML 路径（默认已在浏览器中自动打开）。

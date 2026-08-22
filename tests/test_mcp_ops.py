@@ -3,6 +3,7 @@
 import json
 
 from evoontology import SemanticStore
+from evoontology.visualization import VISUALIZATION_FILENAME
 from evoontology.runtime import ops
 
 SAMPLE = {
@@ -48,7 +49,7 @@ def test_visualize_semantics_writes_html(tmp_path):
     result = ops.execute("visualize_semantics", {"workspace": ws, "open_browser": False})
     assert result["status"] == "ok"
     assert result["opened_in_browser"] is False
-    assert (tmp_path / ".evoontology" / "visualizations" / "index.html").is_file()
+    assert (tmp_path / ".evoontology" / "visualizations" / VISUALIZATION_FILENAME).is_file()
 
 
 def test_visualize_semantics_reports_discovered_nested_workspace(tmp_path):
@@ -62,7 +63,7 @@ def test_visualize_semantics_reports_discovered_nested_workspace(tmp_path):
 
     assert result["workspace"] == str(nested.resolve())
     assert result["html_path"] == str(
-        nested.resolve() / "visualizations" / "index.html"
+        nested.resolve() / "visualizations" / VISUALIZATION_FILENAME
     )
 
 
@@ -76,7 +77,7 @@ def test_visualize_semantics_opens_browser_by_default(tmp_path, monkeypatch):
     result = ops.execute("visualize_semantics", {"workspace": ws})
     assert result["opened_in_browser"] is True
     assert len(opened) == 1
-    assert opened[0].endswith("index.html")
+    assert opened[0].endswith(VISUALIZATION_FILENAME)
 
 
 def test_evolution_accept_flow(tmp_path):

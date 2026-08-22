@@ -5,11 +5,12 @@ Pipeline::
     ontology versions
         -> per-version content / tool views + shared schema view
         -> render_html (template.html + vendored cytoscape.min.js)
-        -> <workspace>/visualizations/index.html
+        -> <workspace>/visualizations/semantic-layer-explorer.html
 
-The module is strictly read-only: records are loaded through ``SemanticStore``
-and the only write is the generated HTML. ``active.json``, versions,
-trajectories, and evolution records are never modified.
+The module is strictly read-only for semantic state: records are loaded through
+``SemanticStore`` and filesystem changes are confined to generated HTML under
+``visualizations/``. ``active.json``, versions, trajectories, and evolution
+records are never modified.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from ..workspace import PathLike, resolve_workspace_for_version
 
 ACTIVE = "active"
 VISUALIZATIONS_DIRNAME = "visualizations"
+VISUALIZATION_FILENAME = "semantic-layer-explorer.html"
 CYTOSCAPE_VERSION = "3.30.2"
 
 #: The five controlled relation values defined by ``semantic-schema.md``.
@@ -85,7 +87,7 @@ def visualize(
     version under ``versions/`` is embedded so the page can switch and compare
     versions offline. Containers and project roots resolve to one matching nested
     workspace. The stable output is
-    ``<resolved-workspace>/visualizations/index.html``.
+    ``<resolved-workspace>/visualizations/semantic-layer-explorer.html``.
     """
     root = resolve_workspace_for_version(workspace, version=version)
     if not root.is_dir():
@@ -129,8 +131,11 @@ def visualize(
 
     out_dir = root / VISUALIZATIONS_DIRNAME
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "index.html"
+    out_path = out_dir / VISUALIZATION_FILENAME
     out_path.write_text(render_html(data), encoding="utf-8")
+    legacy_path = out_dir / "index.html"
+    if legacy_path.exists():
+        legacy_path.unlink()
 
     if open_browser:
         try:
