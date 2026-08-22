@@ -267,8 +267,7 @@
     background: var(--accent-soft); border: 1px solid #d6dbf5; border-radius: 999px; padding: 2px 10px;
     max-width: 100%; white-space: normal; text-align: left; overflow-wrap: anywhere;
   }
-  .link-chip::before { content: '\2197'; margin-right: 5px; font-family: inherit; font-size: 11px; }
-  .link-chip:hover { border-color: var(--accent); }
+  .link-chip:hover { border-color: var(--accent); background: #e3e6f8; }
   .value-chip {
     display: inline-block; max-width: 100%; padding: 2px 9px; border: 1px solid var(--border-strong);
     border-radius: 999px; background: var(--panel); color: #51637a; font-size: 13px;
@@ -676,8 +675,17 @@ window.EVO_DATA = __DATA_JSON__;
       'schema.relationTypes.belongsTo': '归属',
       'schema.relationTypes.belongsValue': 'Relation.relation_type 字段的受控取值',
       'schema.directionality': '方向性',
+      'schema.direction': '具体方向',
       'schema.directed': '有向',
       'schema.undirected': '无向（对称）',
+      'schema.direction.flow': 'source（{source}）→ target（{target}）',
+      'schema.direction.undirected': 'source ↔ target（对称，无固定方向）',
+      'schema.role.parent_broader': '父级 / 上位概念',
+      'schema.role.child_narrower': '子级 / 下位概念',
+      'schema.role.whole_parent': '整体 / 父级',
+      'schema.role.part_child': '部分 / 子级',
+      'schema.role.input_base': '输入 / 基础概念',
+      'schema.role.derived_result': '派生结果',
       'schema.references': '结构引用规则',
       'tool.title': '语义工具（MCP Tool Layer）',
       'tool.params': '参数',
@@ -779,8 +787,17 @@ window.EVO_DATA = __DATA_JSON__;
       'schema.relationTypes.belongsTo': 'Belongs to',
       'schema.relationTypes.belongsValue': 'Controlled value of the Relation.relation_type field',
       'schema.directionality': 'Directionality',
+      'schema.direction': 'Direction',
       'schema.directed': 'Directed',
       'schema.undirected': 'Undirected (symmetric)',
+      'schema.direction.flow': 'source ({source}) → target ({target})',
+      'schema.direction.undirected': 'source ↔ target (symmetric, no prescribed direction)',
+      'schema.role.parent_broader': 'parent / broader',
+      'schema.role.child_narrower': 'child / narrower',
+      'schema.role.whole_parent': 'whole / parent',
+      'schema.role.part_child': 'part / child',
+      'schema.role.input_base': 'input / base concept',
+      'schema.role.derived_result': 'derived result',
       'schema.references': 'Structural reference rules',
       'tool.title': 'Semantic tools (MCP Tool Layer)',
       'tool.params': 'Parameters',
@@ -2475,6 +2492,14 @@ window.EVO_DATA = __DATA_JSON__;
 
   /* ================= schema / tool views ================= */
 
+  function relationDirectionLabel(item) {
+    if (!item.directed) return t('schema.direction.undirected');
+    return t('schema.direction.flow', {
+      source: t('schema.role.' + item.source_role),
+      target: t('schema.role.' + item.target_role)
+    });
+  }
+
   function cardGrid(items) {
     var grid = el('div', 'cards');
     items.forEach(function (item) {
@@ -2541,14 +2566,16 @@ window.EVO_DATA = __DATA_JSON__;
         return {
           key: 'relation-type:' + item.name, raw: item, title: item.name,
           subtitle: item.description,
-          body: item.directed ? t('schema.directed') : t('schema.undirected'),
+          body: (item.directed ? t('schema.directed') : t('schema.undirected'))
+            + ' · ' + relationDirectionLabel(item),
           getDetail: function () {
             return {
               family: 'relation', title: item.name, subtitle: '', recordId: null, actions: [],
               pairs: [
                 [t('schema.relationTypes.belongsTo'), t('schema.relationTypes.belongsValue')],
                 [t('common.description'), item.description],
-                [t('schema.directionality'), item.directed ? t('schema.directed') : t('schema.undirected')]
+                [t('schema.directionality'), item.directed ? t('schema.directed') : t('schema.undirected')],
+                [t('schema.direction'), relationDirectionLabel(item)]
               ]
             };
           }
@@ -2743,14 +2770,16 @@ window.EVO_DATA = __DATA_JSON__;
         return {
           title: item.name,
           subtitle: item.description,
-          body: item.directed ? t('schema.directed') : t('schema.undirected'),
+          body: (item.directed ? t('schema.directed') : t('schema.undirected'))
+            + ' · ' + relationDirectionLabel(item),
           getDetail: function () {
             return {
               family: 'relation', title: item.name, subtitle: '', recordId: null, actions: [],
               pairs: [
                 [t('schema.relationTypes.belongsTo'), t('schema.relationTypes.belongsValue')],
                 [t('common.description'), item.description],
-                [t('schema.directionality'), item.directed ? t('schema.directed') : t('schema.undirected')]
+                [t('schema.directionality'), item.directed ? t('schema.directed') : t('schema.undirected')],
+                [t('schema.direction'), relationDirectionLabel(item)]
               ]
             };
           }

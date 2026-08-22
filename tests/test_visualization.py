@@ -413,6 +413,18 @@ def test_schema_view_reflects_core_model():
     assert {rule["name"] for rule in schema["reference_rules"]} == {
         "grounded_by", "constrained_by", "supported_by"}
     assert "source" in schema["relation_record"]["fields"]
+    relation_types = {item["name"]: item for item in schema["relation_types"]}
+    assert (relation_types["hierarchy"]["source_role"],
+            relation_types["hierarchy"]["target_role"]) == (
+                "parent_broader", "child_narrower")
+    assert (relation_types["composition"]["source_role"],
+            relation_types["composition"]["target_role"]) == (
+                "whole_parent", "part_child")
+    assert (relation_types["derivation"]["source_role"],
+            relation_types["derivation"]["target_role"]) == (
+                "input_base", "derived_result")
+    assert "source_role" not in relation_types["association"]
+    assert "source_role" not in relation_types["equivalence"]
 
 
 def test_legend_counts_follow_rendered_graph_elements(tmp_path):
@@ -438,6 +450,13 @@ def test_schema_view_nests_relation_types_under_relation(workspace):
     assert "Relation（语义关系）" in html
     assert "relation_type 受控取值" in html
     assert "'语义关系类型'" not in html, "relation types must not stay a standalone section"
+    assert ".link-chip::before" not in html, "navigable values must not show a misleading arrow"
+    assert "function relationDirectionLabel(" in html
+    assert "'schema.direction.flow': 'source（{source}）→ target（{target}）'" in html
+    assert "'schema.role.parent_broader': '父级 / 上位概念'" in html
+    assert "'schema.role.whole_parent': 'whole / parent'" in html
+    assert '"source_role":"input_base","target_role":"derived_result"' in html
+    assert "[t('schema.direction'), relationDirectionLabel(item)]" in html
 
 
 def test_tool_view_uses_real_registry(workspace):

@@ -57,6 +57,12 @@ _RELATION_SEMANTICS = {
     "derivation": "Directed relationship where one Term is computed from another.",
 }
 
+_DIRECTED_RELATION_ROLES = {
+    "hierarchy": ("parent_broader", "child_narrower"),
+    "composition": ("whole_parent", "part_child"),
+    "derivation": ("input_base", "derived_result"),
+}
+
 _REFERENCE_RULES = (
     ("grounded_by", "Term", "Mapping", "A Mapping grounds its Term to database structures (table, column, path)."),
     ("constrained_by", "Term / Mapping", "Constraint", "A Constraint governs how its target object must be interpreted."),
@@ -423,8 +429,15 @@ def build_schema_view() -> Dict[str, Any]:
             "fields": [f.name for f in dataclasses.fields(Relation)],
         },
         "relation_types": [
-            {"name": name, "directed": name in ("hierarchy", "composition", "derivation"),
-             "description": _RELATION_SEMANTICS[name]}
+            {
+                "name": name,
+                "directed": name in _DIRECTED_RELATION_ROLES,
+                "description": _RELATION_SEMANTICS[name],
+                **({
+                    "source_role": _DIRECTED_RELATION_ROLES[name][0],
+                    "target_role": _DIRECTED_RELATION_ROLES[name][1],
+                } if name in _DIRECTED_RELATION_ROLES else {}),
+            }
             for name in RELATION_TYPES
         ],
         "reference_rules": [
